@@ -23,15 +23,16 @@ export default function TabLayout() {
     }
   };
 
+  const isAdminUser = user?.role === 'admin';
+
   const visibleTabs = config.navigationConfig.tabs
     .filter((tab) => {
-      if (!tab.enabled) return false;
-      if (tab.id === 'settings' && user?.role !== 'admin') return false;
-      return true;
+      if (tab.id === 'settings') {
+        return isAdminUser;
+      }
+      return tab.enabled;
     })
     .sort((a, b) => a.order - b.order);
-
-  const isAdminUser = user?.role === 'admin';
 
   return (
     <Tabs
@@ -56,19 +57,9 @@ export default function TabLayout() {
           options={{
             title: tab.name,
             tabBarIcon: ({ color }) => getIconForTab(tab.icon, color),
-            href: tab.enabled || (tab.id === 'settings' && isAdminUser) ? undefined : null,
           }}
         />
       ))}
-      {isAdminUser && !visibleTabs.find((tab) => tab.id === 'settings') && (
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: config.navigationConfig.tabs.find((t) => t.id === 'settings')?.name || 'Settings',
-            tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
-          }}
-        />
-      )}
     </Tabs>
   );
 }
