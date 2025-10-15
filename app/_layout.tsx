@@ -12,9 +12,9 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { isLoading: prefsLoading } = usePreferences();
-  const { isLoading: configLoading } = useAdminConfig();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isLoading: prefsLoading, loadUserPreferences, clearUserPreferences } = usePreferences();
+  const { isLoading: configLoading, config } = useAdminConfig();
   const segments = useSegments();
   const router = useRouter();
 
@@ -25,6 +25,16 @@ function RootLayoutNav() {
       SplashScreen.hideAsync();
     }
   }, [isLoading]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('[RootLayout] User authenticated, loading preferences for:', user.id);
+      loadUserPreferences(user.id, config.languageConfig.defaultLanguage);
+    } else if (!isAuthenticated) {
+      console.log('[RootLayout] User logged out, clearing preferences');
+      clearUserPreferences();
+    }
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (isLoading) return;

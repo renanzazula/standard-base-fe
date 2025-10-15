@@ -76,6 +76,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const now = Date.now();
 
         if (now - session.lastActivity < config.sessionConfig.maxTime) {
+          console.log('[Auth] Restoring session for user:', user.id);
           setAuthState({
             user,
             isAuthenticated: true,
@@ -156,6 +157,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           provider: 'manual',
         };
         await saveSession(user);
+        console.log('[Auth] Login successful for user:', user.id);
         setAuthState({
           user,
           isAuthenticated: true,
@@ -182,6 +184,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         provider: 'google',
       };
       await saveSession(user);
+      console.log('[Auth] Google login successful for user:', user.id);
       setAuthState({
         user,
         isAuthenticated: true,
@@ -206,6 +209,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         provider: 'apple',
       };
       await saveSession(user);
+      console.log('[Auth] Apple login successful for user:', user.id);
       setAuthState({
         user,
         isAuthenticated: true,
@@ -235,6 +239,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         provider,
       };
       await saveSession(user);
+      console.log('[Auth] Signup successful for user:', user.id);
       setAuthState({
         user,
         isAuthenticated: true,
@@ -248,6 +253,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const logout = async () => {
+    console.log('[Auth] Logging out');
     await clearSession();
     clearSessionTimeout();
     setAuthState({
