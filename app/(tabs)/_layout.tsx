@@ -25,14 +25,17 @@ export default function TabLayout() {
 
   const isAdminUser = user?.role === 'admin';
 
-  const visibleTabs = config.navigationConfig.tabs
-    .filter((tab) => {
-      if (isAdminUser && tab.id === 'settings') {
-        return true;
-      }
-      return tab.enabled;
-    })
-    .sort((a, b) => a.order - b.order);
+  const isTabVisible = (tabId: string) => {
+    const tab = config.navigationConfig.tabs.find((t) => t.id === tabId);
+    if (!tab) return false;
+    if (isAdminUser && tabId === 'settings') return true;
+    return tab.enabled;
+  };
+
+  const getTabConfig = (tabId: string) => {
+    const tab = config.navigationConfig.tabs.find((t) => t.id === tabId);
+    return tab;
+  };
 
   return (
     <Tabs
@@ -50,16 +53,30 @@ export default function TabLayout() {
         },
       }}
     >
-      {visibleTabs.map((tab) => (
-        <Tabs.Screen
-          key={tab.id}
-          name={tab.id}
-          options={{
-            title: tab.name,
-            tabBarIcon: ({ color }) => getIconForTab(tab.icon, color),
-          }}
-        />
-      ))}
+      <Tabs.Screen
+        name="home"
+        options={{
+          href: isTabVisible('home') ? '/home' : null,
+          title: getTabConfig('home')?.name || 'Home',
+          tabBarIcon: ({ color }) => getIconForTab('home', color),
+        }}
+      />
+      <Tabs.Screen
+        name="feed"
+        options={{
+          href: isTabVisible('feed') ? '/feed' : null,
+          title: getTabConfig('feed')?.name || 'Feed',
+          tabBarIcon: ({ color }) => getIconForTab('rss', color),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: isTabVisible('settings') ? '/settings' : null,
+          title: getTabConfig('settings')?.name || 'Settings',
+          tabBarIcon: ({ color }) => getIconForTab('settings', color),
+        }}
+      />
     </Tabs>
   );
 }
