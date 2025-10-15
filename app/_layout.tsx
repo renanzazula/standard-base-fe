@@ -45,10 +45,11 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === undefined;
+    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management';
 
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/login');
-    } else if (isAuthenticated && !inAuthGroup) {
+    } else if (isAuthenticated && !inAuthGroup && !inProtectedRoute) {
       router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, isLoading, segments]);
