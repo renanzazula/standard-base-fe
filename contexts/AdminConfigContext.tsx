@@ -8,6 +8,15 @@ export type ServiceMode = 'mock' | 'real';
 
 export type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 
+export interface NavigationTab {
+  id: string;
+  name: string;
+  enabled: boolean;
+  icon: string;
+  order: number;
+  isSystem: boolean;
+}
+
 export interface AdminConfig {
   enabledAuthMethods: {
     google: boolean;
@@ -37,6 +46,9 @@ export interface AdminConfig {
     usernameMaxLength: number;
     avatarMaxSizeMB: number;
     allowedAvatarFormats: string[];
+  };
+  navigationConfig: {
+    tabs: NavigationTab[];
   };
 }
 
@@ -70,6 +82,13 @@ const DEFAULT_CONFIG: AdminConfig = {
     avatarMaxSizeMB: 5,
     allowedAvatarFormats: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
   },
+  navigationConfig: {
+    tabs: [
+      { id: 'home', name: 'Home', enabled: false, icon: 'home', order: 1, isSystem: true },
+      { id: 'feed', name: 'Feed', enabled: false, icon: 'rss', order: 2, isSystem: true },
+      { id: 'settings', name: 'Settings', enabled: true, icon: 'settings', order: 3, isSystem: true },
+    ],
+  },
 };
 
 const STORAGE_KEY = '@admin_config';
@@ -95,6 +114,11 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
             ...(parsedConfig.languageConfig || {}),
             availableLanguages: parsedConfig.languageConfig?.availableLanguages || DEFAULT_CONFIG.languageConfig.availableLanguages,
             defaultLanguage: parsedConfig.languageConfig?.defaultLanguage || DEFAULT_CONFIG.languageConfig.defaultLanguage,
+          },
+          navigationConfig: {
+            ...DEFAULT_CONFIG.navigationConfig,
+            ...(parsedConfig.navigationConfig || {}),
+            tabs: parsedConfig.navigationConfig?.tabs || DEFAULT_CONFIG.navigationConfig.tabs,
           },
         };
         setConfig(mergedConfig);
@@ -214,6 +238,63 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     saveConfig(newConfig);
   };
 
+  const toggleTabEnabled = (tabId: string) => {
+    const newTabs = config.navigationConfig.tabs.map((tab) =>
+      tab.id === tabId ? { ...tab, enabled: !tab.enabled } : tab
+    );
+    const newConfig = {
+      ...config,
+      navigationConfig: {
+        ...config.navigationConfig,
+        tabs: newTabs,
+      },
+    };
+    saveConfig(newConfig);
+  };
+
+  const updateTabName = (tabId: string, name: string) => {
+    const newTabs = config.navigationConfig.tabs.map((tab) =>
+      tab.id === tabId ? { ...tab, name } : tab
+    );
+    const newConfig = {
+      ...config,
+      navigationConfig: {
+        ...config.navigationConfig,
+        tabs: newTabs,
+      },
+    };
+    saveConfig(newConfig);
+  };
+
+  const addCustomTab = (tab: Omit<NavigationTab, 'isSystem' | 'order'>) => {
+    const maxOrder = Math.max(...config.navigationConfig.tabs.map((t) => t.order));
+    const newTab: NavigationTab = {
+      ...tab,
+      isSystem: false,
+      order: maxOrder + 1,
+    };
+    const newConfig = {
+      ...config,
+      navigationConfig: {
+        ...config.navigationConfig,
+        tabs: [...config.navigationConfig.tabs, newTab],
+      },
+    };
+    saveConfig(newConfig);
+  };
+
+  const removeCustomTab = (tabId: string) => {
+    const newTabs = config.navigationConfig.tabs.filter((tab) => tab.id !== tabId);
+    const newConfig = {
+      ...config,
+      navigationConfig: {
+        ...config.navigationConfig,
+        tabs: newTabs,
+      },
+    };
+    saveConfig(newConfig);
+  };
+
   return {
     config,
     isLoading,
@@ -224,5 +305,9 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     setDefaultLanguage,
     updateRegionalConfig,
     updateProfileConfig,
+    toggleTabEnabled,
+    updateTabName,
+    addCustomTab,
+    removeCustomTab,
   };
 });

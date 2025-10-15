@@ -23,6 +23,8 @@ import {
   Edit3,
   Trash2,
   Camera,
+  Menu,
+  ChevronRight,
 } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal, Pressable, TextInput, Image } from 'react-native';
 import React from 'react';
@@ -951,8 +953,34 @@ export default function SettingsScreen() {
         </View>
 
         {user?.role === 'admin' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.adminProfileConfig')}</Text>
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('settings.adminConfiguration')}</Text>
+              <View style={styles.card}>
+                <TouchableOpacity
+                  style={[styles.settingItem, styles.settingItemLast]}
+                  onPress={() => router.push('/navigation-management')}
+                  testID="navigation-management-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Menu size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>{t('settings.navigationManagement')}</Text>
+                    <Text style={styles.settingDescription}>
+                      {t('settings.manageNavigationTabs')}
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('settings.adminProfileConfig')}</Text>
             <View style={styles.card}>
               <View style={styles.settingItem}>
                 <View style={styles.settingIcon}>
@@ -1041,6 +1069,7 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+          </>
         )}
 
         <View style={styles.section}>
