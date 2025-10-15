@@ -645,16 +645,47 @@ export default function SettingsScreen() {
       borderWidth: 1,
       borderColor: colors.border,
     },
-    avatarPreview: {
-      marginTop: 16,
-      alignItems: 'center',
+    avatarImageContainer: {
+      position: 'relative',
+      width: 120,
+      height: 120,
     },
     avatarImage: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
+      width: 120,
+      height: 120,
+      borderRadius: 60,
       borderWidth: 2,
       borderColor: colors.border,
+    },
+    avatarOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: colors.card,
+    },
+    avatarPlaceholder: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      borderWidth: 2,
+      borderStyle: 'dashed' as const,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      gap: 8,
+    },
+    avatarPlaceholderText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: '600' as const,
     },
     adminFieldRow: {
       flexDirection: 'row',
@@ -759,13 +790,6 @@ export default function SettingsScreen() {
               <Text style={styles.infoLabel}>{t('home.provider')}</Text>
               <Text style={styles.infoValue}>{user?.provider}</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('home.language')}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 18 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
-                <Text style={styles.infoValue}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
-              </View>
-            </View>
           </View>
         </View>
 
@@ -823,23 +847,38 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.profileSettings')}</Text>
           <View style={styles.card}>
-            <View style={styles.settingItem}>
-              <View style={styles.settingIcon}>
-                <User size={20} color={colors.text} />
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIconContainer}>
+                <User size={24} color="#FFFFFF" />
               </View>
-              <View style={styles.settingContent}>
-                <Text style={styles.settingTitle}>{t('settings.profileInformation')}</Text>
-                <Text style={styles.settingDescription}>
-                  {t('settings.manageProfile')}
-                </Text>
-              </View>
+              <Text style={styles.cardTitle}>{t('settings.profileInformation')}</Text>
             </View>
-
-            <View style={{ padding: 16, paddingTop: 0 }}>
-              <View style={styles.profileFieldRow}>
-                <View style={styles.profileFieldInfo}>
-                  <Text style={styles.profileFieldLabel}>{t('settings.username')}</Text>
-                  <Text style={styles.profileFieldValue}>
+            <View style={styles.cardContent}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('auth.email')}</Text>
+                <Text style={styles.infoValue}>{user?.email}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('home.role')}</Text>
+                <View style={styles.profileBadge}>
+                  <Text style={styles.badgeText}>{user?.role}</Text>
+                </View>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('home.provider')}</Text>
+                <Text style={styles.infoValue}>{user?.provider}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('home.language')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontSize: 18 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
+                  <Text style={styles.infoValue}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
+                </View>
+              </View>
+              <View style={[styles.infoRow, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16, marginTop: 12 }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoLabel}>{t('settings.username')}</Text>
+                  <Text style={styles.infoValue}>
                     {user?.username || user?.name}
                   </Text>
                 </View>
@@ -854,15 +893,9 @@ export default function SettingsScreen() {
                   <Edit3 size={16} color={colors.primary} />
                 </TouchableOpacity>
               </View>
-
-              <View style={[styles.profileFieldRow, styles.profileFieldRowLast]}>
-                <View style={styles.profileFieldInfo}>
-                  <Text style={styles.profileFieldLabel}>{t('settings.profilePicture')}</Text>
-                  <Text style={styles.profileFieldDescription}>
-                    {user?.avatar ? t('settings.changeAvatar') : t('settings.noAvatar')}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={[styles.infoRow, { flexDirection: 'column', alignItems: 'flex-start', gap: 12 }]}>
+                <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.infoLabel}>{t('settings.profilePicture')}</Text>
                   {user?.avatar && (
                     <TouchableOpacity
                       style={styles.avatarActionButton}
@@ -872,25 +905,31 @@ export default function SettingsScreen() {
                       <Trash2 size={16} color={colors.error} />
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity
-                    style={styles.avatarActionButton}
-                    onPress={handleSelectAvatar}
-                    testID="upload-avatar-button"
-                  >
-                    <Camera size={16} color={colors.primary} />
-                  </TouchableOpacity>
                 </View>
+                <TouchableOpacity
+                  onPress={handleSelectAvatar}
+                  testID="avatar-upload-area"
+                  activeOpacity={0.7}
+                >
+                  {user?.avatar ? (
+                    <View style={styles.avatarImageContainer}>
+                      <Image
+                        source={{ uri: user.avatar }}
+                        style={styles.avatarImage}
+                        testID="avatar-preview"
+                      />
+                      <View style={styles.avatarOverlay}>
+                        <Camera size={24} color="#FFFFFF" />
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Camera size={32} color={colors.textSecondary} />
+                      <Text style={styles.avatarPlaceholderText}>{t('settings.uploadAvatar')}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
               </View>
-
-              {user?.avatar && (
-                <View style={styles.avatarPreview}>
-                  <Image
-                    source={{ uri: user.avatar }}
-                    style={styles.avatarImage}
-                    testID="avatar-preview"
-                  />
-                </View>
-              )}
             </View>
           </View>
         </View>
