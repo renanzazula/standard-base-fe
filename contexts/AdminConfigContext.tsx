@@ -6,6 +6,8 @@ import { Language } from '@/constants/languages';
 export type AuthMethod = 'google' | 'apple' | 'manual';
 export type ServiceMode = 'mock' | 'real';
 
+export type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+
 export interface AdminConfig {
   enabledAuthMethods: {
     google: boolean;
@@ -25,6 +27,10 @@ export interface AdminConfig {
   languageConfig: {
     availableLanguages: Language[];
     defaultLanguage: Language;
+  };
+  regionalConfig: {
+    defaultTimezone: string;
+    defaultDateFormat: DateFormat;
   };
 }
 
@@ -47,6 +53,10 @@ const DEFAULT_CONFIG: AdminConfig = {
   languageConfig: {
     availableLanguages: ['en'],
     defaultLanguage: 'en' as Language,
+  },
+  regionalConfig: {
+    defaultTimezone: 'UTC',
+    defaultDateFormat: 'MM/DD/YYYY',
   },
 };
 
@@ -170,6 +180,17 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     saveConfig(newConfig);
   };
 
+  const updateRegionalConfig = (regionalConfig: Partial<AdminConfig['regionalConfig']>) => {
+    const newConfig = {
+      ...config,
+      regionalConfig: {
+        ...config.regionalConfig,
+        ...regionalConfig,
+      },
+    };
+    saveConfig(newConfig);
+  };
+
   return {
     config,
     isLoading,
@@ -178,5 +199,6 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     updateSessionConfig,
     toggleLanguageAvailability,
     setDefaultLanguage,
+    updateRegionalConfig,
   };
 });

@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
-import { useAdminConfig } from '@/contexts/AdminConfigContext';
+import { useAdminConfig, DateFormat } from '@/contexts/AdminConfigContext';
 import { useRouter } from 'expo-router';
 import {
   Moon,
@@ -18,18 +18,25 @@ import {
   Languages,
   Globe,
   Check,
+  MapPin,
+  Calendar,
 } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal, Pressable } from 'react-native';
 import React from 'react';
 import { AVAILABLE_LANGUAGES, Language } from '@/constants/languages';
 import { useTranslation } from '@/hooks/useTranslation';
+import { TIMEZONES } from '@/constants/timezones';
 
 export default function SettingsScreen() {
-  const { colors, theme, toggleTheme, language, setLanguage } = usePreferences();
+  const { colors, theme, toggleTheme, language, setLanguage, timezone, setTimezone, dateFormat, setDateFormat } = usePreferences();
   const { user, logout } = useAuth();
-  const { config, updateSessionConfig, toggleAuthMethod, setServiceMode, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
+  const { config, updateSessionConfig, toggleAuthMethod, setServiceMode, toggleLanguageAvailability, setDefaultLanguage, updateRegionalConfig } = useAdminConfig();
   const router = useRouter();
   const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
+  const [timezoneModalVisible, setTimezoneModalVisible] = React.useState(false);
+  const [dateFormatModalVisible, setDateFormatModalVisible] = React.useState(false);
+  const [adminTimezoneModalVisible, setAdminTimezoneModalVisible] = React.useState(false);
+  const [adminDateFormatModalVisible, setAdminDateFormatModalVisible] = React.useState(false);
   const { t } = useTranslation();
 
   if (!config || !config.languageConfig || !config.languageConfig.availableLanguages) {
@@ -1041,6 +1048,86 @@ export default function SettingsScreen() {
         )}
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.regionalConfiguration')}</Text>
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={() => setTimezoneModalVisible(true)}
+              testID="timezone-selector"
+            >
+              <View style={styles.settingIcon}>
+                <MapPin size={20} color={colors.text} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>{t('settings.timezone')}</Text>
+                <Text style={styles.settingDescription}>
+                  {TIMEZONES.find(tz => tz.value === timezone)?.label || timezone}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.settingItem, styles.settingItemLast]}
+              onPress={() => setDateFormatModalVisible(true)}
+              testID="dateformat-selector"
+            >
+              <View style={styles.settingIcon}>
+                <Calendar size={20} color={colors.text} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>{t('settings.dateFormat')}</Text>
+                <Text style={styles.settingDescription}>{dateFormat}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {user?.role === 'admin' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.regionalConfiguration')} (Admin)</Text>
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.settingItem}
+                onPress={() => setAdminTimezoneModalVisible(true)}
+                testID="admin-timezone-selector"
+              >
+                <View style={styles.settingIcon}>
+                  <MapPin size={20} color={colors.text} />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={styles.settingTitle}>{t('settings.systemTimezone')}</Text>
+                  <Text style={styles.settingDescription}>
+                    {TIMEZONES.find(tz => tz.value === config.regionalConfig.defaultTimezone)?.label || config.regionalConfig.defaultTimezone}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.settingItem, styles.settingItemLast]}
+                onPress={() => setAdminDateFormatModalVisible(true)}
+                testID="admin-dateformat-selector"
+              >
+                <View style={styles.settingIcon}>
+                  <Calendar size={20} color={colors.text} />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={styles.settingTitle}>{t('settings.systemDateFormat')}</Text>
+                  <Text style={styles.settingDescription}>{config.regionalConfig.defaultDateFormat}</Text>
+                </View>
+              </TouchableOpacity>
+
+              <View style={{ padding: 16, paddingTop: 0 }}>
+                <View style={styles.infoBox}>
+                  <Text style={styles.infoText}>
+                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br34')}</Text> {t('settings.br34Description')}{' '}
+                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br35')}</Text> {t('settings.br35Description')}{' '}
+                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br36')}</Text> {t('settings.br36Description')}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} testID="logout-button">
             <LogOut size={20} color="#FFFFFF" />
@@ -1099,6 +1186,228 @@ export default function SettingsScreen() {
                 style={styles.modalCloseButton}
                 onPress={() => setLanguageModalVisible(false)}
                 testID="close-language-modal"
+              >
+                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={timezoneModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTimezoneModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setTimezoneModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('settings.selectTimezone')}</Text>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              {TIMEZONES.map((tz, index) => {
+                const isSelected = timezone === tz.value;
+                const isLast = index === TIMEZONES.length - 1;
+
+                return (
+                  <TouchableOpacity
+                    key={tz.value}
+                    style={[
+                      styles.languageItem,
+                      isLast && styles.languageItemLast,
+                    ]}
+                    onPress={() => {
+                      console.log('[Settings] User selected timezone:', tz.value);
+                      setTimezone(tz.value);
+                      setTimezoneModalVisible(false);
+                    }}
+                    testID={`select-timezone-${tz.value}`}
+                  >
+                    <View style={styles.languageInfo}>
+                      <Text style={styles.languageName}>{tz.label}</Text>
+                      <Text style={styles.languageNative}>{tz.offset}</Text>
+                    </View>
+                    {isSelected && (
+                      <View style={styles.languageCheck}>
+                        <Check size={16} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setTimezoneModalVisible(false)}
+                testID="close-timezone-modal"
+              >
+                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={dateFormatModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDateFormatModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setDateFormatModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('settings.selectDateFormat')}</Text>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              {(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] as DateFormat[]).map((format, index) => {
+                const isSelected = dateFormat === format;
+                const isLast = index === 2;
+
+                return (
+                  <TouchableOpacity
+                    key={format}
+                    style={[
+                      styles.languageItem,
+                      isLast && styles.languageItemLast,
+                    ]}
+                    onPress={() => {
+                      console.log('[Settings] User selected date format:', format);
+                      setDateFormat(format);
+                      setDateFormatModalVisible(false);
+                    }}
+                    testID={`select-dateformat-${format}`}
+                  >
+                    <View style={styles.languageInfo}>
+                      <Text style={styles.languageName}>{format}</Text>
+                    </View>
+                    {isSelected && (
+                      <View style={styles.languageCheck}>
+                        <Check size={16} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setDateFormatModalVisible(false)}
+                testID="close-dateformat-modal"
+              >
+                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={adminTimezoneModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAdminTimezoneModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setAdminTimezoneModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('settings.selectTimezone')}</Text>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              {TIMEZONES.map((tz, index) => {
+                const isSelected = config.regionalConfig.defaultTimezone === tz.value;
+                const isLast = index === TIMEZONES.length - 1;
+
+                return (
+                  <TouchableOpacity
+                    key={tz.value}
+                    style={[
+                      styles.languageItem,
+                      isLast && styles.languageItemLast,
+                    ]}
+                    onPress={() => {
+                      console.log('[Settings] Admin selected timezone:', tz.value);
+                      updateRegionalConfig({ defaultTimezone: tz.value });
+                      setAdminTimezoneModalVisible(false);
+                    }}
+                    testID={`admin-select-timezone-${tz.value}`}
+                  >
+                    <View style={styles.languageInfo}>
+                      <Text style={styles.languageName}>{tz.label}</Text>
+                      <Text style={styles.languageNative}>{tz.offset}</Text>
+                    </View>
+                    {isSelected && (
+                      <View style={styles.languageCheck}>
+                        <Check size={16} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setAdminTimezoneModalVisible(false)}
+                testID="close-admin-timezone-modal"
+              >
+                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={adminDateFormatModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAdminDateFormatModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setAdminDateFormatModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('settings.selectDateFormat')}</Text>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              {(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] as DateFormat[]).map((format, index) => {
+                const isSelected = config.regionalConfig.defaultDateFormat === format;
+                const isLast = index === 2;
+
+                return (
+                  <TouchableOpacity
+                    key={format}
+                    style={[
+                      styles.languageItem,
+                      isLast && styles.languageItemLast,
+                    ]}
+                    onPress={() => {
+                      console.log('[Settings] Admin selected date format:', format);
+                      updateRegionalConfig({ defaultDateFormat: format });
+                      setAdminDateFormatModalVisible(false);
+                    }}
+                    testID={`admin-select-dateformat-${format}`}
+                  >
+                    <View style={styles.languageInfo}>
+                      <Text style={styles.languageName}>{format}</Text>
+                    </View>
+                    {isSelected && (
+                      <View style={styles.languageCheck}>
+                        <Check size={16} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setAdminDateFormatModalVisible(false)}
+                testID="close-admin-dateformat-modal"
               >
                 <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
               </TouchableOpacity>

@@ -29,7 +29,12 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isAuthenticated && user) {
       console.log('[RootLayout] User authenticated, loading preferences for:', user.id);
-      loadUserPreferences(user.id, config.languageConfig.defaultLanguage);
+      loadUserPreferences(
+        user.id, 
+        config.languageConfig.defaultLanguage,
+        config.regionalConfig.defaultTimezone,
+        config.regionalConfig.defaultDateFormat
+      );
     } else if (!isAuthenticated) {
       console.log('[RootLayout] User logged out, clearing preferences');
       clearUserPreferences();
