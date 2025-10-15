@@ -59,6 +59,29 @@ export default function SettingsScreen() {
     setServiceMode(method, mode);
   };
 
+  const handleTakePhoto = async () => {
+    console.log('[Settings] Requesting camera access');
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please grant camera access to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      console.log('[Settings] Photo taken:', asset.uri);
+      await updateProfile({ avatar: asset.uri });
+      Alert.alert(t('common.success'), t('settings.avatarUpdated'));
+    }
+  };
+
   const handleSelectAvatar = async () => {
     console.log('[Settings] Requesting avatar selection');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -81,6 +104,24 @@ export default function SettingsScreen() {
       await updateProfile({ avatar: asset.uri });
       Alert.alert(t('common.success'), t('settings.avatarUpdated'));
     }
+  };
+
+  const handleAvatarPress = () => {
+    Alert.alert(
+      t('settings.changeAvatar'),
+      t('settings.chooseAvatarSource'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.takePhoto'),
+          onPress: handleTakePhoto,
+        },
+        {
+          text: t('settings.chooseFromGallery'),
+          onPress: handleSelectAvatar,
+        },
+      ]
+    );
   };
 
   const handleRemoveAvatar = () => {
@@ -768,6 +809,19 @@ export default function SettingsScreen() {
       fontWeight: '700' as const,
       color: colors.textSecondary,
     },
+    cardHeaderAvatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      marginRight: 16,
+      borderWidth: 2,
+      borderColor: colors.primary,
+    },
+    cardSubtitle: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
   });
 
   return (
@@ -781,12 +835,28 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.profileSettings')}</Text>
           <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIconContainer}>
-                <User size={24} color="#FFFFFF" />
+            <TouchableOpacity 
+              style={styles.cardHeader} 
+              onPress={handleAvatarPress}
+              activeOpacity={0.7}
+              testID="profile-avatar-button"
+            >
+              {user?.avatar ? (
+                <Image
+                  source={{ uri: user.avatar }}
+                  style={styles.cardHeaderAvatar}
+                />
+              ) : (
+                <View style={styles.cardIconContainer}>
+                  <User size={24} color="#FFFFFF" />
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardTitle}>{t('settings.profileInformation')}</Text>
+                <Text style={styles.cardSubtitle}>{t('settings.tapToChangeAvatar')}</Text>
               </View>
-              <Text style={styles.cardTitle}>{t('settings.profileInformation')}</Text>
-            </View>
+              <Camera size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
             <View style={styles.cardContent}>
               <View style={[styles.profileFieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
                 <View style={styles.profileFieldInfo}>

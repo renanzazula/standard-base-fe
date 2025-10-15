@@ -157,5 +157,9 @@ export const es: TranslationKeys = {
     selectImage: 'Seleccionar Imagen',
     fromLibrary: 'De la Biblioteca de Fotos',
     fromCamera: 'Tomar Foto',
+    chooseAvatarSource: 'Elige una fuente de foto',
+    takePhoto: 'Tomar Foto',
+    chooseFromGallery: 'Elegir de la Galería',
+    tapToChangeAvatar: 'Toca para cambiar tu foto de perfil',
   },
 };

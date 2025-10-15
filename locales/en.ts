@@ -155,6 +155,10 @@ export const en = {
     selectImage: 'Select Image',
     fromLibrary: 'From Photo Library',
     fromCamera: 'Take Photo',
+    chooseAvatarSource: 'Choose a photo source',
+    takePhoto: 'Take Photo',
+    chooseFromGallery: 'Choose from Gallery',
+    tapToChangeAvatar: 'Tap to change your profile picture',
   },
 };
 
