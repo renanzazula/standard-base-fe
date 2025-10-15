@@ -1,14 +1,12 @@
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { Stack } from 'expo-router';
-import { Chrome, Apple, Mail, Clock, Plus, Minus, Rss } from 'lucide-react-native';
+import { Chrome, Apple, Mail, Clock, Plus, Minus } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
-import { useTranslation } from '@/hooks/useTranslation';
 
 export default function AdminConfigScreen() {
   const { colors } = usePreferences();
-  const { config, toggleAuthMethod, setServiceMode, updateSessionConfig, toggleFeedModule } = useAdminConfig();
-  const { t } = useTranslation();
+  const { config, toggleAuthMethod, setServiceMode, updateSessionConfig } = useAdminConfig();
 
   const MIN_SESSION_TIME = 5 * 60 * 1000;
   const MAX_SESSION_TIME = 24 * 60 * 60 * 1000;
@@ -407,35 +405,6 @@ export default function AdminConfigScreen() {
                   </View>
                 </View>
               )}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Module Configuration</Text>
-
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Rss size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>{t('feed.feedModuleSettings')}</Text>
-              </View>
-
-              <View style={[styles.settingRow, styles.settingRowLast]}>
-                <View>
-                  <Text style={styles.settingLabel}>{t('feed.enableFeedModule')}</Text>
-                  <Text style={styles.settingDescription}>
-                    {t('feed.feedModuleDescription')}
-                  </Text>
-                </View>
-                <Switch
-                  value={config.moduleConfig.feedEnabled}
-                  onValueChange={toggleFeedModule}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                  testID="toggle-feed-module"
-                />
-              </View>
             </View>
           </View>
 

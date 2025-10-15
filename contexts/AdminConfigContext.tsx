@@ -38,9 +38,6 @@ export interface AdminConfig {
     avatarMaxSizeMB: number;
     allowedAvatarFormats: string[];
   };
-  moduleConfig: {
-    feedEnabled: boolean;
-  };
 }
 
 const DEFAULT_CONFIG: AdminConfig = {
@@ -72,9 +69,6 @@ const DEFAULT_CONFIG: AdminConfig = {
     usernameMaxLength: 30,
     avatarMaxSizeMB: 5,
     allowedAvatarFormats: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
-  },
-  moduleConfig: {
-    feedEnabled: true,
   },
 };
 
@@ -220,17 +214,6 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     saveConfig(newConfig);
   };
 
-  const toggleFeedModule = () => {
-    const newConfig = {
-      ...config,
-      moduleConfig: {
-        ...config.moduleConfig,
-        feedEnabled: !config.moduleConfig.feedEnabled,
-      },
-    };
-    saveConfig(newConfig);
-  };
-
   return {
     config,
     isLoading,
@@ -241,6 +224,5 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     setDefaultLanguage,
     updateRegionalConfig,
     updateProfileConfig,
-    toggleFeedModule,
   };
 });
