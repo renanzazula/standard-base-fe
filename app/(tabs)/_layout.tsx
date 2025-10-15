@@ -32,10 +32,9 @@ export default function TabLayout() {
     return tab.enabled;
   };
 
-  const getTabConfig = (tabId: string) => {
-    const tab = config.navigationConfig.tabs.find((t) => t.id === tabId);
-    return tab;
-  };
+  const sortedTabs = [...config.navigationConfig.tabs].sort((a, b) => a.order - b.order);
+
+  console.log('[TabLayout] Rendering tabs in order:', sortedTabs.map(t => `${t.id}(${t.order})`).join(', '));
 
   return (
     <Tabs
@@ -53,30 +52,21 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="home"
-        options={{
-          href: isTabVisible('home') ? '/home' : null,
-          title: getTabConfig('home')?.name || 'Home',
-          tabBarIcon: ({ color }) => getIconForTab('home', color),
-        }}
-      />
-      <Tabs.Screen
-        name="feed"
-        options={{
-          href: isTabVisible('feed') ? '/feed' : null,
-          title: getTabConfig('feed')?.name || 'Feed',
-          tabBarIcon: ({ color }) => getIconForTab('rss', color),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: isTabVisible('settings') ? '/settings' : null,
-          title: getTabConfig('settings')?.name || 'Settings',
-          tabBarIcon: ({ color }) => getIconForTab('settings', color),
-        }}
-      />
+      {sortedTabs.map((tab) => {
+        const isVisible = isTabVisible(tab.id);
+        console.log(`[TabLayout] Tab ${tab.id}: visible=${isVisible}, order=${tab.order}`);
+        return (
+          <Tabs.Screen
+            key={tab.id}
+            name={tab.id}
+            options={{
+              href: isVisible ? `/${tab.id}` : null,
+              title: tab.name,
+              tabBarIcon: ({ color }) => getIconForTab(tab.icon, color),
+            }}
+          />
+        );
+      })}
     </Tabs>
   );
 }
