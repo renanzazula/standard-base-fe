@@ -11,6 +11,8 @@ export interface User {
   name: string;
   role: UserRole;
   provider: 'google' | 'apple' | 'manual';
+  username?: string;
+  avatar?: string;
 }
 
 interface AuthState {
@@ -269,6 +271,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return true;
   };
 
+  const updateProfile = async (updates: Partial<Pick<User, 'username' | 'avatar'>>) => {
+    if (!authState.user) return;
+    
+    console.log('[Auth] Updating profile:', updates);
+    const updatedUser = { ...authState.user, ...updates };
+    await saveSession(updatedUser);
+    setAuthState((prev) => ({
+      ...prev,
+      user: updatedUser,
+    }));
+  };
+
   return {
     user: authState.user,
     isAuthenticated: authState.isAuthenticated,
@@ -280,5 +294,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     logout,
     resetPassword,
     updateActivity,
+    updateProfile,
   };
 });

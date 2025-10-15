@@ -32,6 +32,12 @@ export interface AdminConfig {
     defaultTimezone: string;
     defaultDateFormat: DateFormat;
   };
+  profileConfig: {
+    usernameMinLength: number;
+    usernameMaxLength: number;
+    avatarMaxSizeMB: number;
+    allowedAvatarFormats: string[];
+  };
 }
 
 const DEFAULT_CONFIG: AdminConfig = {
@@ -57,6 +63,12 @@ const DEFAULT_CONFIG: AdminConfig = {
   regionalConfig: {
     defaultTimezone: 'UTC',
     defaultDateFormat: 'MM/DD/YYYY',
+  },
+  profileConfig: {
+    usernameMinLength: 3,
+    usernameMaxLength: 30,
+    avatarMaxSizeMB: 5,
+    allowedAvatarFormats: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
   },
 };
 
@@ -191,6 +203,17 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     saveConfig(newConfig);
   };
 
+  const updateProfileConfig = (profileConfig: Partial<AdminConfig['profileConfig']>) => {
+    const newConfig = {
+      ...config,
+      profileConfig: {
+        ...config.profileConfig,
+        ...profileConfig,
+      },
+    };
+    saveConfig(newConfig);
+  };
+
   return {
     config,
     isLoading,
@@ -200,5 +223,6 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     toggleLanguageAvailability,
     setDefaultLanguage,
     updateRegionalConfig,
+    updateProfileConfig,
   };
 });

@@ -20,23 +20,29 @@ import {
   Check,
   MapPin,
   Calendar,
+  Edit3,
+  Trash2,
+  Camera,
 } from 'lucide-react-native';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal, Pressable, TextInput, Image } from 'react-native';
 import React from 'react';
 import { AVAILABLE_LANGUAGES, Language } from '@/constants/languages';
 import { useTranslation } from '@/hooks/useTranslation';
 import { TIMEZONES } from '@/constants/timezones';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function SettingsScreen() {
   const { colors, theme, toggleTheme, language, setLanguage, timezone, setTimezone, dateFormat, setDateFormat } = usePreferences();
-  const { user, logout } = useAuth();
-  const { config, updateSessionConfig, toggleAuthMethod, setServiceMode, toggleLanguageAvailability, setDefaultLanguage, updateRegionalConfig } = useAdminConfig();
+  const { user, logout, updateProfile } = useAuth();
+  const { config, updateSessionConfig, toggleAuthMethod, setServiceMode, toggleLanguageAvailability, setDefaultLanguage, updateRegionalConfig, updateProfileConfig } = useAdminConfig();
   const router = useRouter();
   const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
   const [timezoneModalVisible, setTimezoneModalVisible] = React.useState(false);
   const [dateFormatModalVisible, setDateFormatModalVisible] = React.useState(false);
   const [adminTimezoneModalVisible, setAdminTimezoneModalVisible] = React.useState(false);
   const [adminDateFormatModalVisible, setAdminDateFormatModalVisible] = React.useState(false);
+  const [usernameModalVisible, setUsernameModalVisible] = React.useState(false);
+  const [usernameInput, setUsernameInput] = React.useState('');
   const { t } = useTranslation();
 
   if (!config || !config.languageConfig || !config.languageConfig.availableLanguages) {
@@ -51,6 +57,74 @@ export default function SettingsScreen() {
   const updateServiceMode = (method: 'google' | 'apple' | 'manual', mode: 'mock' | 'real') => {
     console.log(`[Settings] Updating service mode for ${method}: ${mode}`);
     setServiceMode(method, mode);
+  };
+
+  const handleSelectAvatar = async () => {
+    console.log('[Settings] Requesting avatar selection');
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please grant photo library access to upload an avatar.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      console.log('[Settings] Avatar selected:', asset.uri);
+      await updateProfile({ avatar: asset.uri });
+      Alert.alert(t('common.success'), t('settings.avatarUpdated'));
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    Alert.alert(
+      t('settings.removeAvatar'),
+      'Are you sure you want to remove your avatar?',
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.removeAvatar'),
+          style: 'destructive',
+          onPress: async () => {
+            console.log('[Settings] Removing avatar');
+            await updateProfile({ avatar: undefined });
+            Alert.alert(t('common.success'), t('settings.avatarRemoved'));
+          },
+        },
+      ]
+    );
+  };
+
+  const handleUpdateUsername = () => {
+    const trimmed = usernameInput.trim();
+    
+    if (trimmed.length < config.profileConfig.usernameMinLength) {
+      Alert.alert(
+        t('common.error'),
+        t('settings.usernameTooShort').replace('{min}', config.profileConfig.usernameMinLength.toString())
+      );
+      return;
+    }
+
+    if (trimmed.length > config.profileConfig.usernameMaxLength) {
+      Alert.alert(
+        t('common.error'),
+        t('settings.usernameTooLong').replace('{max}', config.profileConfig.usernameMaxLength.toString())
+      );
+      return;
+    }
+
+    console.log('[Settings] Updating username to:', trimmed);
+    updateProfile({ username: trimmed });
+    setUsernameModalVisible(false);
+    Alert.alert(t('common.success'), t('settings.usernameUpdated'));
   };
 
   const MIN_SESSION_TIME = 5 * 60 * 1000;
@@ -508,11 +582,141 @@ export default function SettingsScreen() {
       fontWeight: '600' as const,
       color: colors.text,
     },
+    profileFieldRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    profileFieldRowLast: {
+      borderBottomWidth: 0,
+    },
+    profileFieldInfo: {
+      flex: 1,
+    },
+    profileFieldLabel: {
+      fontSize: 14,
+      fontWeight: '600' as const,
+      color: colors.text,
+      marginBottom: 4,
+    },
+    profileFieldValue: {
+      fontSize: 16,
+      color: colors.text,
+    },
+    profileFieldDescription: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    editButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    avatarActionButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    avatarPreview: {
+      marginTop: 16,
+      alignItems: 'center',
+    },
+    avatarImage: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      borderWidth: 2,
+      borderColor: colors.border,
+    },
+    adminFieldRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    adminFieldRowLast: {
+      borderBottomWidth: 0,
+    },
+    adminFieldLabel: {
+      fontSize: 14,
+      fontWeight: '600' as const,
+      color: colors.text,
+    },
+    adminFieldControl: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    adminFieldButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    adminFieldValue: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      color: colors.text,
+      minWidth: 60,
+      textAlign: 'center',
+    },
+    usernameModalBody: {
+      padding: 20,
+    },
+    usernameInput: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 16,
+      color: colors.text,
+      backgroundColor: colors.surface,
+    },
+    usernameHint: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 8,
+    },
+    modalActionButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    modalActionButton: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: 'center',
+    },
+    modalActionButtonText: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      color: '#FFFFFF',
+    },
   });
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} testID="settings-scroll">
         <View style={styles.header}>
           <Text style={styles.title}>{t('settings.settings')}</Text>
           <Text style={styles.subtitle}>{t('settings.managePreferences')}</Text>
@@ -582,544 +786,167 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.profileSettings')}</Text>
+          <View style={styles.card}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingIcon}>
+                <User size={20} color={colors.text} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>{t('settings.profileInformation')}</Text>
+                <Text style={styles.settingDescription}>
+                  {t('settings.manageProfile')}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ padding: 16, paddingTop: 0 }}>
+              <View style={styles.profileFieldRow}>
+                <View style={styles.profileFieldInfo}>
+                  <Text style={styles.profileFieldLabel}>{t('settings.username')}</Text>
+                  <Text style={styles.profileFieldValue}>
+                    {user?.username || user?.name}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => {
+                    setUsernameInput(user?.username || user?.name || '');
+                    setUsernameModalVisible(true);
+                  }}
+                  testID="edit-username-button"
+                >
+                  <Edit3 size={16} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.profileFieldRow, styles.profileFieldRowLast]}>
+                <View style={styles.profileFieldInfo}>
+                  <Text style={styles.profileFieldLabel}>{t('settings.profilePicture')}</Text>
+                  <Text style={styles.profileFieldDescription}>
+                    {user?.avatar ? t('settings.changeAvatar') : t('settings.noAvatar')}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {user?.avatar && (
+                    <TouchableOpacity
+                      style={styles.avatarActionButton}
+                      onPress={handleRemoveAvatar}
+                      testID="remove-avatar-button"
+                    >
+                      <Trash2 size={16} color={colors.error} />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={styles.avatarActionButton}
+                    onPress={handleSelectAvatar}
+                    testID="upload-avatar-button"
+                  >
+                    <Camera size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {user?.avatar && (
+                <View style={styles.avatarPreview}>
+                  <Image
+                    source={{ uri: user.avatar }}
+                    style={styles.avatarImage}
+                    testID="avatar-preview"
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
         {user?.role === 'admin' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.authConfiguration')}</Text>
+            <Text style={styles.sectionTitle}>{t('settings.adminProfileConfig')}</Text>
             <View style={styles.card}>
               <View style={styles.settingItem}>
                 <View style={styles.settingIcon}>
                   <Shield size={20} color={colors.text} />
                 </View>
                 <View style={styles.settingContent}>
-                  <Text style={styles.settingTitle}>{t('settings.loginMethods')}</Text>
+                  <Text style={styles.settingTitle}>{t('settings.usernamePolicy')}</Text>
                   <Text style={styles.settingDescription}>
-                    {t('settings.controlAuthMethods')}
+                    {t('settings.minLength')}: {config.profileConfig.usernameMinLength}, {t('settings.maxLength')}: {config.profileConfig.usernameMaxLength}
                   </Text>
                 </View>
               </View>
 
               <View style={{ padding: 16, paddingTop: 0 }}>
-                <View style={styles.authMethodRow}>
-                  <View style={styles.authMethodHeader}>
-                    <Chrome size={20} color={colors.text} />
-                    <View style={styles.authMethodInfo}>
-                      <Text style={styles.authMethodTitle}>{t('settings.googleLogin')}</Text>
-                      <Text style={styles.authMethodDescription}>
-                        {t('settings.googleOAuth')}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.authMethodControls}>
-                    <View style={styles.authMethodControl}>
-                      <Text style={styles.controlLabel}>{t('settings.enabled')}</Text>
-                      <Switch
-                        value={config.enabledAuthMethods.google}
-                        onValueChange={() => {
-                          console.log('[Settings] Toggling Google auth method');
-                          updateAuthMethod('google');
-                        }}
-                        trackColor={{ false: colors.border, true: colors.primary }}
-                        thumbColor="#FFFFFF"
-                        testID="toggle-google-auth"
-                      />
-                    </View>
-                    <View style={styles.authMethodControl}>
-                      <Text style={styles.controlLabel}>{t('settings.mode')}</Text>
-                      <View style={styles.modeToggle}>
-                        <TouchableOpacity
-                          style={[
-                            styles.modeButton,
-                            config.serviceModes.google === 'mock' && styles.modeButtonActive,
-                          ]}
-                          onPress={() => {
-                            console.log('[Settings] Setting Google to mock mode');
-                            updateServiceMode('google', 'mock');
-                          }}
-                          testID="google-mode-mock"
-                        >
-                          <Text
-                            style={[
-                              styles.modeButtonText,
-                              config.serviceModes.google === 'mock' && styles.modeButtonTextActive,
-                            ]}
-                          >
-                            {t('settings.mock')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.modeButton,
-                            config.serviceModes.google === 'real' && styles.modeButtonActive,
-                          ]}
-                          onPress={() => {
-                            console.log('[Settings] Setting Google to real mode');
-                            updateServiceMode('google', 'real');
-                          }}
-                          testID="google-mode-real"
-                        >
-                          <Text
-                            style={[
-                              styles.modeButtonText,
-                              config.serviceModes.google === 'real' && styles.modeButtonTextActive,
-                            ]}
-                          >
-                            {t('settings.real')}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                  {config.serviceModes.google === 'real' && (
-                    <View style={styles.validationStatus}>
-                      <AlertCircle size={16} color="#FFD60A" />
-                      <Text style={styles.validationText}>
-                        {t('settings.oauthRequired')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.authMethodRow}>
-                  <View style={styles.authMethodHeader}>
-                    <AppleIcon size={20} color={colors.text} />
-                    <View style={styles.authMethodInfo}>
-                      <Text style={styles.authMethodTitle}>{t('settings.appleLogin')}</Text>
-                      <Text style={styles.authMethodDescription}>
-                        {t('settings.appleSignIn')}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.authMethodControls}>
-                    <View style={styles.authMethodControl}>
-                      <Text style={styles.controlLabel}>{t('settings.enabled')}</Text>
-                      <Switch
-                        value={config.enabledAuthMethods.apple}
-                        onValueChange={() => {
-                          console.log('[Settings] Toggling Apple auth method');
-                          updateAuthMethod('apple');
-                        }}
-                        trackColor={{ false: colors.border, true: colors.primary }}
-                        thumbColor="#FFFFFF"
-                        testID="toggle-apple-auth"
-                      />
-                    </View>
-                    <View style={styles.authMethodControl}>
-                      <Text style={styles.controlLabel}>{t('settings.mode')}</Text>
-                      <View style={styles.modeToggle}>
-                        <TouchableOpacity
-                          style={[
-                            styles.modeButton,
-                            config.serviceModes.apple === 'mock' && styles.modeButtonActive,
-                          ]}
-                          onPress={() => {
-                            console.log('[Settings] Setting Apple to mock mode');
-                            updateServiceMode('apple', 'mock');
-                          }}
-                          testID="apple-mode-mock"
-                        >
-                          <Text
-                            style={[
-                              styles.modeButtonText,
-                              config.serviceModes.apple === 'mock' && styles.modeButtonTextActive,
-                            ]}
-                          >
-                            {t('settings.mock')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.modeButton,
-                            config.serviceModes.apple === 'real' && styles.modeButtonActive,
-                          ]}
-                          onPress={() => {
-                            console.log('[Settings] Setting Apple to real mode');
-                            updateServiceMode('apple', 'real');
-                          }}
-                          testID="apple-mode-real"
-                        >
-                          <Text
-                            style={[
-                              styles.modeButtonText,
-                              config.serviceModes.apple === 'real' && styles.modeButtonTextActive,
-                            ]}
-                          >
-                            {t('settings.real')}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                  {config.serviceModes.apple === 'real' && (
-                    <View style={styles.validationStatus}>
-                      <AlertCircle size={16} color="#FFD60A" />
-                      <Text style={styles.validationText}>
-                        {t('settings.appleCredentialsRequired')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={[styles.authMethodRow, styles.authMethodRowLast]}>
-                  <View style={styles.authMethodHeader}>
-                    <Mail size={20} color={colors.text} />
-                    <View style={styles.authMethodInfo}>
-                      <Text style={styles.authMethodTitle}>{t('settings.emailPasswordLogin')}</Text>
-                      <Text style={styles.authMethodDescription}>
-                        {t('settings.manualRegistration')}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.authMethodControls}>
-                    <View style={styles.authMethodControl}>
-                      <Text style={styles.controlLabel}>{t('settings.enabled')}</Text>
-                      <Switch
-                        value={config.enabledAuthMethods.manual}
-                        onValueChange={() => {
-                          console.log('[Settings] Toggling Manual auth method');
-                          updateAuthMethod('manual');
-                        }}
-                        trackColor={{ false: colors.border, true: colors.primary }}
-                        thumbColor="#FFFFFF"
-                        testID="toggle-manual-auth"
-                      />
-                    </View>
-                    <View style={styles.authMethodControl}>
-                      <Text style={styles.controlLabel}>{t('settings.mode')}</Text>
-                      <View style={styles.modeToggle}>
-                        <TouchableOpacity
-                          style={[
-                            styles.modeButton,
-                            config.serviceModes.manual === 'mock' && styles.modeButtonActive,
-                          ]}
-                          onPress={() => {
-                            console.log('[Settings] Setting Manual to mock mode');
-                            updateServiceMode('manual', 'mock');
-                          }}
-                          testID="manual-mode-mock"
-                        >
-                          <Text
-                            style={[
-                              styles.modeButtonText,
-                              config.serviceModes.manual === 'mock' && styles.modeButtonTextActive,
-                            ]}
-                          >
-                            {t('settings.mock')}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.modeButton,
-                            config.serviceModes.manual === 'real' && styles.modeButtonActive,
-                          ]}
-                          onPress={() => {
-                            console.log('[Settings] Setting Manual to real mode');
-                            updateServiceMode('manual', 'real');
-                          }}
-                          testID="manual-mode-real"
-                        >
-                          <Text
-                            style={[
-                              styles.modeButtonText,
-                              config.serviceModes.manual === 'real' && styles.modeButtonTextActive,
-                            ]}
-                          >
-                            {t('settings.real')}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                  {config.serviceModes.manual === 'real' && (
-                    <View style={styles.validationStatus}>
-                      <AlertCircle size={16} color="#FFD60A" />
-                      <Text style={styles.validationText}>
-                        {t('settings.smsEmailRequired')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.infoBox}>
-                  <Text style={styles.infoText}>
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br08')}</Text> {t('settings.br08Description')}{' '}
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br09')}</Text> {t('settings.br09Description')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {user?.role === 'admin' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.sessionConfiguration')}</Text>
-            <View style={styles.card}>
-              <View style={styles.settingItem}>
-                <View style={styles.settingIcon}>
-                  <Clock size={20} color={colors.text} />
-                </View>
-                <View style={styles.settingContent}>
-                  <Text style={styles.settingTitle}>{t('settings.sessionTimeoutSettings')}</Text>
-                  <Text style={styles.settingDescription}>
-                    {t('settings.configureSession')}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={{ padding: 16, paddingTop: 0 }}>
-                <View style={styles.sessionRow}>
-                  <Text style={styles.sessionLabel}>{t('settings.maxSessionTime')}</Text>
-                  <Text style={styles.settingDescription}>
-                    {t('settings.maxSessionDescription')}
-                  </Text>
-                  <View style={styles.timeControl}>
-                    <View style={styles.timeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.timeButton,
-                          config.sessionConfig.maxTime <= MIN_SESSION_TIME && styles.timeButtonDisabled,
-                        ]}
-                        onPress={() => handleMaxTimeChange(false)}
-                        disabled={config.sessionConfig.maxTime <= MIN_SESSION_TIME}
-                        testID="decrease-max-time"
-                      >
-                        <Minus size={20} color="#FFFFFF" />
-                      </TouchableOpacity>
-                      <View style={styles.timeDisplay}>
-                        <Text style={styles.sessionValue}>{formatTime(config.sessionConfig.maxTime)}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={[
-                          styles.timeButton,
-                          config.sessionConfig.maxTime >= MAX_SESSION_TIME && styles.timeButtonDisabled,
-                        ]}
-                        onPress={() => handleMaxTimeChange(true)}
-                        disabled={config.sessionConfig.maxTime >= MAX_SESSION_TIME}
-                        testID="increase-max-time"
-                      >
-                        <Plus size={20} color="#FFFFFF" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.sessionRow}>
-                  <Text style={styles.sessionLabel}>{t('settings.idleTimeout')}</Text>
-                  <Text style={styles.settingDescription}>
-                    {t('settings.idleTimeoutDescription')}
-                  </Text>
-                  <View style={styles.timeControl}>
-                    <View style={styles.timeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.timeButton,
-                          config.sessionConfig.idleTime <= MIN_IDLE_TIME && styles.timeButtonDisabled,
-                        ]}
-                        onPress={() => handleIdleTimeChange(false)}
-                        disabled={config.sessionConfig.idleTime <= MIN_IDLE_TIME}
-                        testID="decrease-idle-time"
-                      >
-                        <Minus size={20} color="#FFFFFF" />
-                      </TouchableOpacity>
-                      <View style={styles.timeDisplay}>
-                        <Text style={styles.sessionValue}>{formatTime(config.sessionConfig.idleTime)}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={[
-                          styles.timeButton,
-                          config.sessionConfig.idleTime >= MAX_IDLE_TIME && styles.timeButtonDisabled,
-                        ]}
-                        onPress={() => handleIdleTimeChange(true)}
-                        disabled={config.sessionConfig.idleTime >= MAX_IDLE_TIME}
-                        testID="increase-idle-time"
-                      >
-                        <Plus size={20} color="#FFFFFF" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={[styles.sessionRow, styles.sessionRowLast, styles.settingRow]}>
-                  <View>
-                    <Text style={styles.settingLabel}>{t('settings.autoRefreshSession')}</Text>
-                    <Text style={styles.settingDescription}>
-                      {t('settings.extendSession')}
-                    </Text>
-                  </View>
-                  <Switch
-                    value={config.sessionConfig.autoRefresh}
-                    onValueChange={(value) => updateSessionConfig({ autoRefresh: value })}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor="#FFFFFF"
-                    testID="auto-refresh-toggle"
-                  />
-                </View>
-
-                <View style={styles.infoBox}>
-                  <Text style={styles.infoText}>
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.sessionConfigInfo')}</Text>{' '}
-                    {t('settings.sessionConfigDescription')}
-                    {config.sessionConfig.autoRefresh && `\n\n${t('settings.autoRefreshEnabled')}`}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {user?.role === 'admin' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.languageConfiguration')}</Text>
-            <View style={styles.card}>
-              <View style={styles.settingItem}>
-                <View style={styles.settingIcon}>
-                  <Languages size={20} color={colors.text} />
-                </View>
-                <View style={styles.settingContent}>
-                  <Text style={styles.settingTitle}>{t('settings.availableLanguages')}</Text>
-                  <Text style={styles.settingDescription}>
-                    {t('settings.manageLanguages')}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={{ padding: 16, paddingTop: 0 }}>
-                {(Object.keys(AVAILABLE_LANGUAGES) as Language[]).map((lang, index) => {
-                  const langInfo = AVAILABLE_LANGUAGES[lang];
-                  const isAvailable = config.languageConfig.availableLanguages.includes(lang);
-                  const isDefault = config.languageConfig.defaultLanguage === lang;
-                  const isLast = index === Object.keys(AVAILABLE_LANGUAGES).length - 1;
-
-                  return (
-                    <View
-                      key={lang}
-                      style={[
-                        styles.adminLanguageItem,
-                        isLast && styles.adminLanguageItemLast,
-                      ]}
+                <View style={styles.adminFieldRow}>
+                  <Text style={styles.adminFieldLabel}>{t('settings.minLength')}</Text>
+                  <View style={styles.adminFieldControl}>
+                    <TouchableOpacity
+                      style={styles.adminFieldButton}
+                      onPress={() => updateProfileConfig({ usernameMinLength: Math.max(1, config.profileConfig.usernameMinLength - 1) })}
+                      testID="decrease-username-min"
                     >
-                      <Text style={styles.languageFlag}>{langInfo.flag}</Text>
-                      <View style={styles.languageInfo}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={styles.languageName}>{langInfo.name}</Text>
-                          {isDefault && (
-                            <View style={styles.defaultBadge}>
-                              <Text style={styles.defaultBadgeText}>{t('settings.default')}</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={styles.languageNative}>{langInfo.nativeName}</Text>
-                      </View>
-                      {isAvailable && !isDefault && (
-                        <TouchableOpacity
-                          style={styles.setDefaultButton}
-                          onPress={() => {
-                            console.log('[Settings] Setting default language:', lang);
-                            setDefaultLanguage(lang);
-                          }}
-                          testID={`set-default-${lang}`}
-                        >
-                          <Text style={styles.setDefaultButtonText}>{t('settings.setDefault')}</Text>
-                        </TouchableOpacity>
-                      )}
-                      <Switch
-                        value={isAvailable}
-                        onValueChange={() => {
-                          console.log('[Settings] Toggling language availability:', lang);
-                          toggleLanguageAvailability(lang);
-                        }}
-                        trackColor={{ false: colors.border, true: colors.primary }}
-                        thumbColor="#FFFFFF"
-                        testID={`toggle-language-${lang}`}
-                      />
-                    </View>
-                  );
-                })}
+                      <Minus size={16} color={colors.text} />
+                    </TouchableOpacity>
+                    <Text style={styles.adminFieldValue}>{config.profileConfig.usernameMinLength}</Text>
+                    <TouchableOpacity
+                      style={styles.adminFieldButton}
+                      onPress={() => updateProfileConfig({ usernameMinLength: Math.min(config.profileConfig.usernameMaxLength - 1, config.profileConfig.usernameMinLength + 1) })}
+                      testID="increase-username-min"
+                    >
+                      <Plus size={16} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.adminFieldRow}>
+                  <Text style={styles.adminFieldLabel}>{t('settings.maxLength')}</Text>
+                  <View style={styles.adminFieldControl}>
+                    <TouchableOpacity
+                      style={styles.adminFieldButton}
+                      onPress={() => updateProfileConfig({ usernameMaxLength: Math.max(config.profileConfig.usernameMinLength + 1, config.profileConfig.usernameMaxLength - 1) })}
+                      testID="decrease-username-max"
+                    >
+                      <Minus size={16} color={colors.text} />
+                    </TouchableOpacity>
+                    <Text style={styles.adminFieldValue}>{config.profileConfig.usernameMaxLength}</Text>
+                    <TouchableOpacity
+                      style={styles.adminFieldButton}
+                      onPress={() => updateProfileConfig({ usernameMaxLength: config.profileConfig.usernameMaxLength + 1 })}
+                      testID="increase-username-max"
+                    >
+                      <Plus size={16} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={[styles.adminFieldRow, styles.adminFieldRowLast]}>
+                  <Text style={styles.adminFieldLabel}>{t('settings.maxFileSize')}</Text>
+                  <View style={styles.adminFieldControl}>
+                    <TouchableOpacity
+                      style={styles.adminFieldButton}
+                      onPress={() => updateProfileConfig({ avatarMaxSizeMB: Math.max(1, config.profileConfig.avatarMaxSizeMB - 1) })}
+                      testID="decrease-avatar-size"
+                    >
+                      <Minus size={16} color={colors.text} />
+                    </TouchableOpacity>
+                    <Text style={styles.adminFieldValue}>{config.profileConfig.avatarMaxSizeMB}MB</Text>
+                    <TouchableOpacity
+                      style={styles.adminFieldButton}
+                      onPress={() => updateProfileConfig({ avatarMaxSizeMB: config.profileConfig.avatarMaxSizeMB + 1 })}
+                      testID="increase-avatar-size"
+                    >
+                      <Plus size={16} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
                 <View style={styles.infoBox}>
                   <Text style={styles.infoText}>
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br28')}</Text> {t('settings.br28Description')}{' '}
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br29')}</Text> {t('settings.br29Description')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.regionalConfiguration')}</Text>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => setTimezoneModalVisible(true)}
-              testID="timezone-selector"
-            >
-              <View style={styles.settingIcon}>
-                <MapPin size={20} color={colors.text} />
-              </View>
-              <View style={styles.settingContent}>
-                <Text style={styles.settingTitle}>{t('settings.timezone')}</Text>
-                <Text style={styles.settingDescription}>
-                  {TIMEZONES.find(tz => tz.value === timezone)?.label || timezone}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.settingItem, styles.settingItemLast]}
-              onPress={() => setDateFormatModalVisible(true)}
-              testID="dateformat-selector"
-            >
-              <View style={styles.settingIcon}>
-                <Calendar size={20} color={colors.text} />
-              </View>
-              <View style={styles.settingContent}>
-                <Text style={styles.settingTitle}>{t('settings.dateFormat')}</Text>
-                <Text style={styles.settingDescription}>{dateFormat}</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {user?.role === 'admin' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.regionalConfiguration')} (Admin)</Text>
-            <View style={styles.card}>
-              <TouchableOpacity
-                style={styles.settingItem}
-                onPress={() => setAdminTimezoneModalVisible(true)}
-                testID="admin-timezone-selector"
-              >
-                <View style={styles.settingIcon}>
-                  <MapPin size={20} color={colors.text} />
-                </View>
-                <View style={styles.settingContent}>
-                  <Text style={styles.settingTitle}>{t('settings.systemTimezone')}</Text>
-                  <Text style={styles.settingDescription}>
-                    {TIMEZONES.find(tz => tz.value === config.regionalConfig.defaultTimezone)?.label || config.regionalConfig.defaultTimezone}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.settingItem, styles.settingItemLast]}
-                onPress={() => setAdminDateFormatModalVisible(true)}
-                testID="admin-dateformat-selector"
-              >
-                <View style={styles.settingIcon}>
-                  <Calendar size={20} color={colors.text} />
-                </View>
-                <View style={styles.settingContent}>
-                  <Text style={styles.settingTitle}>{t('settings.systemDateFormat')}</Text>
-                  <Text style={styles.settingDescription}>{config.regionalConfig.defaultDateFormat}</Text>
-                </View>
-              </TouchableOpacity>
-
-              <View style={{ padding: 16, paddingTop: 0 }}>
-                <View style={styles.infoBox}>
-                  <Text style={styles.infoText}>
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br34')}</Text> {t('settings.br34Description')}{' '}
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br35')}</Text> {t('settings.br35Description')}{' '}
-                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br36')}</Text> {t('settings.br36Description')}
+                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br30')}</Text> {t('settings.br30Description')}{' '}
+                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br31')}</Text> {t('settings.br31Description')}{' '}
+                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br32')}</Text> {t('settings.br32Description')}{' '}
+                    <Text style={{ fontWeight: '700' as const }}>{t('settings.br33')}</Text> {t('settings.br33Description')}
                   </Text>
                 </View>
               </View>
@@ -1137,280 +964,47 @@ export default function SettingsScreen() {
       </ScrollView>
 
       <Modal
-        visible={languageModalVisible}
+        visible={usernameModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setLanguageModalVisible(false)}
+        onRequestClose={() => setUsernameModalVisible(false)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setUsernameModalVisible(false)}>
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.selectLanguage')}</Text>
+              <Text style={styles.modalTitle}>{t('settings.updateUsername')}</Text>
             </View>
-            <ScrollView style={styles.modalBody}>
-              {config?.languageConfig?.availableLanguages?.map((lang, index) => {
-                const langInfo = AVAILABLE_LANGUAGES[lang];
-                const isSelected = language === lang;
-                const isLast = index === (config.languageConfig.availableLanguages.length - 1);
-
-                return (
-                  <TouchableOpacity
-                    key={lang}
-                    style={[
-                      styles.languageItem,
-                      isLast && styles.languageItemLast,
-                    ]}
-                    onPress={() => {
-                      console.log('[Settings] User selected language:', lang);
-                      setLanguage(lang);
-                      setLanguageModalVisible(false);
-                    }}
-                    testID={`select-language-${lang}`}
-                  >
-                    <Text style={styles.languageFlag}>{langInfo.flag}</Text>
-                    <View style={styles.languageInfo}>
-                      <Text style={styles.languageName}>{langInfo.name}</Text>
-                      <Text style={styles.languageNative}>{langInfo.nativeName}</Text>
-                    </View>
-                    {isSelected && (
-                      <View style={styles.languageCheck}>
-                        <Check size={16} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            <View style={styles.usernameModalBody}>
+              <TextInput
+                style={styles.usernameInput}
+                value={usernameInput}
+                onChangeText={setUsernameInput}
+                placeholder={t('settings.enterUsername')}
+                placeholderTextColor={colors.textSecondary}
+                autoFocus
+                testID="username-input"
+              />
+              <Text style={styles.usernameHint}>
+                {t('settings.minLength')}: {config.profileConfig.usernameMinLength}, {t('settings.maxLength')}: {config.profileConfig.usernameMaxLength}
+              </Text>
+            </View>
             <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setLanguageModalVisible(false)}
-                testID="close-language-modal"
-              >
-                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <Modal
-        visible={timezoneModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setTimezoneModalVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setTimezoneModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.selectTimezone')}</Text>
-            </View>
-            <ScrollView style={styles.modalBody}>
-              {TIMEZONES.map((tz, index) => {
-                const isSelected = timezone === tz.value;
-                const isLast = index === TIMEZONES.length - 1;
-
-                return (
-                  <TouchableOpacity
-                    key={tz.value}
-                    style={[
-                      styles.languageItem,
-                      isLast && styles.languageItemLast,
-                    ]}
-                    onPress={() => {
-                      console.log('[Settings] User selected timezone:', tz.value);
-                      setTimezone(tz.value);
-                      setTimezoneModalVisible(false);
-                    }}
-                    testID={`select-timezone-${tz.value}`}
-                  >
-                    <View style={styles.languageInfo}>
-                      <Text style={styles.languageName}>{tz.label}</Text>
-                      <Text style={styles.languageNative}>{tz.offset}</Text>
-                    </View>
-                    {isSelected && (
-                      <View style={styles.languageCheck}>
-                        <Check size={16} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setTimezoneModalVisible(false)}
-                testID="close-timezone-modal"
-              >
-                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <Modal
-        visible={dateFormatModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDateFormatModalVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setDateFormatModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.selectDateFormat')}</Text>
-            </View>
-            <ScrollView style={styles.modalBody}>
-              {(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] as DateFormat[]).map((format, index) => {
-                const isSelected = dateFormat === format;
-                const isLast = index === 2;
-
-                return (
-                  <TouchableOpacity
-                    key={format}
-                    style={[
-                      styles.languageItem,
-                      isLast && styles.languageItemLast,
-                    ]}
-                    onPress={() => {
-                      console.log('[Settings] User selected date format:', format);
-                      setDateFormat(format);
-                      setDateFormatModalVisible(false);
-                    }}
-                    testID={`select-dateformat-${format}`}
-                  >
-                    <View style={styles.languageInfo}>
-                      <Text style={styles.languageName}>{format}</Text>
-                    </View>
-                    {isSelected && (
-                      <View style={styles.languageCheck}>
-                        <Check size={16} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setDateFormatModalVisible(false)}
-                testID="close-dateformat-modal"
-              >
-                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <Modal
-        visible={adminTimezoneModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAdminTimezoneModalVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setAdminTimezoneModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.selectTimezone')}</Text>
-            </View>
-            <ScrollView style={styles.modalBody}>
-              {TIMEZONES.map((tz, index) => {
-                const isSelected = config.regionalConfig.defaultTimezone === tz.value;
-                const isLast = index === TIMEZONES.length - 1;
-
-                return (
-                  <TouchableOpacity
-                    key={tz.value}
-                    style={[
-                      styles.languageItem,
-                      isLast && styles.languageItemLast,
-                    ]}
-                    onPress={() => {
-                      console.log('[Settings] Admin selected timezone:', tz.value);
-                      updateRegionalConfig({ defaultTimezone: tz.value });
-                      setAdminTimezoneModalVisible(false);
-                    }}
-                    testID={`admin-select-timezone-${tz.value}`}
-                  >
-                    <View style={styles.languageInfo}>
-                      <Text style={styles.languageName}>{tz.label}</Text>
-                      <Text style={styles.languageNative}>{tz.offset}</Text>
-                    </View>
-                    {isSelected && (
-                      <View style={styles.languageCheck}>
-                        <Check size={16} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setAdminTimezoneModalVisible(false)}
-                testID="close-admin-timezone-modal"
-              >
-                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <Modal
-        visible={adminDateFormatModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAdminDateFormatModalVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setAdminDateFormatModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.selectDateFormat')}</Text>
-            </View>
-            <ScrollView style={styles.modalBody}>
-              {(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] as DateFormat[]).map((format, index) => {
-                const isSelected = config.regionalConfig.defaultDateFormat === format;
-                const isLast = index === 2;
-
-                return (
-                  <TouchableOpacity
-                    key={format}
-                    style={[
-                      styles.languageItem,
-                      isLast && styles.languageItemLast,
-                    ]}
-                    onPress={() => {
-                      console.log('[Settings] Admin selected date format:', format);
-                      updateRegionalConfig({ defaultDateFormat: format });
-                      setAdminDateFormatModalVisible(false);
-                    }}
-                    testID={`admin-select-dateformat-${format}`}
-                  >
-                    <View style={styles.languageInfo}>
-                      <Text style={styles.languageName}>{format}</Text>
-                    </View>
-                    {isSelected && (
-                      <View style={styles.languageCheck}>
-                        <Check size={16} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setAdminDateFormatModalVisible(false)}
-                testID="close-admin-dateformat-modal"
-              >
-                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
-              </TouchableOpacity>
+              <View style={styles.modalActionButtons}>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setUsernameModalVisible(false)}
+                  testID="cancel-username"
+                >
+                  <Text style={styles.modalCloseButtonText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalActionButton}
+                  onPress={handleUpdateUsername}
+                  testID="save-username"
+                >
+                  <Text style={styles.modalActionButtonText}>{t('common.save')}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </Pressable>
         </Pressable>
