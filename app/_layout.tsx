@@ -60,6 +60,7 @@ function RootLayoutNav() {
       <Stack.Screen name="signup" options={{ headerShown: false }} />
       <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
       <Stack.Screen name="admin-config" options={{ headerShown: true }} />
+      <Stack.Screen name="navigation-management" options={{ headerShown: true }} />
     </Stack>
   );
 }
