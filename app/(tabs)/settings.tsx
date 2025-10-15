@@ -45,7 +45,7 @@ export default function SettingsScreen() {
   const [usernameInput, setUsernameInput] = React.useState('');
   const { t } = useTranslation();
 
-  if (!config || !config.languageConfig || !config.languageConfig.availableLanguages) {
+  if (!config || !config.languageConfig) {
     return null;
   }
 
@@ -1085,36 +1085,35 @@ export default function SettingsScreen() {
               <Text style={styles.modalTitle}>{t('settings.selectLanguage')}</Text>
             </View>
             <ScrollView style={styles.modalBody}>
-              {Object.entries(AVAILABLE_LANGUAGES).map(([code, lang], index) => {
-                const isAvailable = config.languageConfig.availableLanguages[code as keyof typeof config.languageConfig.availableLanguages];
-                if (!isAvailable) return null;
-                
-                const isSelected = language === code;
-                const isLast = index === Object.keys(AVAILABLE_LANGUAGES).length - 1;
-                
-                return (
-                  <TouchableOpacity
-                    key={code}
-                    style={[styles.languageItem, isLast && styles.languageItemLast]}
-                    onPress={() => {
-                      setLanguage(code as keyof typeof AVAILABLE_LANGUAGES);
-                      setLanguageModalVisible(false);
-                    }}
-                    testID={`language-option-${code}`}
-                  >
-                    <Text style={styles.languageFlag}>{lang.flag}</Text>
-                    <View style={styles.languageInfo}>
-                      <Text style={styles.languageName}>{lang.name}</Text>
-                      <Text style={styles.languageNative}>{lang.nativeName}</Text>
-                    </View>
-                    {isSelected && (
-                      <View style={styles.languageCheck}>
-                        <Check size={16} color="#FFFFFF" />
+              {Object.entries(AVAILABLE_LANGUAGES)
+                .filter(([code]) => config.languageConfig.availableLanguages.includes(code as Language))
+                .map(([code, lang], index, filteredArray) => {
+                  const isSelected = language === code;
+                  const isLast = index === filteredArray.length - 1;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={code}
+                      style={[styles.languageItem, isLast && styles.languageItemLast]}
+                      onPress={() => {
+                        setLanguage(code as keyof typeof AVAILABLE_LANGUAGES);
+                        setLanguageModalVisible(false);
+                      }}
+                      testID={`language-option-${code}`}
+                    >
+                      <Text style={styles.languageFlag}>{lang.flag}</Text>
+                      <View style={styles.languageInfo}>
+                        <Text style={styles.languageName}>{lang.name}</Text>
+                        <Text style={styles.languageNative}>{lang.nativeName}</Text>
                       </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+                      {isSelected && (
+                        <View style={styles.languageCheck}>
+                          <Check size={16} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
             </ScrollView>
             <View style={styles.modalFooter}>
               <TouchableOpacity

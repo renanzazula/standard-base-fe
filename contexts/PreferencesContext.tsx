@@ -157,7 +157,14 @@ export const [PreferencesProvider, usePreferences] = createContextHook(() => {
   const clearUserPreferences = async () => {
     console.log('[Preferences] Clearing user preferences on logout');
     setCurrentUserId(null);
-    setLanguageState(DEFAULT_LANGUAGE);
+    const storedLanguage = await AsyncStorage.getItem(getUserLanguageKey(null));
+    if (storedLanguage) {
+      console.log('[Preferences] Restoring guest language after logout:', storedLanguage);
+      setLanguageState(storedLanguage as Language);
+    } else {
+      console.log('[Preferences] No guest language, using default:', DEFAULT_LANGUAGE);
+      setLanguageState(DEFAULT_LANGUAGE);
+    }
     setTimezoneState('UTC');
     setDateFormatState('MM/DD/YYYY');
   };
