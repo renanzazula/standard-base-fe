@@ -768,31 +768,6 @@ export default function SettingsScreen() {
           <Text style={styles.subtitle}>{t('settings.managePreferences')}</Text>
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardIconContainer}>
-              <User size={24} color="#FFFFFF" />
-            </View>
-            <Text style={styles.cardTitle}>{t('home.profileInformation')}</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('auth.email')}</Text>
-              <Text style={styles.infoValue}>{user?.email}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('home.role')}</Text>
-              <View style={styles.profileBadge}>
-                <Text style={styles.badgeText}>{user?.role}</Text>
-              </View>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('home.provider')}</Text>
-              <Text style={styles.infoValue}>{user?.provider}</Text>
-            </View>
-          </View>
-        </View>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>
           <View style={styles.card}>
