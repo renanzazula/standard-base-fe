@@ -794,6 +794,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.settingItem}
