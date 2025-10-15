@@ -911,10 +911,7 @@ export default function SettingsScreen() {
                     <Text style={styles.settingDescription}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
                   </View>
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontSize: 20 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
-                  <Text style={styles.languageCode}>{language.toUpperCase()}</Text>
-                </View>
+                <Text style={{ fontSize: 20 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
               </TouchableOpacity>
             </View>
           </View>
