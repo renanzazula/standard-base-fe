@@ -348,54 +348,57 @@ export default function NavigationManagementScreen() {
 
               {config.navigationConfig.tabs
                 .sort((a, b) => a.order - b.order)
-                .map((tab, index, array) => (
-                  <View
-                    key={tab.id}
-                    style={[styles.tabItem, index === array.length - 1 && styles.tabItemLast]}
-                  >
-                    <View style={styles.tabDragHandle}>
-                      <GripVertical size={20} color={colors.textSecondary} />
-                    </View>
-                    <View style={styles.tabInfo}>
-                      <Text style={styles.tabName}>{tab.name}</Text>
-                      <View style={styles.tabMeta}>
-                        {tab.isSystem && (
-                          <View style={[styles.tabBadge, styles.systemBadge]}>
-                            <Text style={[styles.tabBadgeText, styles.systemBadgeText]}>
-                              {t('navigation.system')}
-                            </Text>
-                          </View>
-                        )}
-                        <Text style={styles.tabId}>ID: {tab.id}</Text>
+                .map((tab, index, array) => {
+                  console.log(`[NavigationManagement] Rendering tab: ${tab.id}, enabled: ${tab.enabled}`);
+                  return (
+                    <View
+                      key={tab.id}
+                      style={[styles.tabItem, index === array.length - 1 && styles.tabItemLast]}
+                    >
+                      <View style={styles.tabDragHandle}>
+                        <GripVertical size={20} color={colors.textSecondary} />
                       </View>
-                    </View>
-                    <View style={styles.tabActions}>
-                      <TouchableOpacity
-                        style={styles.iconButton}
-                        onPress={() => handleEditTab(tab)}
-                        testID={`edit-tab-${tab.id}`}
-                      >
-                        <Edit3 size={16} color={colors.primary} />
-                      </TouchableOpacity>
-                      {!tab.isSystem && (
+                      <View style={styles.tabInfo}>
+                        <Text style={styles.tabName}>{tab.name}</Text>
+                        <View style={styles.tabMeta}>
+                          {tab.isSystem && (
+                            <View style={[styles.tabBadge, styles.systemBadge]}>
+                              <Text style={[styles.tabBadgeText, styles.systemBadgeText]}>
+                                {t('navigation.system')}
+                              </Text>
+                            </View>
+                          )}
+                          <Text style={styles.tabId}>ID: {tab.id}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.tabActions}>
                         <TouchableOpacity
                           style={styles.iconButton}
-                          onPress={() => handleRemoveTab(tab.id)}
-                          testID={`remove-tab-${tab.id}`}
+                          onPress={() => handleEditTab(tab)}
+                          testID={`edit-tab-${tab.id}`}
                         >
-                          <Trash2 size={16} color={colors.error} />
+                          <Edit3 size={16} color={colors.primary} />
                         </TouchableOpacity>
-                      )}
-                      <Switch
-                        value={tab.enabled}
-                        onValueChange={() => handleToggleTab(tab.id)}
-                        trackColor={{ false: colors.border, true: colors.primary }}
-                        thumbColor="#FFFFFF"
-                        testID={`toggle-tab-${tab.id}`}
-                      />
+                        {!tab.isSystem && (
+                          <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={() => handleRemoveTab(tab.id)}
+                            testID={`remove-tab-${tab.id}`}
+                          >
+                            <Trash2 size={16} color={colors.error} />
+                          </TouchableOpacity>
+                        )}
+                        <Switch
+                          value={tab.enabled}
+                          onValueChange={() => handleToggleTab(tab.id)}
+                          trackColor={{ false: colors.border, true: colors.primary }}
+                          thumbColor="#FFFFFF"
+                          testID={`toggle-tab-${tab.id}`}
+                        />
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
             </View>
 
             <TouchableOpacity
