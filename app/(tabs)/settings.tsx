@@ -769,57 +769,6 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={toggleTheme}
-            >
-              <View style={styles.settingIcon}>
-                {theme === 'dark' ? (
-                  <Moon size={20} color={colors.text} />
-                ) : (
-                  <Sun size={20} color={colors.text} />
-                )}
-              </View>
-              <View style={styles.settingContent}>
-                <Text style={styles.settingTitle}>{t('settings.darkMode')}</Text>
-                <Text style={styles.settingDescription}>
-                  {theme === 'dark' ? t('settings.enabled') : t('settings.disabled')}
-                </Text>
-              </View>
-              <View style={styles.settingAction}>
-                <Switch
-                  value={theme === 'dark'}
-                  onValueChange={toggleTheme}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                  testID="toggle-theme"
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.settingItem, styles.settingItemLast]}
-              onPress={() => setLanguageModalVisible(true)}
-              testID="language-selector"
-            >
-              <View style={styles.settingIcon}>
-                <Globe size={20} color={colors.text} />
-              </View>
-              <View style={styles.settingContent}>
-                <Text style={styles.settingTitle}>{t('home.language')}</Text>
-                <Text style={styles.settingDescription}>
-                  {AVAILABLE_LANGUAGES[language].nativeName}
-                </Text>
-              </View>
-              <View style={styles.settingAction}>
-                <Text style={styles.languageFlag}>{AVAILABLE_LANGUAGES[language].flag}</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.profileSettings')}</Text>
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -906,6 +855,57 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={toggleTheme}
+            >
+              <View style={styles.settingIcon}>
+                {theme === 'dark' ? (
+                  <Moon size={20} color={colors.text} />
+                ) : (
+                  <Sun size={20} color={colors.text} />
+                )}
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>{t('settings.darkMode')}</Text>
+                <Text style={styles.settingDescription}>
+                  {theme === 'dark' ? t('settings.enabled') : t('settings.disabled')}
+                </Text>
+              </View>
+              <View style={styles.settingAction}>
+                <Switch
+                  value={theme === 'dark'}
+                  onValueChange={toggleTheme}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                  testID="toggle-theme"
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.settingItem, styles.settingItemLast]}
+              onPress={() => setLanguageModalVisible(true)}
+              testID="language-selector"
+            >
+              <View style={styles.settingIcon}>
+                <Globe size={20} color={colors.text} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>{t('home.language')}</Text>
+                <Text style={styles.settingDescription}>
+                  {AVAILABLE_LANGUAGES[language].nativeName}
+                </Text>
+              </View>
+              <View style={styles.settingAction}>
+                <Text style={styles.languageFlag}>{AVAILABLE_LANGUAGES[language].flag}</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
