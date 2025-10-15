@@ -27,8 +27,8 @@ export default function TabLayout() {
 
   const visibleTabs = config.navigationConfig.tabs
     .filter((tab) => {
-      if (tab.id === 'settings') {
-        return isAdminUser;
+      if (isAdminUser && tab.id === 'settings') {
+        return true;
       }
       return tab.enabled;
     })
