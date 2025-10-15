@@ -12,7 +12,7 @@ export const AVAILABLE_LANGUAGES: Record<Language, LanguageInfo> = {
     code: 'en',
     name: 'English',
     nativeName: 'English',
-    flag: '🇺🇸',
+    flag: '🇬🇧',
   },
   es: {
     code: 'es',
