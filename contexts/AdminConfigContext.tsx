@@ -295,6 +295,37 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     saveConfig(newConfig);
   };
 
+  const updateTabOrder = (tabId: string, newOrder: number) => {
+    const currentTab = config.navigationConfig.tabs.find((tab) => tab.id === tabId);
+    if (!currentTab) return;
+
+    const oldOrder = currentTab.order;
+    const newTabs = config.navigationConfig.tabs.map((tab) => {
+      if (tab.id === tabId) {
+        return { ...tab, order: newOrder };
+      }
+      if (oldOrder < newOrder) {
+        if (tab.order > oldOrder && tab.order <= newOrder) {
+          return { ...tab, order: tab.order - 1 };
+        }
+      } else {
+        if (tab.order >= newOrder && tab.order < oldOrder) {
+          return { ...tab, order: tab.order + 1 };
+        }
+      }
+      return tab;
+    });
+
+    const newConfig = {
+      ...config,
+      navigationConfig: {
+        ...config.navigationConfig,
+        tabs: newTabs,
+      },
+    };
+    saveConfig(newConfig);
+  };
+
   return {
     config,
     isLoading,
@@ -309,5 +340,6 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     updateTabName,
     addCustomTab,
     removeCustomTab,
+    updateTabOrder,
   };
 });

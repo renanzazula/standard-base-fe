@@ -1,14 +1,14 @@
 import { useAdminConfig, NavigationTab } from '@/contexts/AdminConfigContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { Stack } from 'expo-router';
-import { Menu, Plus, Edit3, Trash2, GripVertical } from 'lucide-react-native';
+import { Menu, Plus, Edit3, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, Modal, Pressable, TextInput } from 'react-native';
 import React from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NavigationManagementScreen() {
   const { colors } = usePreferences();
-  const { config, toggleTabEnabled, updateTabName, addCustomTab, removeCustomTab } = useAdminConfig();
+  const { config, toggleTabEnabled, updateTabName, addCustomTab, removeCustomTab, updateTabOrder } = useAdminConfig();
   const [editModalVisible, setEditModalVisible] = React.useState(false);
   const [addModalVisible, setAddModalVisible] = React.useState(false);
   const [editingTab, setEditingTab] = React.useState<NavigationTab | null>(null);
@@ -105,6 +105,30 @@ export default function NavigationManagementScreen() {
     );
   };
 
+  const handleMoveUp = (tabId: string) => {
+    const sortedTabs = [...config.navigationConfig.tabs].sort((a, b) => a.order - b.order);
+    const currentIndex = sortedTabs.findIndex((t) => t.id === tabId);
+    
+    if (currentIndex > 0) {
+      const currentTab = sortedTabs[currentIndex];
+      const previousTab = sortedTabs[currentIndex - 1];
+      console.log(`[NavigationManagement] Moving tab ${tabId} up: order ${currentTab.order} -> ${previousTab.order}`);
+      updateTabOrder(tabId, previousTab.order);
+    }
+  };
+
+  const handleMoveDown = (tabId: string) => {
+    const sortedTabs = [...config.navigationConfig.tabs].sort((a, b) => a.order - b.order);
+    const currentIndex = sortedTabs.findIndex((t) => t.id === tabId);
+    
+    if (currentIndex < sortedTabs.length - 1) {
+      const currentTab = sortedTabs[currentIndex];
+      const nextTab = sortedTabs[currentIndex + 1];
+      console.log(`[NavigationManagement] Moving tab ${tabId} down: order ${currentTab.order} -> ${nextTab.order}`);
+      updateTabOrder(tabId, nextTab.order);
+    }
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -160,7 +184,19 @@ export default function NavigationManagementScreen() {
       borderBottomWidth: 0,
     },
     tabDragHandle: {
-      marginRight: 12,
+      marginRight: 8,
+    },
+    tabReorderButtons: {
+      marginRight: 8,
+    },
+    reorderButton: {
+      width: 24,
+      height: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    reorderButtonDisabled: {
+      opacity: 0.3,
     },
     tabInfo: {
       flex: 1,
@@ -349,7 +385,7 @@ export default function NavigationManagementScreen() {
               {config.navigationConfig.tabs
                 .sort((a, b) => a.order - b.order)
                 .map((tab, index, array) => {
-                  console.log(`[NavigationManagement] Rendering tab: ${tab.id}, enabled: ${tab.enabled}`);
+                  console.log(`[NavigationManagement] Rendering tab: ${tab.id}, order: ${tab.order}, enabled: ${tab.enabled}`);
                   return (
                     <View
                       key={tab.id}
@@ -357,6 +393,24 @@ export default function NavigationManagementScreen() {
                     >
                       <View style={styles.tabDragHandle}>
                         <GripVertical size={20} color={colors.textSecondary} />
+                      </View>
+                      <View style={styles.tabReorderButtons}>
+                        <TouchableOpacity
+                          style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
+                          onPress={() => handleMoveUp(tab.id)}
+                          disabled={index === 0}
+                          testID={`move-up-tab-${tab.id}`}
+                        >
+                          <ChevronUp size={16} color={index === 0 ? colors.border : colors.textSecondary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.reorderButton, index === array.length - 1 && styles.reorderButtonDisabled]}
+                          onPress={() => handleMoveDown(tab.id)}
+                          disabled={index === array.length - 1}
+                          testID={`move-down-tab-${tab.id}`}
+                        >
+                          <ChevronDown size={16} color={index === array.length - 1 ? colors.border : colors.textSecondary} />
+                        </TouchableOpacity>
                       </View>
                       <View style={styles.tabInfo}>
                         <Text style={styles.tabName}>{tab.name}</Text>
