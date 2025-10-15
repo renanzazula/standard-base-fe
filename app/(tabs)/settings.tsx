@@ -758,6 +758,16 @@ export default function SettingsScreen() {
       fontWeight: '600' as const,
       color: '#FFFFFF',
     },
+    divider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginVertical: 16,
+    },
+    languageCode: {
+      fontSize: 12,
+      fontWeight: '700' as const,
+      color: colors.textSecondary,
+    },
   });
 
   return (
@@ -778,31 +788,10 @@ export default function SettingsScreen() {
               <Text style={styles.cardTitle}>{t('settings.profileInformation')}</Text>
             </View>
             <View style={styles.cardContent}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{t('auth.email')}</Text>
-                <Text style={styles.infoValue}>{user?.email}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{t('home.role')}</Text>
-                <View style={styles.profileBadge}>
-                  <Text style={styles.badgeText}>{user?.role}</Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{t('home.provider')}</Text>
-                <Text style={styles.infoValue}>{user?.provider}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{t('home.language')}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontSize: 18 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
-                  <Text style={styles.infoValue}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
-                </View>
-              </View>
-              <View style={[styles.infoRow, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16, marginTop: 12 }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.infoLabel}>{t('settings.username')}</Text>
-                  <Text style={styles.infoValue}>
+              <View style={[styles.profileFieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                <View style={styles.profileFieldInfo}>
+                  <Text style={styles.profileFieldLabel}>{t('settings.username')}</Text>
+                  <Text style={styles.profileFieldDescription}>
                     {user?.username || user?.name}
                   </Text>
                 </View>
@@ -817,43 +806,46 @@ export default function SettingsScreen() {
                   <Edit3 size={16} color={colors.primary} />
                 </TouchableOpacity>
               </View>
-              <View style={[styles.infoRow, { flexDirection: 'column', alignItems: 'flex-start', gap: 12 }]}>
-                <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={styles.infoLabel}>{t('settings.profilePicture')}</Text>
-                  {user?.avatar && (
-                    <TouchableOpacity
-                      style={styles.avatarActionButton}
-                      onPress={handleRemoveAvatar}
-                      testID="remove-avatar-button"
-                    >
-                      <Trash2 size={16} color={colors.error} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <TouchableOpacity
-                  onPress={handleSelectAvatar}
-                  testID="avatar-upload-area"
-                  activeOpacity={0.7}
-                >
-                  {user?.avatar ? (
-                    <View style={styles.avatarImageContainer}>
-                      <Image
-                        source={{ uri: user.avatar }}
-                        style={styles.avatarImage}
-                        testID="avatar-preview"
-                      />
-                      <View style={styles.avatarOverlay}>
-                        <Camera size={24} color="#FFFFFF" />
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <Camera size={32} color={colors.textSecondary} />
-                      <Text style={styles.avatarPlaceholderText}>{t('settings.uploadAvatar')}</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('auth.email')}</Text>
+                <Text style={styles.infoValue}>{user?.email}</Text>
               </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('home.role')}</Text>
+                <View style={styles.profileBadge}>
+                  <Text style={styles.badgeText}>{user?.role}</Text>
+                </View>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('home.provider')}</Text>
+                <Text style={styles.infoValue}>{user?.provider}</Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                style={[styles.infoRow, { paddingVertical: 12 }]}
+                onPress={() => setLanguageModalVisible(true)}
+                testID="language-selector-profile"
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={styles.settingIcon}>
+                    <Globe size={20} color={colors.text} />
+                  </View>
+                  <View>
+                    <Text style={styles.settingTitle}>{t('home.language')}</Text>
+                    <Text style={styles.settingDescription}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontSize: 20 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
+                  <Text style={styles.languageCode}>{language.toUpperCase()}</Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -1010,6 +1002,62 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('settings.selectLanguage')}</Text>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              {Object.entries(AVAILABLE_LANGUAGES).map(([code, lang], index) => {
+                const isAvailable = config.languageConfig.availableLanguages[code as keyof typeof config.languageConfig.availableLanguages];
+                if (!isAvailable) return null;
+                
+                const isSelected = language === code;
+                const isLast = index === Object.keys(AVAILABLE_LANGUAGES).length - 1;
+                
+                return (
+                  <TouchableOpacity
+                    key={code}
+                    style={[styles.languageItem, isLast && styles.languageItemLast]}
+                    onPress={() => {
+                      setLanguage(code as keyof typeof AVAILABLE_LANGUAGES);
+                      setLanguageModalVisible(false);
+                    }}
+                    testID={`language-option-${code}`}
+                  >
+                    <Text style={styles.languageFlag}>{lang.flag}</Text>
+                    <View style={styles.languageInfo}>
+                      <Text style={styles.languageName}>{lang.name}</Text>
+                      <Text style={styles.languageNative}>{lang.nativeName}</Text>
+                    </View>
+                    {isSelected && (
+                      <View style={styles.languageCheck}>
+                        <Check size={16} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setLanguageModalVisible(false)}
+                testID="close-language-modal"
+              >
+                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={usernameModalVisible}
