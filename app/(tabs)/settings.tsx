@@ -841,7 +841,7 @@ export default function SettingsScreen() {
               activeOpacity={0.7}
               testID="profile-avatar-button"
             >
-              {user?.avatar ? (
+              {user?.avatar && user.avatar.trim() !== '' ? (
                 <Image
                   source={{ uri: user.avatar }}
                   style={styles.cardHeaderAvatar}
