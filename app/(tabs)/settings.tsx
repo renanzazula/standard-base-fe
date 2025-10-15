@@ -260,37 +260,52 @@ export default function SettingsScreen() {
       color: '#FFFFFF',
       marginLeft: 8,
     },
-    profileCard: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 24,
-      borderWidth: 1,
-      borderColor: colors.border,
+    cardHeader: {
       flexDirection: 'row',
       alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
-    profileIcon: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+    cardIconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
       backgroundColor: colors.primary,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
     },
-    profileInfo: {
-      flex: 1,
-    },
-    profileName: {
+    cardTitle: {
       fontSize: 20,
       fontWeight: '700' as const,
       color: colors.text,
-      marginBottom: 4,
     },
-    profileEmail: {
+    cardContent: {
+      padding: 16,
+      gap: 12,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    infoLabel: {
       fontSize: 14,
       color: colors.textSecondary,
+      fontWeight: '500' as const,
+    },
+    infoValue: {
+      fontSize: 14,
+      color: colors.text,
+      fontWeight: '600' as const,
+    },
+    profileBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+      backgroundColor: colors.primary,
     },
     badge: {
       paddingHorizontal: 8,
@@ -722,15 +737,34 @@ export default function SettingsScreen() {
           <Text style={styles.subtitle}>{t('settings.managePreferences')}</Text>
         </View>
 
-        <View style={styles.profileCard}>
-          <View style={styles.profileIcon}>
-            <User size={30} color="#FFFFFF" />
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardIconContainer}>
+              <User size={24} color="#FFFFFF" />
+            </View>
+            <Text style={styles.cardTitle}>{t('home.profileInformation')}</Text>
           </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name}</Text>
-            <Text style={styles.profileEmail}>{user?.email}</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{user?.role}</Text>
+          <View style={styles.cardContent}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{t('auth.email')}</Text>
+              <Text style={styles.infoValue}>{user?.email}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{t('home.role')}</Text>
+              <View style={styles.profileBadge}>
+                <Text style={styles.badgeText}>{user?.role}</Text>
+              </View>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{t('home.provider')}</Text>
+              <Text style={styles.infoValue}>{user?.provider}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{t('home.language')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ fontSize: 18 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
+                <Text style={styles.infoValue}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
+              </View>
             </View>
           </View>
         </View>
