@@ -1,6 +1,7 @@
 import { AdminConfigProvider, useAdminConfig } from '@/contexts/AdminConfigContext';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { PreferencesProvider, usePreferences } from '@/contexts/PreferencesContext';
+import { FeedProvider } from '@/contexts/FeedContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -60,6 +61,9 @@ function RootLayoutNav() {
       <Stack.Screen name="signup" options={{ headerShown: false }} />
       <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
       <Stack.Screen name="admin-config" options={{ headerShown: true }} />
+      <Stack.Screen name="post/[id]" options={{ headerShown: true, title: 'Post' }} />
+      <Stack.Screen name="post/create" options={{ headerShown: true, title: 'Create Post' }} />
+      <Stack.Screen name="post/edit/[id]" options={{ headerShown: true, title: 'Edit Post' }} />
     </Stack>
   );
 }
@@ -71,7 +75,9 @@ export default function RootLayout() {
         <AdminConfigProvider>
           <PreferencesProvider>
             <AuthProvider>
-              <RootLayoutNav />
+              <FeedProvider>
+                <RootLayoutNav />
+              </FeedProvider>
             </AuthProvider>
           </PreferencesProvider>
         </AdminConfigProvider>

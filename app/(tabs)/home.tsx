@@ -1,17 +1,28 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
-import { Home, User, Shield, Activity } from 'lucide-react-native';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { AVAILABLE_LANGUAGES } from '@/constants/languages';
+import { useAdminConfig } from '@/contexts/AdminConfigContext';
+import { useFeed } from '@/contexts/FeedContext';
+import { Plus, Lock, Settings as SettingsIcon } from 'lucide-react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshControl, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useRouter } from 'expo-router';
+import { Post } from '@/types/post';
 
 export default function HomeScreen() {
-  const { colors, language } = usePreferences();
-  const { user, updateActivity } = useAuth();
+  const { colors } = usePreferences();
+  const { user } = useAuth();
+  const { config } = useAdminConfig();
+  const { posts, isLoading, isRefreshing, hasMore, refresh, loadMore } = useFeed();
   const { t } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  const handleInteraction = () => {
-    updateActivity();
+  const feedEnabled = config.moduleConfig.feedEnabled;
+
+  const formatDate = (timestamp: number): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const styles = StyleSheet.create({
@@ -19,194 +30,318 @@ export default function HomeScreen() {
       flex: 1,
       backgroundColor: colors.background,
     },
-    scrollContent: {
-      padding: 20,
-    },
     header: {
-      marginBottom: 32,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: insets.top + 16,
+      paddingBottom: 16,
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
-    greeting: {
+    headerTitle: {
       fontSize: 28,
       fontWeight: '700' as const,
       color: colors.text,
-      marginBottom: 8,
     },
-    subGreeting: {
-      fontSize: 16,
-      color: colors.textSecondary,
-    },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    cardHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    cardIconContainer: {
+    createFloatingButton: {
       width: 48,
       height: 48,
       borderRadius: 24,
       backgroundColor: colors.primary,
       alignItems: 'center',
       justifyContent: 'center',
-      marginRight: 16,
     },
-    cardTitle: {
-      fontSize: 20,
-      fontWeight: '700' as const,
-      color: colors.text,
-    },
-    cardContent: {
-      gap: 12,
-    },
-    infoRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 8,
-    },
-    infoLabel: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      fontWeight: '500' as const,
-    },
-    infoValue: {
-      fontSize: 14,
-      color: colors.text,
-      fontWeight: '600' as const,
-    },
-    badge: {
-      paddingHorizontal: 12,
-      paddingVertical: 4,
-      borderRadius: 12,
-      backgroundColor: colors.primary,
-    },
-    badgeText: {
-      fontSize: 12,
-      fontWeight: '700' as const,
-      color: '#FFFFFF',
-      textTransform: 'uppercase' as const,
-    },
-    sectionTitle: {
-      fontSize: 22,
-      fontWeight: '700' as const,
-      color: colors.text,
-      marginBottom: 16,
-      marginTop: 8,
-    },
-    featureGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 12,
-    },
-    featureCard: {
-      flex: 1,
-      minWidth: '47%',
-      backgroundColor: colors.surface,
-      borderRadius: 12,
+    listContent: {
       padding: 16,
-      alignItems: 'center',
+      paddingBottom: 32,
+    },
+    postCard: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      marginBottom: 16,
+      overflow: 'hidden',
       borderWidth: 1,
       borderColor: colors.border,
     },
-    featureIcon: {
+    postImage: {
+      width: '100%',
+      height: 200,
+      backgroundColor: colors.surface,
+    },
+    postContent: {
+      padding: 16,
+    },
+    postTitle: {
+      fontSize: 20,
+      fontWeight: '700' as const,
+      color: colors.text,
+      marginBottom: 8,
+    },
+    postExcerpt: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      lineHeight: 20,
       marginBottom: 12,
     },
-    featureTitle: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: colors.text,
-      textAlign: 'center',
+    postMeta: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
     },
-    featureDescription: {
+    postAuthor: {
       fontSize: 12,
       color: colors.textSecondary,
+      fontWeight: '600' as const,
+    },
+    postDate: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    tag: {
+      backgroundColor: colors.surface,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    tagText: {
+      fontSize: 12,
+      color: colors.primary,
+      fontWeight: '600' as const,
+    },
+    emptyContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 80,
+      paddingHorizontal: 40,
+    },
+    emptyTitle: {
+      fontSize: 24,
+      fontWeight: '700' as const,
+      color: colors.text,
+      marginBottom: 8,
       textAlign: 'center',
-      marginTop: 4,
+    },
+    emptyDescription: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: 24,
+    },
+    createButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 24,
+      gap: 8,
+    },
+    createButtonText: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      color: '#FFFFFF',
+    },
+    loadingContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 80,
+    },
+    loadingText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      marginTop: 16,
+    },
+    footer: {
+      paddingVertical: 20,
+      alignItems: 'center',
+    },
+    disabledContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 40,
+    },
+    disabledIconContainer: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 24,
+    },
+    disabledTitle: {
+      fontSize: 24,
+      fontWeight: '700' as const,
+      color: colors.text,
+      marginBottom: 12,
+      textAlign: 'center',
+    },
+    disabledDescription: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: 32,
+      lineHeight: 24,
+    },
+    settingsButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 24,
+      gap: 8,
+    },
+    settingsButtonText: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      color: '#FFFFFF',
     },
   });
 
-  return (
-    <View style={styles.container} onTouchStart={handleInteraction}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.greeting}>{t('home.welcomeBack')}, {user?.name}!</Text>
-          <Text style={styles.subGreeting}>{t('home.happeningToday')}</Text>
+  const renderPostItem = ({ item }: { item: Post }) => (
+    <TouchableOpacity
+      style={styles.postCard}
+      onPress={() => router.push(`/post/${item.id}` as any)}
+      activeOpacity={0.7}
+      testID={`post-${item.id}`}
+    >
+      {item.featuredImage && (
+        <Image
+          source={{ uri: item.featuredImage }}
+          style={styles.postImage}
+          resizeMode="cover"
+        />
+      )}
+      <View style={styles.postContent}>
+        <Text style={styles.postTitle} numberOfLines={2}>
+          {item.title}
+        </Text>
+        <Text style={styles.postExcerpt} numberOfLines={3}>
+          {item.excerpt}
+        </Text>
+        <View style={styles.postMeta}>
+          <Text style={styles.postAuthor}>
+            {t('feed.by')} {item.authorName}
+          </Text>
+          <Text style={styles.postDate}>
+            {formatDate(item.publishedAt || item.createdAt)}
+          </Text>
         </View>
-
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardIconContainer}>
-              <User size={24} color="#FFFFFF" />
-            </View>
-            <Text style={styles.cardTitle}>{t('home.profileInformation')}</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('auth.email')}</Text>
-              <Text style={styles.infoValue}>{user?.email}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('home.role')}</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{user?.role}</Text>
+        {item.tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {item.tags.slice(0, 3).map((tag, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>#{tag}</Text>
               </View>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('home.provider')}</Text>
-              <Text style={styles.infoValue}>{user?.provider}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('home.language')}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 18 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
-                <Text style={styles.infoValue}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {user?.role === 'admin' && (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIconContainer}>
-                <Shield size={24} color="#FFFFFF" />
-              </View>
-              <Text style={styles.cardTitle}>{t('home.adminAccess')}</Text>
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.infoLabel}>
-                {t('home.adminPrivileges')}
-              </Text>
-            </View>
+            ))}
           </View>
         )}
+      </View>
+    </TouchableOpacity>
+  );
 
-        <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
-        <View style={styles.featureGrid}>
-          <TouchableOpacity style={styles.featureCard} onPress={handleInteraction}>
-            <View style={styles.featureIcon}>
-              <Home size={32} color={colors.primary} />
-            </View>
-            <Text style={styles.featureTitle}>{t('home.dashboard')}</Text>
-            <Text style={styles.featureDescription}>{t('home.viewOverview')}</Text>
-          </TouchableOpacity>
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyTitle}>{t('feed.noPostsYet')}</Text>
+      <Text style={styles.emptyDescription}>{t('feed.noPostsDescription')}</Text>
+      {user?.role === 'admin' && (
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={() => router.push('/post/create' as any)}
+          testID="create-first-post-button"
+        >
+          <Plus size={20} color="#FFFFFF" />
+          <Text style={styles.createButtonText}>{t('feed.createPost')}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
-          <TouchableOpacity style={styles.featureCard} onPress={handleInteraction}>
-            <View style={styles.featureIcon}>
-              <Activity size={32} color={colors.primary} />
-            </View>
-            <Text style={styles.featureTitle}>{t('home.activity')}</Text>
-            <Text style={styles.featureDescription}>{t('home.trackProgress')}</Text>
+  const renderDisabledState = () => (
+    <View style={styles.disabledContainer}>
+      <View style={styles.disabledIconContainer}>
+        <Lock size={48} color={colors.textSecondary} />
+      </View>
+      <Text style={styles.disabledTitle}>{t('feed.moduleDisabled')}</Text>
+      <Text style={styles.disabledDescription}>{t('feed.moduleDisabledDescription')}</Text>
+      {user?.role === 'admin' && (
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => router.push('/admin-config')}
+          testID="enable-feed-button"
+        >
+          <SettingsIcon size={20} color="#FFFFFF" />
+          <Text style={styles.settingsButtonText}>{t('feed.enableFeedModule')}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const renderFooter = () => {
+    if (!hasMore) return null;
+    return (
+      <View style={styles.footer}>
+        <ActivityIndicator size="small" color={colors.primary} />
+      </View>
+    );
+  };
+
+  if (!feedEnabled) {
+    return (
+      <View style={styles.container}>
+        {renderDisabledState()}
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{t('feed.feed')}</Text>
+        {user?.role === 'admin' && (
+          <TouchableOpacity
+            style={styles.createFloatingButton}
+            onPress={() => router.push('/post/create' as any)}
+            testID="create-post-button"
+          >
+            <Plus size={24} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
-      </ScrollView>
+        )}
+      </View>
+      <FlatList
+        data={posts}
+        renderItem={renderPostItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            tintColor={colors.primary}
+          />
+        }
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>{t('feed.loadingPosts')}</Text>
+          </View>
+        ) : renderEmptyState()}
+        ListFooterComponent={renderFooter}
+        testID="feed-list"
+      />
     </View>
   );
 }
