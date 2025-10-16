@@ -118,6 +118,22 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
           setIsLoading(false);
           return;
         }
+        const storedTabs = parsedConfig.navigationConfig?.tabs || [];
+        const defaultTabs = DEFAULT_CONFIG.navigationConfig.tabs;
+        
+        const mergedTabs = defaultTabs.map(defaultTab => {
+          const storedTab = storedTabs.find((t: NavigationTab) => t.id === defaultTab.id);
+          return storedTab || defaultTab;
+        });
+        
+        const customTabs = storedTabs.filter(
+          (storedTab: NavigationTab) => !defaultTabs.find(dt => dt.id === storedTab.id)
+        );
+        
+        const allTabs = [...mergedTabs, ...customTabs];
+        
+        console.log('[AdminConfig] Merging tabs - Default:', defaultTabs.length, 'Stored:', storedTabs.length, 'Merged:', allTabs.length);
+        
         const mergedConfig = {
           ...DEFAULT_CONFIG,
           ...parsedConfig,
@@ -130,7 +146,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
           navigationConfig: {
             ...DEFAULT_CONFIG.navigationConfig,
             ...(parsedConfig.navigationConfig || {}),
-            tabs: parsedConfig.navigationConfig?.tabs || DEFAULT_CONFIG.navigationConfig.tabs,
+            tabs: allTabs,
           },
         };
         console.log('[AdminConfig] Loaded config:', mergedConfig);
