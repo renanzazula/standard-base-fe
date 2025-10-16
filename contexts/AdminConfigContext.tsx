@@ -105,8 +105,19 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
   const loadConfig = async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      console.log('[AdminConfig] Stored config raw:', stored);
       if (stored) {
-        const parsedConfig = JSON.parse(stored);
+        let parsedConfig;
+        try {
+          parsedConfig = JSON.parse(stored);
+        } catch (parseError) {
+          console.error('[AdminConfig] JSON parse error:', parseError);
+          console.error('[AdminConfig] Invalid JSON string:', stored);
+          await AsyncStorage.removeItem(STORAGE_KEY);
+          setConfig(DEFAULT_CONFIG);
+          setIsLoading(false);
+          return;
+        }
         const mergedConfig = {
           ...DEFAULT_CONFIG,
           ...parsedConfig,
@@ -122,10 +133,15 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
             tabs: parsedConfig.navigationConfig?.tabs || DEFAULT_CONFIG.navigationConfig.tabs,
           },
         };
+        console.log('[AdminConfig] Loaded config:', mergedConfig);
         setConfig(mergedConfig);
+      } else {
+        console.log('[AdminConfig] No stored config, using defaults');
+        setConfig(DEFAULT_CONFIG);
       }
     } catch (error) {
-      console.error('Failed to load admin config:', error);
+      console.error('[AdminConfig] Failed to load admin config:', error);
+      setConfig(DEFAULT_CONFIG);
     } finally {
       setIsLoading(false);
     }
@@ -133,10 +149,13 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
 
   const saveConfig = async (newConfig: AdminConfig) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
+      const configString = JSON.stringify(newConfig);
+      console.log('[AdminConfig] Saving config:', configString);
+      await AsyncStorage.setItem(STORAGE_KEY, configString);
       setConfig(newConfig);
+      console.log('[AdminConfig] Config saved successfully');
     } catch (error) {
-      console.error('Failed to save admin config:', error);
+      console.error('[AdminConfig] Failed to save admin config:', error);
     }
   };
 
