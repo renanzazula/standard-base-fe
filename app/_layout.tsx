@@ -46,7 +46,7 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === undefined;
-    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management';
+    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management' || segments[0] === 'user-management';
 
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/login');
