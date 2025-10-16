@@ -87,7 +87,8 @@ const DEFAULT_CONFIG: AdminConfig = {
       { id: 'home', name: 'Home', enabled: false, icon: 'home', order: 1, isSystem: true },
       { id: 'feed', name: 'Feed', enabled: false, icon: 'rss', order: 2, isSystem: true },
       { id: 'skate-square', name: 'Skate Square', enabled: false, icon: 'droplet', order: 3, isSystem: true },
-      { id: 'settings', name: 'Settings', enabled: true, icon: 'settings', order: 4, isSystem: true },
+      { id: 'podcast', name: 'Podcast', enabled: false, icon: 'mic', order: 4, isSystem: true },
+      { id: 'settings', name: 'Settings', enabled: true, icon: 'settings', order: 5, isSystem: true },
     ],
   },
 };
