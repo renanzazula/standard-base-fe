@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { usePreferences } from '@/contexts/PreferencesContext';
-import { Droplet } from 'lucide-react-native';
+import { Flame } from 'lucide-react-native';
 
 export default function SkateSquareScreen() {
   const { colors } = usePreferences();
@@ -64,7 +64,7 @@ export default function SkateSquareScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} testID="skate-square-scroll">
         <View style={styles.header}>
           <View style={styles.iconContainer}>
-            <Droplet size={40} color={colors.primary} />
+            <Flame size={40} color={colors.primary} />
           </View>
           <Text style={styles.title}>Skate Square</Text>
           <Text style={styles.subtitle}>Welcome to Skate Square</Text>

@@ -2,7 +2,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs } from 'expo-router';
-import { Home, Settings, Rss, Droplet } from 'lucide-react-native';
+import { Home, Settings, Rss, Flame } from 'lucide-react-native';
 import React from 'react';
 
 export default function TabLayout() {
@@ -16,8 +16,8 @@ export default function TabLayout() {
         return <Home size={24} color={color} />;
       case 'rss':
         return <Rss size={24} color={color} />;
-      case 'droplet':
-        return <Droplet size={24} color={color} />;
+      case 'flame':
+        return <Flame size={24} color={color} />;
       case 'settings':
         return <Settings size={24} color={color} />;
       default:
