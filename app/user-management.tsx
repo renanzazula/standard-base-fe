@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserManagement, ManagedUser } from '@/contexts/UserManagementContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import {
   View,
   Text,
@@ -578,7 +578,15 @@ export default function UserManagementScreen() {
   const hasActiveFilters = roleFilter !== 'all' || statusFilter !== 'all';
 
   return (
-    <View style={styles.container}>
+    <>
+      <Stack.Screen
+        options={{
+          title: t('userManagement.title'),
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.text,
+        }}
+      />
+      <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>{t('userManagement.title')}</Text>
@@ -867,5 +875,6 @@ export default function UserManagementScreen() {
         </Pressable>
       </Modal>
     </View>
+    </>
   );
 }
