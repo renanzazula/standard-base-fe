@@ -1,6 +1,7 @@
 import { AdminConfigProvider, useAdminConfig } from '@/contexts/AdminConfigContext';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { PreferencesProvider, usePreferences } from '@/contexts/PreferencesContext';
+import { UserManagementProvider } from '@/contexts/UserManagementContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -62,6 +63,7 @@ function RootLayoutNav() {
       <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
       <Stack.Screen name="admin-config" options={{ headerShown: true }} />
       <Stack.Screen name="navigation-management" options={{ headerShown: true }} />
+      <Stack.Screen name="user-management" options={{ headerShown: true, title: 'User Management' }} />
     </Stack>
   );
 }
@@ -73,7 +75,9 @@ export default function RootLayout() {
         <AdminConfigProvider>
           <PreferencesProvider>
             <AuthProvider>
-              <RootLayoutNav />
+              <UserManagementProvider>
+                <RootLayoutNav />
+              </UserManagementProvider>
             </AuthProvider>
           </PreferencesProvider>
         </AdminConfigProvider>
