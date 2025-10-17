@@ -24,6 +24,7 @@ interface AuthState {
 
 const USER_STORAGE_KEY = '@user_data';
 const SESSION_STORAGE_KEY = '@session_data';
+const USERS_STORAGE_KEY = '@managed_users';
 
 const mockUsers = {
   'user@example.com': {
@@ -134,6 +135,23 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
+  const checkUserStatus = async (userId: string): Promise<boolean> => {
+    try {
+      const stored = await AsyncStorage.getItem(USERS_STORAGE_KEY);
+      if (stored) {
+        const managedUsers = JSON.parse(stored);
+        const user = managedUsers.find((u: any) => u.id === userId);
+        if (user && user.status === 'disabled') {
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('[Auth] Failed to check user status:', error);
+      return false;
+    }
+  };
+
   const updateActivity = () => {
     if (authState.isAuthenticated && config.sessionConfig.autoRefresh) {
       const now = Date.now();
@@ -151,6 +169,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     if (config.serviceModes.manual === 'mock') {
       const mockUser = mockUsers[email as keyof typeof mockUsers];
       if (mockUser && mockUser.password === password) {
+        const isDisabled = await checkUserStatus(mockUser.id);
+        if (isDisabled) {
+          console.log('[Auth] Login blocked - user is disabled:', mockUser.id);
+          throw new Error('User account is disabled');
+        }
+        
         const user: User = {
           id: mockUser.id,
           email: mockUser.email,
@@ -178,8 +202,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     console.log('Google login attempt:', { mode: config.serviceModes.google });
 
     if (config.serviceModes.google === 'mock') {
+      const userId = 'google-mock-1';
+      const isDisabled = await checkUserStatus(userId);
+      if (isDisabled) {
+        console.log('[Auth] Login blocked - user is disabled:', userId);
+        throw new Error('User account is disabled');
+      }
+      
       const user: User = {
-        id: 'google-mock-1',
+        id: userId,
         email: 'google.user@example.com',
         name: 'Google User',
         role: 'standard',
@@ -203,8 +234,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     console.log('Apple login attempt:', { mode: config.serviceModes.apple });
 
     if (config.serviceModes.apple === 'mock') {
+      const userId = 'apple-mock-1';
+      const isDisabled = await checkUserStatus(userId);
+      if (isDisabled) {
+        console.log('[Auth] Login blocked - user is disabled:', userId);
+        throw new Error('User account is disabled');
+      }
+      
       const user: User = {
-        id: 'apple-mock-1',
+        id: userId,
         email: 'apple.user@example.com',
         name: 'Apple User',
         role: 'standard',

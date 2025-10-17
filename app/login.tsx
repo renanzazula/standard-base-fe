@@ -45,7 +45,11 @@ export default function LoginScreen() {
         Alert.alert(t('auth.loginFailed'), t('auth.invalidCredentials'));
       }
     } catch (error) {
-      Alert.alert(t('common.error'), t('auth.loginError'));
+      if (error instanceof Error && error.message === 'User account is disabled') {
+        Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
+      } else {
+        Alert.alert(t('common.error'), t('auth.loginError'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +65,11 @@ export default function LoginScreen() {
         Alert.alert(t('auth.loginFailed'), 'Google login failed');
       }
     } catch (error) {
-      Alert.alert(t('common.error'), 'An error occurred during Google login');
+      if (error instanceof Error && error.message === 'User account is disabled') {
+        Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
+      } else {
+        Alert.alert(t('common.error'), 'An error occurred during Google login');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +85,11 @@ export default function LoginScreen() {
         Alert.alert(t('auth.loginFailed'), 'Apple login failed');
       }
     } catch (error) {
-      Alert.alert(t('common.error'), 'An error occurred during Apple login');
+      if (error instanceof Error && error.message === 'User account is disabled') {
+        Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
+      } else {
+        Alert.alert(t('common.error'), 'An error occurred during Apple login');
+      }
     } finally {
       setIsLoading(false);
     }
