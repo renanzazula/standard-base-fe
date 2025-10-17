@@ -26,6 +26,7 @@ import {
   Menu,
   ChevronRight,
   Users,
+  Settings,
 } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal, Pressable, TextInput, Image } from 'react-native';
 import React from 'react';
@@ -971,6 +972,25 @@ export default function SettingsScreen() {
                     <Text style={styles.settingTitle}>{t('userManagement.manageUsers')}</Text>
                     <Text style={styles.settingDescription}>
                       {t('userManagement.viewAllUsers')}
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => router.push('/admin-config')}
+                  testID="admin-config-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Settings size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>Admin Configuration</Text>
+                    <Text style={styles.settingDescription}>
+                      Configure authentication, session, and profile settings
                     </Text>
                   </View>
                   <View style={styles.settingAction}>
