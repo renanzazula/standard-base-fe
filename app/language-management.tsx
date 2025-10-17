@@ -1,9 +1,10 @@
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { AVAILABLE_LANGUAGES } from '@/constants/languages';
 import type { Language } from '@/constants/languages';
-import { Stack } from 'expo-router';
-import { Trash2, Edit2 } from 'lucide-react-native';
+import { Stack, router } from 'expo-router';
+import { Trash2, ToggleLeft, ToggleRight } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 
@@ -16,7 +17,8 @@ interface LanguageItem {
 
 export default function LanguageManagementScreen() {
   const { colors } = usePreferences();
-  const { config } = useAdminConfig();
+  const { config, toggleLanguageAvailability } = useAdminConfig();
+  const { user } = useAuth();
 
   const [languages, setLanguages] = useState<LanguageItem[]>([]);
 
@@ -133,18 +135,92 @@ export default function LanguageManagementScreen() {
   });
 
   const toggleLanguageStatus = (code: Language) => {
-    Alert.alert(
-      'Cannot Toggle',
-      'Languages shown here are already enabled in Admin Configuration. To disable a language, go to Admin Configuration > Language Settings.',
-      [{ text: 'OK' }]
-    );
+    if (user?.role !== 'admin') {
+      Alert.alert(
+        'Access Denied',
+        'Only administrators can modify language settings.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    const isCurrentlyEnabled = config.languageConfig.availableLanguages.includes(code);
+    
+    if (isCurrentlyEnabled) {
+      if (config.languageConfig.availableLanguages.length === 1) {
+        Alert.alert(
+          'Cannot Disable',
+          'At least one language must remain enabled.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      if (code === config.languageConfig.defaultLanguage) {
+        Alert.alert(
+          'Cannot Disable',
+          'Cannot disable the default language. Please change the default language in Admin Configuration first.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      Alert.alert(
+        'Disable Language',
+        `Are you sure you want to disable ${AVAILABLE_LANGUAGES[code].name}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Disable',
+            style: 'destructive',
+            onPress: () => toggleLanguageAvailability(code),
+          },
+        ]
+      );
+    } else {
+      toggleLanguageAvailability(code);
+    }
   };
 
   const deleteLanguage = (code: Language) => {
+    if (user?.role !== 'admin') {
+      Alert.alert(
+        'Access Denied',
+        'Only administrators can remove languages.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    if (config.languageConfig.availableLanguages.length === 1) {
+      Alert.alert(
+        'Cannot Remove',
+        'At least one language must remain enabled.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    if (code === config.languageConfig.defaultLanguage) {
+      Alert.alert(
+        'Cannot Remove',
+        'Cannot remove the default language. Please change the default language in Admin Configuration first.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     Alert.alert(
-      'Cannot Delete',
-      'Languages shown here are managed in Admin Configuration. To remove a language, go to Admin Configuration > Language Settings.',
-      [{ text: 'OK' }]
+      'Remove Language',
+      `Are you sure you want to remove ${AVAILABLE_LANGUAGES[code].name}? This will disable it for all users.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => toggleLanguageAvailability(code),
+        },
+      ]
     );
   };
 
@@ -195,7 +271,11 @@ export default function LanguageManagementScreen() {
                       onPress={() => toggleLanguageStatus(language.code)}
                       testID={`toggle-language-${language.code}`}
                     >
-                      <Edit2 size={18} color={colors.text} />
+                      {language.enabled ? (
+                        <ToggleRight size={20} color="#10B981" />
+                      ) : (
+                        <ToggleLeft size={20} color={colors.textSecondary} />
+                      )}
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.iconButton}
@@ -212,9 +292,29 @@ export default function LanguageManagementScreen() {
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
                 <Text style={{ fontWeight: '700' as const }}>Language Management:</Text>{' '}
-                This page displays languages that are currently enabled in Admin Configuration. These are the languages available to users throughout the application. To modify which languages are available, go to Admin Configuration → Language Settings.
+                {user?.role === 'admin' 
+                  ? 'This page displays languages that are currently enabled in the application. You can toggle or remove languages here. To change the default language or add new languages, go to Admin Configuration → Language Settings.'
+                  : 'This page displays languages that are currently enabled in Admin Configuration. These are the languages available to users throughout the application.'}
               </Text>
             </View>
+            
+            {user?.role === 'admin' && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: colors.primary,
+                  padding: 16,
+                  borderRadius: 12,
+                  marginTop: 16,
+                  alignItems: 'center',
+                }}
+                onPress={() => router.push('/admin-config')}
+                testID="go-to-admin-config"
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' as const }}>
+                  Go to Admin Configuration
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
 

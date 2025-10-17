@@ -1,12 +1,13 @@
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
+import { AVAILABLE_LANGUAGES, Language } from '@/constants/languages';
 import { Stack, useRouter } from 'expo-router';
-import { Chrome, Apple, Mail, Clock, Plus, Minus, Shield, ChevronRight, Languages } from 'lucide-react-native';
+import { Chrome, Apple, Mail, Clock, Plus, Minus, Shield, ChevronRight, Languages, Globe } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
 
 export default function AdminConfigScreen() {
   const { colors } = usePreferences();
-  const { config, toggleAuthMethod, setServiceMode, updateSessionConfig } = useAdminConfig();
+  const { config, toggleAuthMethod, setServiceMode, updateSessionConfig, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
   const router = useRouter();
 
   const MIN_SESSION_TIME = 5 * 60 * 1000;
@@ -519,6 +520,97 @@ export default function AdminConfigScreen() {
           </View>
 
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Language Settings</Text>
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIcon}>
+                  <Globe size={20} color={colors.text} />
+                </View>
+                <Text style={styles.cardTitle}>Available Languages</Text>
+              </View>
+              
+              <Text style={[styles.settingDescription, { marginBottom: 12 }]}>
+                Select which languages are available to users
+              </Text>
+
+              {(Object.keys(AVAILABLE_LANGUAGES) as Language[]).map((langCode, index) => {
+                const langInfo = AVAILABLE_LANGUAGES[langCode];
+                const isEnabled = config.languageConfig.availableLanguages.includes(langCode);
+                const isDefault = config.languageConfig.defaultLanguage === langCode;
+                const isLast = index === Object.keys(AVAILABLE_LANGUAGES).length - 1;
+
+                return (
+                  <View
+                    key={langCode}
+                    style={[
+                      styles.settingRow,
+                      isLast && styles.settingRowLast,
+                    ]}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Text style={styles.settingLabel}>
+                          {langInfo.flag} {langInfo.name}
+                        </Text>
+                        {isDefault && (
+                          <View
+                            style={{
+                              paddingHorizontal: 8,
+                              paddingVertical: 2,
+                              borderRadius: 8,
+                              backgroundColor: colors.primary,
+                            }}
+                          >
+                            <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' as const }}>
+                              DEFAULT
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.settingDescription}>
+                        {langInfo.nativeName} ({langCode})
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      {isEnabled && !isDefault && (
+                        <TouchableOpacity
+                          onPress={() => setDefaultLanguage(langCode)}
+                          style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: colors.primary,
+                          }}
+                          testID={`set-default-${langCode}`}
+                        >
+                          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' as const }}>
+                            Set Default
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      <Switch
+                        value={isEnabled}
+                        onValueChange={() => toggleLanguageAvailability(langCode)}
+                        trackColor={{ false: colors.border, true: colors.primary }}
+                        thumbColor="#FFFFFF"
+                        testID={`toggle-language-${langCode}`}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+
+              <View style={styles.infoBox}>
+                <Text style={styles.infoText}>
+                  <Text style={{ fontWeight: '700' as const }}>Language Settings:</Text>{' '}
+                  Enable or disable languages for your app. The default language is used for new users and as a fallback. You cannot disable the default language or the last remaining language.
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Profile Configuration</Text>
             <TouchableOpacity
               style={styles.card}
@@ -550,7 +642,7 @@ export default function AdminConfigScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>Language Management</Text>
-                  <Text style={styles.settingDescription}>Configure available languages and translations</Text>
+                  <Text style={styles.settingDescription}>View and manage enabled languages</Text>
                 </View>
                 <ChevronRight size={20} color={colors.textSecondary} />
               </View>
