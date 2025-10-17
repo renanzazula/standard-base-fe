@@ -1,12 +1,13 @@
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
-import { Stack } from 'expo-router';
-import { Chrome, Apple, Mail, Clock, Plus, Minus } from 'lucide-react-native';
+import { Stack, useRouter } from 'expo-router';
+import { Chrome, Apple, Mail, Clock, Plus, Minus, Shield, ChevronRight } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
 
 export default function AdminConfigScreen() {
   const { colors } = usePreferences();
   const { config, toggleAuthMethod, setServiceMode, updateSessionConfig } = useAdminConfig();
+  const router = useRouter();
 
   const MIN_SESSION_TIME = 5 * 60 * 1000;
   const MAX_SESSION_TIME = 24 * 60 * 60 * 1000;
@@ -515,6 +516,27 @@ export default function AdminConfigScreen() {
                 </Text>
               </View>
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Profile Configuration</Text>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => router.push('/profile-restrictions')}
+              testID="profile-restrictions-link"
+              activeOpacity={0.7}
+            >
+              <View style={[styles.cardHeader, { marginBottom: 0 }]}>
+                <View style={styles.cardIcon}>
+                  <Shield size={20} color={colors.text} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>Profile Restrictions</Text>
+                  <Text style={styles.settingDescription}>Configure username and avatar policies</Text>
+                </View>
+                <ChevronRight size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </View>
