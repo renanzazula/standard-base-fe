@@ -46,7 +46,7 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === undefined;
-    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management' || segments[0] === 'user-management';
+    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management' || segments[0] === 'user-management' || segments[0] === 'profile-restrictions' || segments[0] === 'language-management';
 
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/login');
@@ -64,6 +64,8 @@ function RootLayoutNav() {
       <Stack.Screen name="admin-config" options={{ headerShown: true }} />
       <Stack.Screen name="navigation-management" options={{ headerShown: true }} />
       <Stack.Screen name="user-management" options={{ headerShown: true, title: 'User Management' }} />
+      <Stack.Screen name="profile-restrictions" options={{ headerShown: true }} />
+      <Stack.Screen name="language-management" options={{ headerShown: true }} />
     </Stack>
   );
 }
