@@ -1,7 +1,7 @@
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { Stack, useRouter } from 'expo-router';
-import { Chrome, Apple, Mail, Clock, Plus, Minus, Shield, ChevronRight } from 'lucide-react-native';
+import { Chrome, Apple, Mail, Clock, Plus, Minus, Shield, ChevronRight, Languages } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
 
 export default function AdminConfigScreen() {
@@ -533,6 +533,24 @@ export default function AdminConfigScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>Profile Restrictions</Text>
                   <Text style={styles.settingDescription}>Configure username and avatar policies</Text>
+                </View>
+                <ChevronRight size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => router.push('/language-management')}
+              testID="language-management-link"
+              activeOpacity={0.7}
+            >
+              <View style={[styles.cardHeader, { marginBottom: 0 }]}>
+                <View style={styles.cardIcon}>
+                  <Languages size={20} color={colors.text} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>Language Management</Text>
+                  <Text style={styles.settingDescription}>Configure available languages and translations</Text>
                 </View>
                 <ChevronRight size={20} color={colors.textSecondary} />
               </View>
