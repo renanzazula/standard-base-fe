@@ -587,7 +587,7 @@ export default function UserManagementScreen() {
         }}
       />
       <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>{t('userManagement.title')}</Text>
           <Text style={styles.subtitle}>{t('userManagement.subtitle')}</Text>
@@ -750,7 +750,8 @@ export default function UserManagementScreen() {
             </View>
           ))
         )}
-      </ScrollView>
+        </ScrollView>
+      </View>
 
       <Modal visible={filterModalVisible} transparent animationType="fade" onRequestClose={() => setFilterModalVisible(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setFilterModalVisible(false)}>
@@ -874,7 +875,6 @@ export default function UserManagementScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
     </>
   );
 }
