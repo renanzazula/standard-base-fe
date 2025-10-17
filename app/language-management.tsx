@@ -1,11 +1,14 @@
 import { usePreferences } from '@/contexts/PreferencesContext';
-import { Stack, useRouter } from 'expo-router';
-import { Languages, Plus, Trash2, Edit2 } from 'lucide-react-native';
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { useAdminConfig } from '@/contexts/AdminConfigContext';
+import { AVAILABLE_LANGUAGES } from '@/constants/languages';
+import type { Language } from '@/constants/languages';
+import { Stack } from 'expo-router';
+import { Trash2, Edit2 } from 'lucide-react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 
-interface Language {
-  code: string;
+interface LanguageItem {
+  code: Language;
   name: string;
   nativeName: string;
   enabled: boolean;
@@ -13,25 +16,23 @@ interface Language {
 
 export default function LanguageManagementScreen() {
   const { colors } = usePreferences();
-  const router = useRouter();
+  const { config } = useAdminConfig();
 
-  const [languages, setLanguages] = useState<Language[]>([
-    { code: 'en', name: 'English', nativeName: 'English', enabled: true },
-    { code: 'es', name: 'Spanish', nativeName: 'Español', enabled: true },
-    { code: 'fr', name: 'French', nativeName: 'Français', enabled: false },
-    { code: 'de', name: 'German', nativeName: 'Deutsch', enabled: false },
-    { code: 'pt', name: 'Portuguese', nativeName: 'Português', enabled: false },
-    { code: 'it', name: 'Italian', nativeName: 'Italiano', enabled: false },
-    { code: 'ja', name: 'Japanese', nativeName: '日本語', enabled: false },
-    { code: 'zh', name: 'Chinese', nativeName: '中文', enabled: false },
-  ]);
+  const [languages, setLanguages] = useState<LanguageItem[]>([]);
 
-  const [isAddingLanguage, setIsAddingLanguage] = useState(false);
-  const [newLanguage, setNewLanguage] = useState({
-    code: '',
-    name: '',
-    nativeName: '',
-  });
+  useEffect(() => {
+    const availableLanguages = config.languageConfig.availableLanguages;
+    const languageItems = availableLanguages.map((langCode) => {
+      const langInfo = AVAILABLE_LANGUAGES[langCode];
+      return {
+        code: langCode,
+        name: langInfo.name,
+        nativeName: langInfo.nativeName,
+        enabled: true,
+      };
+    });
+    setLanguages(languageItems);
+  }, [config.languageConfig.availableLanguages]);
 
   const styles = StyleSheet.create({
     container: {
@@ -116,64 +117,6 @@ export default function LanguageManagementScreen() {
       fontWeight: '600' as const,
       color: '#FFFFFF',
     },
-    addButton: {
-      backgroundColor: colors.primary,
-      borderRadius: 12,
-      padding: 16,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-    },
-    addButtonText: {
-      fontSize: 16,
-      fontWeight: '600' as const,
-      color: '#FFFFFF',
-    },
-    inputGroup: {
-      marginBottom: 16,
-    },
-    inputLabel: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: colors.text,
-      marginBottom: 8,
-    },
-    input: {
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      padding: 12,
-      fontSize: 16,
-      color: colors.text,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    buttonRow: {
-      flexDirection: 'row',
-      gap: 12,
-    },
-    button: {
-      flex: 1,
-      padding: 16,
-      borderRadius: 12,
-      alignItems: 'center',
-    },
-    buttonPrimary: {
-      backgroundColor: colors.primary,
-    },
-    buttonSecondary: {
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    buttonText: {
-      fontSize: 16,
-      fontWeight: '600' as const,
-      color: '#FFFFFF',
-    },
-    buttonTextSecondary: {
-      color: colors.text,
-    },
     infoBox: {
       backgroundColor: colors.surface,
       borderRadius: 12,
@@ -189,61 +132,20 @@ export default function LanguageManagementScreen() {
     },
   });
 
-  const toggleLanguageStatus = (code: string) => {
-    const enabledCount = languages.filter(lang => lang.enabled).length;
-    const language = languages.find(lang => lang.code === code);
-    
-    if (language?.enabled && enabledCount === 1) {
-      Alert.alert('Error', 'At least one language must be enabled');
-      return;
-    }
-
-    setLanguages(languages.map(lang => 
-      lang.code === code ? { ...lang, enabled: !lang.enabled } : lang
-    ));
-  };
-
-  const deleteLanguage = (code: string) => {
-    const language = languages.find(lang => lang.code === code);
-    
-    if (language?.enabled) {
-      const enabledCount = languages.filter(lang => lang.enabled).length;
-      if (enabledCount === 1) {
-        Alert.alert('Error', 'Cannot delete the only enabled language');
-        return;
-      }
-    }
-
+  const toggleLanguageStatus = (code: Language) => {
     Alert.alert(
-      'Delete Language',
-      `Are you sure you want to delete ${language?.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setLanguages(languages.filter(lang => lang.code !== code));
-          },
-        },
-      ]
+      'Cannot Toggle',
+      'Languages shown here are already enabled in Admin Configuration. To disable a language, go to Admin Configuration > Language Settings.',
+      [{ text: 'OK' }]
     );
   };
 
-  const addLanguage = () => {
-    if (!newLanguage.code || !newLanguage.name || !newLanguage.nativeName) {
-      Alert.alert('Error', 'All fields are required');
-      return;
-    }
-
-    if (languages.some(lang => lang.code === newLanguage.code)) {
-      Alert.alert('Error', 'Language code already exists');
-      return;
-    }
-
-    setLanguages([...languages, { ...newLanguage, enabled: false }]);
-    setNewLanguage({ code: '', name: '', nativeName: '' });
-    setIsAddingLanguage(false);
+  const deleteLanguage = (code: Language) => {
+    Alert.alert(
+      'Cannot Delete',
+      'Languages shown here are managed in Admin Configuration. To remove a language, go to Admin Configuration > Language Settings.',
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -310,81 +212,12 @@ export default function LanguageManagementScreen() {
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
                 <Text style={{ fontWeight: '700' as const }}>Language Management:</Text>{' '}
-                Enable or disable languages available in the application. Users will only be able to select from enabled languages. At least one language must remain enabled.
+                This page displays languages that are currently enabled in Admin Configuration. These are the languages available to users throughout the application. To modify which languages are available, go to Admin Configuration → Language Settings.
               </Text>
             </View>
           </View>
 
-          {!isAddingLanguage ? (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => setIsAddingLanguage(true)}
-              testID="add-language-button"
-            >
-              <Plus size={20} color="#FFFFFF" />
-              <Text style={styles.addButtonText}>Add New Language</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Add New Language</Text>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Language Code</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newLanguage.code}
-                  onChangeText={(text) => setNewLanguage({ ...newLanguage, code: text })}
-                  placeholder="e.g., en, es, fr"
-                  placeholderTextColor={colors.textSecondary}
-                  testID="language-code-input"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Language Name (English)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newLanguage.name}
-                  onChangeText={(text) => setNewLanguage({ ...newLanguage, name: text })}
-                  placeholder="e.g., English, Spanish, French"
-                  placeholderTextColor={colors.textSecondary}
-                  testID="language-name-input"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Native Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newLanguage.nativeName}
-                  onChangeText={(text) => setNewLanguage({ ...newLanguage, nativeName: text })}
-                  placeholder="e.g., English, Español, Français"
-                  placeholderTextColor={colors.textSecondary}
-                  testID="language-native-name-input"
-                />
-              </View>
-
-              <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={[styles.button, styles.buttonSecondary]}
-                  onPress={() => {
-                    setIsAddingLanguage(false);
-                    setNewLanguage({ code: '', name: '', nativeName: '' });
-                  }}
-                  testID="cancel-add-language"
-                >
-                  <Text style={[styles.buttonText, styles.buttonTextSecondary]}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.buttonPrimary]}
-                  onPress={addLanguage}
-                  testID="save-language"
-                >
-                  <Text style={styles.buttonText}>Add Language</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
         </ScrollView>
       </View>
     </>
