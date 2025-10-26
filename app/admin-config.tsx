@@ -1,14 +1,16 @@
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { AVAILABLE_LANGUAGES, Language } from '@/constants/languages';
 import { Stack, useRouter } from 'expo-router';
-import { Chrome, Apple, Mail, Clock, Plus, Minus, Shield, ChevronRight, Languages, Globe } from 'lucide-react-native';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
+import { Chrome, Apple, Mail, Clock, Plus, Minus, Shield, ChevronRight, Globe, Trash2, ToggleLeft, ToggleRight } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
 
 export default function AdminConfigScreen() {
   const { colors } = usePreferences();
   const { config, toggleAuthMethod, setServiceMode, updateSessionConfig, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
   const router = useRouter();
+  const { user } = useAuth();
 
   const MIN_SESSION_TIME = 5 * 60 * 1000;
   const MAX_SESSION_TIME = 24 * 60 * 60 * 1000;
@@ -173,6 +175,64 @@ export default function AdminConfigScreen() {
       minWidth: 100,
       alignItems: 'center',
     },
+    languageItemCard: {
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    languageItemCardLast: {
+      borderBottomWidth: 0,
+    },
+    languageHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    languageMainInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      flex: 1,
+    },
+    languageControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    statusBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 8,
+    },
+    statusBadgeEnabled: {
+      backgroundColor: '#10B981',
+    },
+    statusBadgeDisabled: {
+      backgroundColor: colors.border,
+    },
+    statusText: {
+      fontSize: 10,
+      fontWeight: '600' as const,
+      color: '#FFFFFF',
+    },
+    iconButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    languageDetails: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 4,
+    },
+    detailText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
   });
 
   const formatTime = (ms: number) => {
@@ -197,6 +257,103 @@ export default function AdminConfigScreen() {
   const handleIdleTimeChange = (increment: boolean) => {
     const newIdleTime = adjustTime(config.sessionConfig.idleTime, increment, MIN_IDLE_TIME, MAX_IDLE_TIME);
     updateSessionConfig({ idleTime: newIdleTime });
+  };
+
+  const handleToggleLanguage = (langCode: Language) => {
+    const isCurrentlyEnabled = config.languageConfig.availableLanguages.includes(langCode);
+    
+    if (isCurrentlyEnabled) {
+      if (config.languageConfig.availableLanguages.length === 1) {
+        Alert.alert(
+          'Cannot Disable',
+          'At least one language must remain enabled.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      if (langCode === config.languageConfig.defaultLanguage) {
+        Alert.alert(
+          'Cannot Disable',
+          'Cannot disable the default language. Please set a different language as default first.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      Alert.alert(
+        'Disable Language',
+        `Are you sure you want to disable ${AVAILABLE_LANGUAGES[langCode].name}? Users will no longer be able to select this language.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Disable',
+            style: 'destructive',
+            onPress: () => toggleLanguageAvailability(langCode),
+          },
+        ]
+      );
+    } else {
+      toggleLanguageAvailability(langCode);
+    }
+  };
+
+  const handleDeleteLanguage = (langCode: Language) => {
+    const isCurrentlyEnabled = config.languageConfig.availableLanguages.includes(langCode);
+    
+    if (!isCurrentlyEnabled) {
+      Alert.alert(
+        'Language Disabled',
+        `${AVAILABLE_LANGUAGES[langCode].name} is already disabled. Enable it first if you want to use it again.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    if (config.languageConfig.availableLanguages.length === 1) {
+      Alert.alert(
+        'Cannot Remove',
+        'At least one language must remain enabled.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    if (langCode === config.languageConfig.defaultLanguage) {
+      Alert.alert(
+        'Cannot Remove',
+        'Cannot remove the default language. Please set a different language as default first.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    Alert.alert(
+      'Remove Language',
+      `Are you sure you want to remove ${AVAILABLE_LANGUAGES[langCode].name}? This will disable it for all users.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => toggleLanguageAvailability(langCode),
+        },
+      ]
+    );
+  };
+
+  const handleSetDefaultLanguage = (langCode: Language) => {
+    Alert.alert(
+      'Set Default Language',
+      `Set ${AVAILABLE_LANGUAGES[langCode].name} as the default language? This will be used for new users and as a fallback.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Set Default',
+          onPress: () => setDefaultLanguage(langCode),
+        },
+      ]
+    );
   };
 
   return (
@@ -543,12 +700,22 @@ export default function AdminConfigScreen() {
                   <View
                     key={langCode}
                     style={[
-                      styles.settingRow,
-                      isLast && styles.settingRowLast,
+                      styles.languageItemCard,
+                      isLast && styles.languageItemCardLast,
                     ]}
                   >
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={styles.languageHeader}>
+                      <View style={styles.languageMainInfo}>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            isEnabled ? styles.statusBadgeEnabled : styles.statusBadgeDisabled,
+                          ]}
+                        >
+                          <Text style={styles.statusText}>
+                            {isEnabled ? 'Enabled' : 'Disabled'}
+                          </Text>
+                        </View>
                         <Text style={styles.settingLabel}>
                           {langInfo.flag} {langInfo.name}
                         </Text>
@@ -567,35 +734,50 @@ export default function AdminConfigScreen() {
                           </View>
                         )}
                       </View>
-                      <Text style={styles.settingDescription}>
-                        {langInfo.nativeName} ({langCode})
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      {isEnabled && !isDefault && (
+                      <View style={styles.languageControls}>
+                        {isEnabled && !isDefault && (
+                          <TouchableOpacity
+                            onPress={() => handleSetDefaultLanguage(langCode)}
+                            style={{
+                              paddingHorizontal: 12,
+                              paddingVertical: 6,
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: colors.primary,
+                            }}
+                            testID={`set-default-${langCode}`}
+                          >
+                            <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' as const }}>
+                              Set Default
+                            </Text>
+                          </TouchableOpacity>
+                        )}
                         <TouchableOpacity
-                          onPress={() => setDefaultLanguage(langCode)}
-                          style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
-                            borderRadius: 8,
-                            borderWidth: 1,
-                            borderColor: colors.primary,
-                          }}
-                          testID={`set-default-${langCode}`}
+                          style={styles.iconButton}
+                          onPress={() => handleToggleLanguage(langCode)}
+                          testID={`toggle-language-${langCode}`}
                         >
-                          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' as const }}>
-                            Set Default
-                          </Text>
+                          {isEnabled ? (
+                            <ToggleRight size={20} color="#10B981" />
+                          ) : (
+                            <ToggleLeft size={20} color={colors.textSecondary} />
+                          )}
                         </TouchableOpacity>
-                      )}
-                      <Switch
-                        value={isEnabled}
-                        onValueChange={() => toggleLanguageAvailability(langCode)}
-                        trackColor={{ false: colors.border, true: colors.primary }}
-                        thumbColor="#FFFFFF"
-                        testID={`toggle-language-${langCode}`}
-                      />
+                        {!isDefault && (
+                          <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={() => handleDeleteLanguage(langCode)}
+                            testID={`delete-language-${langCode}`}
+                          >
+                            <Trash2 size={18} color="#EF4444" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                    <View style={styles.languageDetails}>
+                      <Text style={styles.detailText}>Code: {langCode}</Text>
+                      <Text style={styles.detailText}>•</Text>
+                      <Text style={styles.detailText}>Native: {langInfo.nativeName}</Text>
                     </View>
                   </View>
                 );
@@ -625,24 +807,6 @@ export default function AdminConfigScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>Profile Restrictions</Text>
                   <Text style={styles.settingDescription}>Configure username and avatar policies</Text>
-                </View>
-                <ChevronRight size={20} color={colors.textSecondary} />
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => router.push('/language-management')}
-              testID="language-management-link"
-              activeOpacity={0.7}
-            >
-              <View style={[styles.cardHeader, { marginBottom: 0 }]}>
-                <View style={styles.cardIcon}>
-                  <Languages size={20} color={colors.text} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>Language Management</Text>
-                  <Text style={styles.settingDescription}>View and manage enabled languages</Text>
                 </View>
                 <ChevronRight size={20} color={colors.textSecondary} />
               </View>
