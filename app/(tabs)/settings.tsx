@@ -16,7 +16,6 @@ import {
   Mail,
   AlertCircle,
   Languages,
-  Globe,
   Check,
   MapPin,
   Calendar,
@@ -27,6 +26,8 @@ import {
   ChevronRight,
   Users,
   Settings,
+  Lock,
+  Globe,
 } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal, Pressable, TextInput, Image } from 'react-native';
 import React from 'react';
@@ -980,17 +981,74 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.settingItem}
-                  onPress={() => router.push('/admin-config')}
-                  testID="admin-config-link"
+                  onPress={() => router.push('/configure-authentication')}
+                  testID="configure-auth-link"
                   activeOpacity={0.7}
                 >
                   <View style={styles.settingIcon}>
-                    <Settings size={20} color={colors.text} />
+                    <Lock size={20} color={colors.text} />
                   </View>
                   <View style={styles.settingContent}>
-                    <Text style={styles.settingTitle}>Admin Configuration</Text>
+                    <Text style={styles.settingTitle}>Configure Authentication</Text>
                     <Text style={styles.settingDescription}>
-                      Configure authentication, session, and profile settings
+                      Manage authentication methods and service modes
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => router.push('/session-configuration')}
+                  testID="session-config-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Clock size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>Session Configuration</Text>
+                    <Text style={styles.settingDescription}>
+                      Configure session timeout and auto-refresh settings
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => router.push('/language-settings')}
+                  testID="language-settings-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Globe size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>Language Settings</Text>
+                    <Text style={styles.settingDescription}>
+                      Manage available languages and default language
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => router.push('/profile-restrictions')}
+                  testID="profile-restrictions-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Shield size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>Profile Restrictions</Text>
+                    <Text style={styles.settingDescription}>
+                      Configure username and avatar policies
                     </Text>
                   </View>
                   <View style={styles.settingAction}>
