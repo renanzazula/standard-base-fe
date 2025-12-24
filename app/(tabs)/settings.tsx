@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
-import { useAdminConfig, DateFormat } from '@/contexts/AdminConfigContext';
+import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { useRouter } from 'expo-router';
 import {
   Moon,
@@ -8,24 +8,13 @@ import {
   LogOut,
   User,
   Clock,
-  Plus,
-  Minus,
   Shield,
-  Chrome,
-  Apple as AppleIcon,
-  Mail,
-  AlertCircle,
-  Languages,
   Check,
-  MapPin,
-  Calendar,
   Edit3,
-  Trash2,
   Camera,
   Menu,
   ChevronRight,
   Users,
-  Settings,
   Lock,
   Globe,
 } from 'lucide-react-native';
@@ -33,19 +22,16 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Mo
 import React from 'react';
 import { AVAILABLE_LANGUAGES, Language } from '@/constants/languages';
 import { useTranslation } from '@/hooks/useTranslation';
-import { TIMEZONES } from '@/constants/timezones';
+
 import * as ImagePicker from 'expo-image-picker';
 
 export default function SettingsScreen() {
-  const { colors, theme, toggleTheme, language, setLanguage, timezone, setTimezone, dateFormat, setDateFormat } = usePreferences();
+  const { colors, theme, toggleTheme, language, setLanguage } = usePreferences();
   const { user, logout, updateProfile } = useAuth();
-  const { config, updateSessionConfig, toggleAuthMethod, setServiceMode, toggleLanguageAvailability, setDefaultLanguage, updateRegionalConfig, updateProfileConfig } = useAdminConfig();
+  const { config } = useAdminConfig();
   const router = useRouter();
   const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
-  const [timezoneModalVisible, setTimezoneModalVisible] = React.useState(false);
-  const [dateFormatModalVisible, setDateFormatModalVisible] = React.useState(false);
-  const [adminTimezoneModalVisible, setAdminTimezoneModalVisible] = React.useState(false);
-  const [adminDateFormatModalVisible, setAdminDateFormatModalVisible] = React.useState(false);
+
   const [usernameModalVisible, setUsernameModalVisible] = React.useState(false);
   const [usernameInput, setUsernameInput] = React.useState('');
   const { t } = useTranslation();
@@ -54,15 +40,7 @@ export default function SettingsScreen() {
     return null;
   }
 
-  const updateAuthMethod = (method: 'google' | 'apple' | 'manual') => {
-    console.log(`[Settings] Updating auth method: ${method}`);
-    toggleAuthMethod(method);
-  };
 
-  const updateServiceMode = (method: 'google' | 'apple' | 'manual', mode: 'mock' | 'real') => {
-    console.log(`[Settings] Updating service mode for ${method}: ${mode}`);
-    setServiceMode(method, mode);
-  };
 
   const handleTakePhoto = async () => {
     console.log('[Settings] Requesting camera access');
@@ -129,24 +107,7 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleRemoveAvatar = () => {
-    Alert.alert(
-      t('settings.removeAvatar'),
-      'Are you sure you want to remove your avatar?',
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.removeAvatar'),
-          style: 'destructive',
-          onPress: async () => {
-            console.log('[Settings] Removing avatar');
-            await updateProfile({ avatar: undefined });
-            Alert.alert(t('common.success'), t('settings.avatarRemoved'));
-          },
-        },
-      ]
-    );
-  };
+
 
   const handleUpdateUsername = () => {
     const trimmed = usernameInput.trim();
@@ -173,35 +134,7 @@ export default function SettingsScreen() {
     Alert.alert(t('common.success'), t('settings.usernameUpdated'));
   };
 
-  const MIN_SESSION_TIME = 5 * 60 * 1000;
-  const MAX_SESSION_TIME = 24 * 60 * 60 * 1000;
-  const MIN_IDLE_TIME = 5 * 60 * 1000;
-  const MAX_IDLE_TIME = 24 * 60 * 60 * 1000;
-  const TIME_STEP = 5 * 60 * 1000;
 
-  const formatTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    if (remainingMinutes === 0) return `${hours} hr`;
-    return `${hours}h ${remainingMinutes}m`;
-  };
-
-  const adjustTime = (currentTime: number, increment: boolean, min: number, max: number) => {
-    const newTime = increment ? currentTime + TIME_STEP : currentTime - TIME_STEP;
-    return Math.max(min, Math.min(max, newTime));
-  };
-
-  const handleMaxTimeChange = (increment: boolean) => {
-    const newMaxTime = adjustTime(config.sessionConfig.maxTime, increment, MIN_SESSION_TIME, MAX_SESSION_TIME);
-    updateSessionConfig({ maxTime: newMaxTime });
-  };
-
-  const handleIdleTimeChange = (increment: boolean) => {
-    const newIdleTime = adjustTime(config.sessionConfig.idleTime, increment, MIN_IDLE_TIME, MAX_IDLE_TIME);
-    updateSessionConfig({ idleTime: newIdleTime });
-  };
 
   const handleLogout = () => {
     Alert.alert(t('auth.logout'), t('auth.logoutConfirm'), [
@@ -846,10 +779,11 @@ export default function SettingsScreen() {
               activeOpacity={0.7}
               testID="profile-avatar-button"
             >
-              {user?.avatar && user.avatar.trim() !== '' ? (
+              {user?.avatar && user.avatar.trim() !== '' && user.avatar.startsWith('file://') ? (
                 <Image
                   source={{ uri: user.avatar }}
                   style={styles.cardHeaderAvatar}
+                  defaultSource={require('@/assets/images/icon.png')}
                 />
               ) : (
                 <View style={styles.cardIconContainer}>

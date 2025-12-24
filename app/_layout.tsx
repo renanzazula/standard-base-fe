@@ -40,20 +40,20 @@ function RootLayoutNav() {
       console.log('[RootLayout] User logged out, clearing preferences');
       clearUserPreferences();
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, user, loadUserPreferences, clearUserPreferences, config.languageConfig.defaultLanguage, config.regionalConfig.defaultTimezone, config.regionalConfig.defaultDateFormat]);
 
   useEffect(() => {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === undefined;
-    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management' || segments[0] === 'user-management' || segments[0] === 'profile-restrictions' || segments[0] === 'language-management' || segments[0] === 'configure-authentication' || segments[0] === 'session-configuration' || segments[0] === 'language-settings';
+    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management' || segments[0] === 'user-management' || segments[0] === 'profile-restrictions' || segments[0] === 'configure-authentication' || segments[0] === 'session-configuration' || segments[0] === 'language-settings';
 
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/login');
     } else if (isAuthenticated && !inAuthGroup && !inProtectedRoute) {
       router.replace('/(tabs)/home');
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, router]);
 
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
