@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { LogIn, Mail, Lock, Chrome, Apple as AppleIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { ApiError } from '@/services/api';
 import {
   View,
   Text,
@@ -45,7 +46,9 @@ export default function LoginScreen() {
         Alert.alert(t('auth.loginFailed'), t('auth.invalidCredentials'));
       }
     } catch (error) {
-      if (error instanceof Error && error.message === 'User account is disabled') {
+      if (error instanceof ApiError) {
+        Alert.alert(t('auth.loginFailed'), error.message);
+      } else if (error instanceof Error && error.message === 'User account is disabled') {
         Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
         Alert.alert(t('common.error'), t('auth.loginError'));
@@ -65,10 +68,12 @@ export default function LoginScreen() {
         Alert.alert(t('auth.loginFailed'), 'Google login failed');
       }
     } catch (error) {
-      if (error instanceof Error && error.message === 'User account is disabled') {
+      if (error instanceof ApiError) {
+        Alert.alert(t('auth.loginFailed'), error.message);
+      } else if (error instanceof Error && error.message === 'User account is disabled') {
         Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
-        Alert.alert(t('common.error'), 'An error occurred during Google login');
+        Alert.alert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Google login');
       }
     } finally {
       setIsLoading(false);
@@ -85,10 +90,12 @@ export default function LoginScreen() {
         Alert.alert(t('auth.loginFailed'), 'Apple login failed');
       }
     } catch (error) {
-      if (error instanceof Error && error.message === 'User account is disabled') {
+      if (error instanceof ApiError) {
+        Alert.alert(t('auth.loginFailed'), error.message);
+      } else if (error instanceof Error && error.message === 'User account is disabled') {
         Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
-        Alert.alert(t('common.error'), 'An error occurred during Apple login');
+        Alert.alert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Apple login');
       }
     } finally {
       setIsLoading(false);

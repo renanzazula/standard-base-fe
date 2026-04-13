@@ -4,6 +4,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { useRouter } from 'expo-router';
 import { UserPlus, Mail, Lock, User, Chrome, Apple as AppleIcon } from 'lucide-react-native';
 import { useState } from 'react';
+import { ApiError } from '@/services/api';
 import {
   View,
   Text,
@@ -41,8 +42,8 @@ export default function SignUpScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
 
@@ -55,7 +56,11 @@ export default function SignUpScreen() {
         Alert.alert('Sign Up Failed', 'Unable to create account');
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during sign up');
+      if (error instanceof ApiError) {
+        Alert.alert('Sign Up Failed', error.message);
+      } else {
+        Alert.alert('Error', 'An error occurred during sign up');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +76,11 @@ export default function SignUpScreen() {
         Alert.alert('Sign Up Failed', 'Google sign up failed');
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during Google sign up');
+      if (error instanceof ApiError) {
+        Alert.alert('Sign Up Failed', error.message);
+      } else {
+        Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred during Google sign up');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +96,11 @@ export default function SignUpScreen() {
         Alert.alert('Sign Up Failed', 'Apple sign up failed');
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during Apple sign up');
+      if (error instanceof ApiError) {
+        Alert.alert('Sign Up Failed', error.message);
+      } else {
+        Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred during Apple sign up');
+      }
     } finally {
       setIsLoading(false);
     }
