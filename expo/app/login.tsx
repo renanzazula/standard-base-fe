@@ -243,25 +243,6 @@ export default function LoginScreen() {
       fontWeight: '600' as const,
       marginLeft: 4,
     },
-    debugInfo: {
-      marginTop: 24,
-      padding: 16,
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    debugTitle: {
-      fontSize: 14,
-      fontWeight: '700' as const,
-      color: colors.text,
-      marginBottom: 8,
-    },
-    debugText: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      lineHeight: 18,
-    },
   });
 
   const showSocialButtons =
@@ -395,17 +376,6 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.debugInfo}>
-            <Text style={styles.debugTitle}>{t('auth.testCredentials')}</Text>
-            <Text style={styles.debugText}>
-              {t('auth.standardUser')}:{'\n'}
-              {t('auth.email')}: user@example.com{'\n'}
-              {t('auth.password')}: password123{'\n\n'}
-              {t('auth.adminUser')}:{'\n'}
-              {t('auth.email')}: admin@example.com{'\n'}
-              {t('auth.password')}: admin123
-            </Text>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

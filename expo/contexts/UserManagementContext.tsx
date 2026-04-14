@@ -1,7 +1,8 @@
 import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { User } from './AuthContext';
+import * as adminUsersApi from '@/services/adminUsers';
+import type { UserSummary } from '@/services/adminUsers';
 
 export type UserStatus = 'active' | 'disabled';
 
@@ -11,65 +12,19 @@ export interface ManagedUser extends User {
   lastLogin?: string;
 }
 
-const USERS_STORAGE_KEY = '@managed_users';
-
-const mockManagedUsers: ManagedUser[] = [
-  {
-    id: '1',
-    email: 'user@example.com',
-    name: 'Standard User',
-    username: 'standarduser',
-    role: 'standard',
+function mapToManagedUser(s: UserSummary): ManagedUser {
+  return {
+    id: s.userId,
+    email: s.email,
+    name: s.displayName,
+    username: s.username,
+    role: s.role.toLowerCase() as 'admin' | 'standard',
     provider: 'manual',
-    status: 'active',
-    createdAt: '2025-01-15T10:30:00Z',
-    lastLogin: '2025-10-16T08:45:00Z',
-  },
-  {
-    id: '2',
-    email: 'admin@example.com',
-    name: 'Admin User',
-    username: 'adminuser',
-    role: 'admin',
-    provider: 'manual',
-    status: 'active',
-    createdAt: '2025-01-10T09:00:00Z',
-    lastLogin: '2025-10-16T09:15:00Z',
-  },
-  {
-    id: 'google-mock-1',
-    email: 'google.user@example.com',
-    name: 'Google User',
-    username: 'googleuser',
-    role: 'standard',
-    provider: 'google',
-    status: 'active',
-    createdAt: '2025-02-01T14:20:00Z',
-    lastLogin: '2025-10-15T16:30:00Z',
-  },
-  {
-    id: 'apple-mock-1',
-    email: 'apple.user@example.com',
-    name: 'Apple User',
-    username: 'appleuser',
-    role: 'standard',
-    provider: 'apple',
-    status: 'disabled',
-    createdAt: '2025-03-10T11:00:00Z',
-    lastLogin: '2025-10-10T10:00:00Z',
-  },
-  {
-    id: '5',
-    email: 'john.doe@example.com',
-    name: 'John Doe',
-    username: 'johndoe',
-    role: 'standard',
-    provider: 'manual',
-    status: 'active',
-    createdAt: '2025-04-05T13:15:00Z',
-    lastLogin: '2025-10-14T12:00:00Z',
-  },
-];
+    status: s.status.toLowerCase() as UserStatus,
+    createdAt: s.createdAt ?? new Date().toISOString(),
+    lastLogin: s.lastLoginAt,
+  };
+}
 
 export const [UserManagementProvider, useUserManagement] = createContextHook(() => {
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -81,63 +36,52 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
 
   const loadUsers = async () => {
     try {
-      const stored = await AsyncStorage.getItem(USERS_STORAGE_KEY);
-      if (stored) {
-        const parsedUsers = JSON.parse(stored);
-        console.log('[UserManagement] Loaded users from storage:', parsedUsers.length);
-        setUsers(parsedUsers);
-      } else {
-        console.log('[UserManagement] No stored users, using mock data');
-        setUsers(mockManagedUsers);
-        await AsyncStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(mockManagedUsers));
-      }
+      const result = await adminUsersApi.listUsers();
+      setUsers(result.users.map(mapToManagedUser));
     } catch (error) {
       console.error('[UserManagement] Failed to load users:', error);
-      setUsers(mockManagedUsers);
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveUsers = async (updatedUsers: ManagedUser[]) => {
+  const toggleUserStatus = async (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
+    const newStatus = user.status === 'active' ? 'DISABLED' : 'ACTIVE';
     try {
-      await AsyncStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-      setUsers(updatedUsers);
-      console.log('[UserManagement] Users saved successfully');
+      const updated = await adminUsersApi.updateUser(userId, { status: newStatus });
+      setUsers((prev) => prev.map((u) => (u.id === userId ? mapToManagedUser(updated) : u)));
     } catch (error) {
-      console.error('[UserManagement] Failed to save users:', error);
+      console.error('[UserManagement] Failed to toggle user status:', error);
     }
   };
 
-  const toggleUserStatus = async (userId: string) => {
-    const updatedUsers = users.map((user) =>
-      user.id === userId
-        ? { ...user, status: user.status === 'active' ? 'disabled' as UserStatus : 'active' as UserStatus }
-        : user
-    );
-    await saveUsers(updatedUsers);
-  };
-
   const deleteUser = async (userId: string) => {
-    const updatedUsers = users.filter((user) => user.id !== userId);
-    await saveUsers(updatedUsers);
+    try {
+      await adminUsersApi.deleteUser(userId);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } catch (error) {
+      console.error('[UserManagement] Failed to delete user:', error);
+    }
   };
 
   const updateUser = async (userId: string, updates: Partial<ManagedUser>) => {
-    const updatedUsers = users.map((user) =>
-      user.id === userId ? { ...user, ...updates } : user
-    );
-    await saveUsers(updatedUsers);
+    const body: { role?: 'STANDARD' | 'ADMIN'; status?: 'ACTIVE' | 'DISABLED' } = {};
+    if (updates.role) body.role = updates.role.toUpperCase() as 'STANDARD' | 'ADMIN';
+    if (updates.status) body.status = updates.status.toUpperCase() as 'ACTIVE' | 'DISABLED';
+    try {
+      const updated = await adminUsersApi.updateUser(userId, body);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? mapToManagedUser(updated) : u)));
+    } catch (error) {
+      console.error('[UserManagement] Failed to update user:', error);
+    }
   };
 
-  const addUser = async (userData: Omit<ManagedUser, 'id' | 'createdAt'>) => {
-    const newUser: ManagedUser = {
-      ...userData,
-      id: `user-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    const updatedUsers = [...users, newUser];
-    await saveUsers(updatedUsers);
+  const addUser = async (_userData: Omit<ManagedUser, 'id' | 'createdAt'>) => {
+    // Not yet implemented — requires POST /api/admin/users on the backend
+    console.warn('[UserManagement] addUser is not yet supported by the backend');
   };
 
   const getUserById = (userId: string): ManagedUser | undefined => {
@@ -158,7 +102,7 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
       (user) =>
         user.name.toLowerCase().includes(lowerQuery) ||
         user.email.toLowerCase().includes(lowerQuery) ||
-        user.username?.toLowerCase().includes(lowerQuery)
+        user.username?.toLowerCase().includes(lowerQuery),
     );
   };
 

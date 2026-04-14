@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } f
 
 export default function AdminConfigScreen() {
   const { colors } = usePreferences();
-  const { config, toggleAuthMethod, setServiceMode, updateSessionConfig, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
+  const { config, toggleAuthMethod, updateSessionConfig, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -82,33 +82,6 @@ export default function AdminConfigScreen() {
       fontSize: 12,
       color: colors.textSecondary,
       marginTop: 2,
-    },
-    modeButtons: {
-      flexDirection: 'row',
-      gap: 8,
-      marginTop: 12,
-    },
-    modeButton: {
-      flex: 1,
-      paddingVertical: 8,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-    },
-    modeButtonActive: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    modeButtonText: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: colors.text,
-    },
-    modeButtonTextActive: {
-      color: '#FFFFFF',
     },
     sessionCard: {
       backgroundColor: colors.card,
@@ -393,47 +366,6 @@ export default function AdminConfigScreen() {
                 />
               </View>
 
-              {config.enabledAuthMethods.google && (
-                <View style={[styles.settingRow, styles.settingRowLast]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.settingLabel}>Service Mode</Text>
-                    <View style={styles.modeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.google === 'mock' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('google', 'mock')}
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.google === 'mock' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Mock
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.google === 'real' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('google', 'real')}
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.google === 'real' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Real
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              )}
             </View>
 
             <View style={styles.card}>
@@ -457,47 +389,6 @@ export default function AdminConfigScreen() {
                 />
               </View>
 
-              {config.enabledAuthMethods.apple && (
-                <View style={[styles.settingRow, styles.settingRowLast]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.settingLabel}>Service Mode</Text>
-                    <View style={styles.modeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.apple === 'mock' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('apple', 'mock')}
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.apple === 'mock' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Mock
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.apple === 'real' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('apple', 'real')}
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.apple === 'real' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Real
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              )}
             </View>
 
             <View style={styles.card}>
@@ -523,47 +414,6 @@ export default function AdminConfigScreen() {
                 />
               </View>
 
-              {config.enabledAuthMethods.manual && (
-                <View style={[styles.settingRow, styles.settingRowLast]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.settingLabel}>Service Mode</Text>
-                    <View style={styles.modeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.manual === 'mock' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('manual', 'mock')}
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.manual === 'mock' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Mock
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.manual === 'real' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('manual', 'real')}
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.manual === 'real' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Real
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              )}
             </View>
           </View>
 

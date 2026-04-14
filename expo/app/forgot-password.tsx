@@ -150,18 +150,6 @@ export default function ForgotPasswordScreen() {
       color: '#FFFFFF',
       marginLeft: 8,
     },
-    infoBox: {
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    infoText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      lineHeight: 20,
-    },
   });
 
   return (
@@ -228,12 +216,6 @@ export default function ForgotPasswordScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>
-              Note: In mock mode, password reset emails are simulated. Check the console for reset
-              token information.
-            </Text>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

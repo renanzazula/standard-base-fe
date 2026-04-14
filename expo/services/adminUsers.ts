@@ -1,0 +1,41 @@
+import { apiFetch } from './api';
+
+export interface UserSummary {
+  userId: string;
+  email: string;
+  displayName: string;
+  username?: string;
+  role: 'STANDARD' | 'ADMIN';
+  status: 'ACTIVE' | 'DISABLED';
+  createdAt?: string;
+  lastLoginAt?: string;
+}
+
+export interface UserListResponse {
+  users: UserSummary[];
+  total: number;
+}
+
+export function listUsers(params?: {
+  role?: string;
+  status?: string;
+  search?: string;
+}): Promise<UserListResponse> {
+  const query = new URLSearchParams();
+  if (params?.role) query.set('role', params.role);
+  if (params?.status) query.set('status', params.status);
+  if (params?.search) query.set('search', params.search);
+  const qs = query.toString() ? `?${query}` : '';
+  return apiFetch(`/api/admin/users${qs}`);
+}
+
+export function updateUser(
+  userId: string,
+  body: { role?: 'STANDARD' | 'ADMIN'; status?: 'ACTIVE' | 'DISABLED' },
+): Promise<UserSummary> {
+  return apiFetch(`/api/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) });
+}
+
+export function deleteUser(userId: string): Promise<void> {
+  return apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+}

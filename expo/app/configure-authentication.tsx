@@ -2,11 +2,11 @@ import { useAdminConfig } from '@/contexts/AdminConfigContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { Stack } from 'expo-router';
 import { Chrome, Apple, Mail } from 'lucide-react-native';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
 
 export default function ConfigureAuthenticationScreen() {
   const { colors } = usePreferences();
-  const { config, toggleAuthMethod, setServiceMode } = useAdminConfig();
+  const { config, toggleAuthMethod } = useAdminConfig();
 
   const styles = StyleSheet.create({
     container: {
@@ -57,11 +57,6 @@ export default function ConfigureAuthenticationScreen() {
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    settingRowLast: {
-      borderBottomWidth: 0,
     },
     settingLabel: {
       fontSize: 14,
@@ -72,33 +67,6 @@ export default function ConfigureAuthenticationScreen() {
       fontSize: 12,
       color: colors.textSecondary,
       marginTop: 2,
-    },
-    modeButtons: {
-      flexDirection: 'row',
-      gap: 8,
-      marginTop: 12,
-    },
-    modeButton: {
-      flex: 1,
-      paddingVertical: 8,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-    },
-    modeButtonActive: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    modeButtonText: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: colors.text,
-    },
-    modeButtonTextActive: {
-      color: '#FFFFFF',
     },
     infoBox: {
       backgroundColor: colors.surface,
@@ -152,50 +120,6 @@ export default function ConfigureAuthenticationScreen() {
                   testID="google-auth-toggle"
                 />
               </View>
-
-              {config.enabledAuthMethods.google && (
-                <View style={[styles.settingRow, styles.settingRowLast]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.settingLabel}>Service Mode</Text>
-                    <View style={styles.modeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.google === 'mock' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('google', 'mock')}
-                        testID="google-mode-mock"
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.google === 'mock' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Mock
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.google === 'real' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('google', 'real')}
-                        testID="google-mode-real"
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.google === 'real' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Real
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              )}
             </View>
 
             <View style={styles.card}>
@@ -219,50 +143,6 @@ export default function ConfigureAuthenticationScreen() {
                   testID="apple-auth-toggle"
                 />
               </View>
-
-              {config.enabledAuthMethods.apple && (
-                <View style={[styles.settingRow, styles.settingRowLast]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.settingLabel}>Service Mode</Text>
-                    <View style={styles.modeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.apple === 'mock' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('apple', 'mock')}
-                        testID="apple-mode-mock"
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.apple === 'mock' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Mock
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.apple === 'real' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('apple', 'real')}
-                        testID="apple-mode-real"
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.apple === 'real' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Real
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              )}
             </View>
 
             <View style={styles.card}>
@@ -288,56 +168,12 @@ export default function ConfigureAuthenticationScreen() {
                   testID="manual-auth-toggle"
                 />
               </View>
-
-              {config.enabledAuthMethods.manual && (
-                <View style={[styles.settingRow, styles.settingRowLast]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.settingLabel}>Service Mode</Text>
-                    <View style={styles.modeButtons}>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.manual === 'mock' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('manual', 'mock')}
-                        testID="manual-mode-mock"
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.manual === 'mock' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Mock
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.modeButton,
-                          config.serviceModes.manual === 'real' && styles.modeButtonActive,
-                        ]}
-                        onPress={() => setServiceMode('manual', 'real')}
-                        testID="manual-mode-real"
-                      >
-                        <Text
-                          style={[
-                            styles.modeButtonText,
-                            config.serviceModes.manual === 'real' && styles.modeButtonTextActive,
-                          ]}
-                        >
-                          Real
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              )}
             </View>
 
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
                 <Text style={{ fontWeight: '700' as const }}>Authentication Methods:</Text>{' '}
-                Enable or disable different authentication methods for your app. Each method can be configured to use mock data for testing or real services for production. At least one authentication method must remain enabled.
+                Enable or disable different authentication methods for your app. At least one authentication method must remain enabled.
               </Text>
             </View>
           </View>

@@ -1,10 +1,10 @@
 import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Language } from '@/constants/languages';
+import * as adminConfigApi from '@/services/adminConfig';
+import type { AppConfigResponse } from '@/services/adminConfig';
 
 export type AuthMethod = 'google' | 'apple' | 'manual';
-export type ServiceMode = 'mock' | 'real';
 
 export type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 
@@ -22,11 +22,6 @@ export interface AdminConfig {
     google: boolean;
     apple: boolean;
     manual: boolean;
-  };
-  serviceModes: {
-    google: ServiceMode;
-    apple: ServiceMode;
-    manual: ServiceMode;
   };
   sessionConfig: {
     maxTime: number;
@@ -54,14 +49,9 @@ export interface AdminConfig {
 
 const DEFAULT_CONFIG: AdminConfig = {
   enabledAuthMethods: {
-    google: true,
-    apple: true,
+    google: false,
+    apple: false,
     manual: true,
-  },
-  serviceModes: {
-    google: 'mock',
-    apple: 'mock',
-    manual: 'mock',
   },
   sessionConfig: {
     maxTime: 30 * 60 * 1000,
@@ -93,7 +83,44 @@ const DEFAULT_CONFIG: AdminConfig = {
   },
 };
 
-const STORAGE_KEY = '@admin_config';
+function mapConfigResponse(response: AppConfigResponse): AdminConfig {
+  return {
+    enabledAuthMethods: {
+      google: response.googleAuthEnabled,
+      apple: response.appleAuthEnabled,
+      manual: response.emailAuthEnabled,
+    },
+    sessionConfig: {
+      maxTime: response.sessionDurationSeconds * 1000,
+      idleTime: response.refreshTokenDurationSeconds * 1000,
+      autoRefresh: true,
+    },
+    languageConfig: {
+      availableLanguages: response.availableLanguages as Language[],
+      defaultLanguage: response.defaultLanguage as Language,
+    },
+    regionalConfig: {
+      defaultTimezone: response.defaultTimezone,
+      defaultDateFormat: response.defaultDateFormat as DateFormat,
+    },
+    profileConfig: {
+      usernameMinLength: response.usernameMinLength,
+      usernameMaxLength: response.usernameMaxLength,
+      avatarMaxSizeMB: response.avatarUploadEnabled ? 5 : 0,
+      allowedAvatarFormats: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
+    },
+    navigationConfig: {
+      tabs: response.navigationTabs.map((t) => ({
+        id: t.tabId,
+        name: t.label,
+        enabled: t.enabled,
+        icon: t.iconName,
+        order: t.sortOrder,
+        isSystem: t.isSystem,
+      })),
+    },
+  };
+}
 
 export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
   const [config, setConfig] = useState<AdminConfig>(DEFAULT_CONFIG);
@@ -105,111 +132,43 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
 
   const loadConfig = async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      console.log('[AdminConfig] Stored config raw:', stored);
-      if (stored) {
-        let parsedConfig;
-        try {
-          parsedConfig = JSON.parse(stored);
-        } catch (parseError) {
-          console.error('[AdminConfig] JSON parse error:', parseError);
-          console.error('[AdminConfig] Invalid JSON string:', stored);
-          await AsyncStorage.removeItem(STORAGE_KEY);
-          setConfig(DEFAULT_CONFIG);
-          setIsLoading(false);
-          return;
-        }
-        const storedTabs = parsedConfig.navigationConfig?.tabs || [];
-        const defaultTabs = DEFAULT_CONFIG.navigationConfig.tabs;
-        
-        const mergedTabs = defaultTabs.map(defaultTab => {
-          const storedTab = storedTabs.find((t: NavigationTab) => t.id === defaultTab.id);
-          return storedTab || defaultTab;
-        });
-        
-        const customTabs = storedTabs.filter(
-          (storedTab: NavigationTab) => !defaultTabs.find(dt => dt.id === storedTab.id)
-        );
-        
-        const allTabs = [...mergedTabs, ...customTabs];
-        
-        console.log('[AdminConfig] Merging tabs - Default:', defaultTabs.length, 'Stored:', storedTabs.length, 'Merged:', allTabs.length);
-        
-        const mergedConfig = {
-          ...DEFAULT_CONFIG,
-          ...parsedConfig,
-          languageConfig: {
-            ...DEFAULT_CONFIG.languageConfig,
-            ...(parsedConfig.languageConfig || {}),
-            availableLanguages: parsedConfig.languageConfig?.availableLanguages || DEFAULT_CONFIG.languageConfig.availableLanguages,
-            defaultLanguage: parsedConfig.languageConfig?.defaultLanguage || DEFAULT_CONFIG.languageConfig.defaultLanguage,
-          },
-          navigationConfig: {
-            ...DEFAULT_CONFIG.navigationConfig,
-            ...(parsedConfig.navigationConfig || {}),
-            tabs: allTabs,
-          },
-        };
-        console.log('[AdminConfig] Loaded config:', mergedConfig);
-        setConfig(mergedConfig);
-      } else {
-        console.log('[AdminConfig] No stored config, using defaults');
-        setConfig(DEFAULT_CONFIG);
-      }
+      const response = await adminConfigApi.getAppConfig();
+      setConfig(mapConfigResponse(response));
     } catch (error) {
-      console.error('[AdminConfig] Failed to load admin config:', error);
+      console.error('[AdminConfig] Failed to load config from backend, using defaults:', error);
       setConfig(DEFAULT_CONFIG);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveConfig = async (newConfig: AdminConfig) => {
+  const toggleAuthMethod = async (method: AuthMethod) => {
     try {
-      const configString = JSON.stringify(newConfig);
-      console.log('[AdminConfig] Saving config:', configString);
-      await AsyncStorage.setItem(STORAGE_KEY, configString);
-      setConfig(newConfig);
-      console.log('[AdminConfig] Config saved successfully');
+      const response = await adminConfigApi.updateAuthMethods({
+        emailAuthEnabled: method === 'manual' ? !config.enabledAuthMethods.manual : config.enabledAuthMethods.manual,
+        googleAuthEnabled: method === 'google' ? !config.enabledAuthMethods.google : config.enabledAuthMethods.google,
+        appleAuthEnabled: method === 'apple' ? !config.enabledAuthMethods.apple : config.enabledAuthMethods.apple,
+      });
+      setConfig(mapConfigResponse(response));
     } catch (error) {
-      console.error('[AdminConfig] Failed to save admin config:', error);
+      console.error('[AdminConfig] Failed to toggle auth method:', error);
     }
   };
 
-  const toggleAuthMethod = (method: AuthMethod) => {
-    const newConfig = {
-      ...config,
-      enabledAuthMethods: {
-        ...config.enabledAuthMethods,
-        [method]: !config.enabledAuthMethods[method],
-      },
-    };
-    saveConfig(newConfig);
+  const updateSessionConfig = async (sessionConfig: Partial<AdminConfig['sessionConfig']>) => {
+    try {
+      const merged = { ...config.sessionConfig, ...sessionConfig };
+      const response = await adminConfigApi.updateSessionPolicy({
+        sessionDurationSeconds: Math.round(merged.maxTime / 1000),
+        refreshTokenDurationSeconds: Math.round(merged.idleTime / 1000),
+      });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to update session config:', error);
+    }
   };
 
-  const setServiceMode = (method: AuthMethod, mode: ServiceMode) => {
-    const newConfig = {
-      ...config,
-      serviceModes: {
-        ...config.serviceModes,
-        [method]: mode,
-      },
-    };
-    saveConfig(newConfig);
-  };
-
-  const updateSessionConfig = (sessionConfig: Partial<AdminConfig['sessionConfig']>) => {
-    const newConfig = {
-      ...config,
-      sessionConfig: {
-        ...config.sessionConfig,
-        ...sessionConfig,
-      },
-    };
-    saveConfig(newConfig);
-  };
-
-  const toggleLanguageAvailability = (language: Language) => {
+  const toggleLanguageAvailability = async (language: Language) => {
     const currentLanguages = config.languageConfig.availableLanguages;
     const isAvailable = currentLanguages.includes(language);
 
@@ -228,146 +187,125 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
       newLanguages = [...currentLanguages, language];
     }
 
-    const newConfig = {
-      ...config,
-      languageConfig: {
-        ...config.languageConfig,
-        availableLanguages: newLanguages,
-      },
-    };
-    saveConfig(newConfig);
+    try {
+      const response = await adminConfigApi.updateLanguagePolicy({ availableLanguages: newLanguages });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to toggle language availability:', error);
+    }
   };
 
-  const setDefaultLanguage = (language: Language) => {
+  const setDefaultLanguage = async (language: Language) => {
     if (!config.languageConfig.availableLanguages.includes(language)) {
       console.warn('Cannot set unavailable language as default');
       return;
     }
-    const newConfig = {
-      ...config,
-      languageConfig: {
-        ...config.languageConfig,
-        defaultLanguage: language,
-      },
-    };
-    saveConfig(newConfig);
+    try {
+      const response = await adminConfigApi.updateLanguagePolicy({ defaultLanguage: language });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to set default language:', error);
+    }
   };
 
-  const updateRegionalConfig = (regionalConfig: Partial<AdminConfig['regionalConfig']>) => {
-    const newConfig = {
-      ...config,
-      regionalConfig: {
-        ...config.regionalConfig,
-        ...regionalConfig,
-      },
-    };
-    saveConfig(newConfig);
+  const updateRegionalConfig = async (regionalConfig: Partial<AdminConfig['regionalConfig']>) => {
+    try {
+      const response = await adminConfigApi.updateRegionalPolicy(regionalConfig);
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to update regional config:', error);
+    }
   };
 
-  const updateProfileConfig = (profileConfig: Partial<AdminConfig['profileConfig']>) => {
-    const newConfig = {
-      ...config,
-      profileConfig: {
-        ...config.profileConfig,
-        ...profileConfig,
-      },
-    };
-    saveConfig(newConfig);
+  const updateProfileConfig = async (profileConfig: Partial<AdminConfig['profileConfig']>) => {
+    try {
+      const response = await adminConfigApi.updateProfilePolicy({
+        usernameMinLength: profileConfig.usernameMinLength,
+        usernameMaxLength: profileConfig.usernameMaxLength,
+        avatarUploadEnabled:
+          profileConfig.avatarMaxSizeMB !== undefined ? profileConfig.avatarMaxSizeMB > 0 : undefined,
+      });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to update profile config:', error);
+    }
   };
 
-  const toggleTabEnabled = (tabId: string) => {
-    const newTabs = config.navigationConfig.tabs.map((tab) =>
-      tab.id === tabId ? { ...tab, enabled: !tab.enabled } : tab
-    );
-    const newConfig = {
-      ...config,
-      navigationConfig: {
-        ...config.navigationConfig,
-        tabs: newTabs,
-      },
-    };
-    saveConfig(newConfig);
+  const toggleTabEnabled = async (tabId: string) => {
+    const tab = config.navigationConfig.tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    try {
+      const response = await adminConfigApi.updateNavigationTabs({
+        tabs: [{ tabId, enabled: !tab.enabled }],
+      });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to toggle tab enabled:', error);
+    }
   };
 
-  const updateTabName = (tabId: string, name: string) => {
-    const newTabs = config.navigationConfig.tabs.map((tab) =>
-      tab.id === tabId ? { ...tab, name } : tab
-    );
-    const newConfig = {
-      ...config,
-      navigationConfig: {
-        ...config.navigationConfig,
-        tabs: newTabs,
-      },
-    };
-    saveConfig(newConfig);
+  const updateTabName = async (tabId: string, name: string) => {
+    try {
+      const response = await adminConfigApi.updateNavigationTabs({
+        tabs: [{ tabId, label: name }],
+      });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to update tab name:', error);
+    }
   };
 
-  const addCustomTab = (tab: Omit<NavigationTab, 'isSystem' | 'order'>) => {
-    const maxOrder = Math.max(...config.navigationConfig.tabs.map((t) => t.order));
-    const newTab: NavigationTab = {
-      ...tab,
-      isSystem: false,
-      order: maxOrder + 1,
-    };
-    const newConfig = {
-      ...config,
-      navigationConfig: {
-        ...config.navigationConfig,
-        tabs: [...config.navigationConfig.tabs, newTab],
-      },
-    };
-    saveConfig(newConfig);
+  const addCustomTab = async (tab: Omit<NavigationTab, 'isSystem' | 'order'>) => {
+    try {
+      const response = await adminConfigApi.addNavigationTab({
+        key: tab.id,
+        label: tab.name,
+        iconName: tab.icon,
+      });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to add custom tab:', error);
+    }
   };
 
-  const removeCustomTab = (tabId: string) => {
-    const newTabs = config.navigationConfig.tabs.filter((tab) => tab.id !== tabId);
-    const newConfig = {
-      ...config,
-      navigationConfig: {
-        ...config.navigationConfig,
-        tabs: newTabs,
-      },
-    };
-    saveConfig(newConfig);
+  const removeCustomTab = async (tabId: string) => {
+    try {
+      const response = await adminConfigApi.removeNavigationTab(tabId);
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to remove custom tab:', error);
+    }
   };
 
-  const updateTabOrder = (tabId: string, newOrder: number) => {
+  const updateTabOrder = async (tabId: string, newOrder: number) => {
     const currentTab = config.navigationConfig.tabs.find((tab) => tab.id === tabId);
     if (!currentTab) return;
 
     const oldOrder = currentTab.order;
-    const newTabs = config.navigationConfig.tabs.map((tab) => {
-      if (tab.id === tabId) {
-        return { ...tab, order: newOrder };
-      }
+    const reorderedTabs = config.navigationConfig.tabs.map((tab) => {
+      if (tab.id === tabId) return { ...tab, order: newOrder };
       if (oldOrder < newOrder) {
-        if (tab.order > oldOrder && tab.order <= newOrder) {
-          return { ...tab, order: tab.order - 1 };
-        }
+        if (tab.order > oldOrder && tab.order <= newOrder) return { ...tab, order: tab.order - 1 };
       } else {
-        if (tab.order >= newOrder && tab.order < oldOrder) {
-          return { ...tab, order: tab.order + 1 };
-        }
+        if (tab.order >= newOrder && tab.order < oldOrder) return { ...tab, order: tab.order + 1 };
       }
       return tab;
     });
 
-    const newConfig = {
-      ...config,
-      navigationConfig: {
-        ...config.navigationConfig,
-        tabs: newTabs,
-      },
-    };
-    saveConfig(newConfig);
+    try {
+      const response = await adminConfigApi.updateNavigationTabs({
+        tabs: reorderedTabs.map((t) => ({ tabId: t.id, sortOrder: t.order })),
+      });
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to update tab order:', error);
+    }
   };
 
   return {
     config,
     isLoading,
     toggleAuthMethod,
-    setServiceMode,
     updateSessionConfig,
     toggleLanguageAvailability,
     setDefaultLanguage,

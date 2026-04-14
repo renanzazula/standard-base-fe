@@ -51,6 +51,10 @@ export async function getCurrentUser(): Promise<UserProfileResponse> {
   return apiFetch<UserProfileResponse>('/api/auth/me');
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  return apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+}
+
 export async function refreshToken(token: string): Promise<AuthResponse> {
   const response = await apiFetch<AuthResponse>('/api/auth/refresh', {
     method: 'POST',
