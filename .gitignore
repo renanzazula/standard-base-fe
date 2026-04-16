@@ -1,3 +1,6 @@
 node_modules
 .env
 .expo
+*.iml
+/.idea*
+/package-lock.json

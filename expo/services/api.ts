@@ -1,6 +1,8 @@
 import { ENV } from '@/config/env';
 import * as tokenStorage from './tokenStorage';
 
+const TENANT_HEADER = 'X-Tenant-ID';
+
 export class ApiError extends Error {
   status: number;
   error: string;
@@ -33,6 +35,7 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+  headers[TENANT_HEADER] = ENV.TENANT_ID;
 
   const accessToken = await tokenStorage.getAccessToken();
   if (accessToken) {
@@ -82,7 +85,10 @@ async function tryRefreshToken(): Promise<boolean> {
     const url = `${ENV.API_BASE_URL}/api/auth/refresh`;
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        [TENANT_HEADER]: ENV.TENANT_ID,
+      },
       body: JSON.stringify({ refreshToken }),
     });
 
