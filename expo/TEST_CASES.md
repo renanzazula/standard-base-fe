@@ -833,3 +833,104 @@ This document provides comprehensive test cases for all modules defined in the r
 3. Add real OAuth providers
 4. Implement security features (rate limiting, etc.)
 5. Add session timeout configuration UI
+
+---
+
+## MODULE M7 – PERMISSION-BASED ACCESS CONTROL
+
+### UC-P1: Standard User Cannot Access Admin Routes
+**Test Case ID**: TC-M7-UC-P1-001
+**Priority**: High
+**Status**: ✅ IMPLEMENTED
+
+**Test Steps**:
+1. Log in as `user@example.com` (role: standard)
+2. Attempt to navigate directly to `/user-management`
+3. Verify redirect to `/(tabs)/home`
+4. Attempt to navigate to `/configure-authentication`
+5. Verify redirect to `/(tabs)/home`
+
+**Expected Results**:
+- Standard user is redirected away from all admin routes
+- No admin links visible in Settings screen
+
+**API Used**: `usePermissions()`, `ROUTE_PERMISSION_MAP` in `app/_layout.tsx`
+
+---
+
+### UC-P2: Admin Has All FUNC_TAB_SETTINGS_* Permissions
+**Test Case ID**: TC-M7-UC-P2-001
+**Priority**: High
+**Status**: ✅ IMPLEMENTED
+
+**Test Steps**:
+1. Log in as `admin@example.com` (role: admin)
+2. Navigate to Settings
+3. Verify "Admin Configuration" section is visible
+4. Verify all admin links are present: User Management, Configure Authentication, Session Configuration, Language Settings, Profile Restrictions, Navigation Management
+5. Navigate to `/user-management` — verify access granted
+
+**Expected Results**:
+- Admin section visible in Settings
+- All admin routes accessible
+- No unwanted redirects
+
+**API Used**: `DEFAULT_ROLE_PERMISSIONS['admin']`, `usePermissions()`
+
+---
+
+### UC-P3: Feature-Level Permissions Gate User Management Actions
+**Test Case ID**: TC-M7-UC-P3-001
+**Priority**: High
+**Status**: ✅ IMPLEMENTED
+
+**Test Steps**:
+1. Log in as `admin@example.com`
+2. Navigate to `/user-management`
+3. Verify Edit button visible (requires `FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE`)
+4. Verify Disable/Enable button visible (requires `FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE`)
+5. Verify Delete button visible (requires `FUNC_TAB_SETTINGS_MANAGE_USERS_DELETE`)
+
+**Expected Results**:
+- Admin sees all action buttons
+- A role with only `FUNC_TAB_SETTINGS_MANAGE_USERS` but not INSERT/UPDATE/DELETE would see no action buttons
+
+**API Used**: `usePermissions()`, `PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_*`
+
+---
+
+### UC-P4: Tab Visibility Requires Both Config Enabled AND Permission
+**Test Case ID**: TC-M7-UC-P4-001
+**Priority**: High
+**Status**: ✅ IMPLEMENTED
+
+**Test Steps**:
+1. Log in as `admin@example.com`
+2. Navigate to Navigation Management — disable the Home tab
+3. Log in as `user@example.com` (standard)
+4. Verify Home tab not visible (disabled in config, even though standard role has `FUNC_TAB_HOME`)
+5. Re-enable Home tab in admin config
+6. Verify Home tab now appears for standard user
+
+**Expected Results**:
+- Tab only appears when `tab.enabled === true` AND user `hasPermission(tab.permissionKey)`
+
+**API Used**: `NavigationTab.permissionKey`, `isTabVisible()` in `app/(tabs)/_layout.tsx`
+
+---
+
+### UC-P5: Permissions Resolved at Login from Role
+**Test Case ID**: TC-M7-UC-P5-001
+**Priority**: Medium
+**Status**: ✅ IMPLEMENTED
+
+**Test Steps**:
+1. Log in as `user@example.com` — verify `user.permissions` equals `DEFAULT_ROLE_PERMISSIONS['standard']`
+2. Log in as `admin@example.com` — verify `user.permissions` equals `DEFAULT_ROLE_PERMISSIONS['admin']`
+3. Verify permissions are cached in `@user_data` AsyncStorage key (as part of User object)
+
+**Expected Results**:
+- Permissions derived from role when backend does not return a permissions array
+- Backend-provided permissions array takes precedence if present
+
+**API Used**: `resolvePermissions()` in `AuthContext.tsx`, `DEFAULT_ROLE_PERMISSIONS`

@@ -1,6 +1,7 @@
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
-import { useAuth } from '@/contexts/AuthContext';
+import type { NavigationTab } from '@/contexts/AdminConfigContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Tabs } from 'expo-router';
 import { Home, Settings, Rss, Droplets, Mic } from 'lucide-react-native';
 import React from 'react';
@@ -8,7 +9,7 @@ import React from 'react';
 export default function TabLayout() {
   const { colors } = usePreferences();
   const { config } = useAdminConfig();
-  const { user } = useAuth();
+  const { hasPermission } = usePermissions();
 
   const getIconForTab = (iconName: string, color: string) => {
     switch (iconName) {
@@ -27,13 +28,10 @@ export default function TabLayout() {
     }
   };
 
-  const isAdminUser = user?.role === 'admin';
-
-  const isTabVisible = (tabId: string) => {
-    const tab = config.navigationConfig.tabs.find((t) => t.id === tabId);
-    if (!tab) return false;
-    if (isAdminUser && tabId === 'settings') return true;
-    return tab.enabled;
+  const isTabVisible = (tab: NavigationTab): boolean => {
+    if (!tab.enabled) return false;
+    if (!tab.permissionKey) return true;
+    return hasPermission(tab.permissionKey);
   };
 
   const sortedTabs = [...config.navigationConfig.tabs].sort((a, b) => a.order - b.order);
@@ -57,7 +55,7 @@ export default function TabLayout() {
       }}
     >
       {sortedTabs.map((tab) => {
-        const isVisible = isTabVisible(tab.id);
+        const isVisible = isTabVisible(tab);
         console.log(`[TabLayout] Tab ${tab.id}: visible=${isVisible}, order=${tab.order}`);
         return (
           <Tabs.Screen

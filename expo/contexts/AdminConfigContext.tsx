@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Language } from '@/constants/languages';
 import * as adminConfigApi from '@/services/adminConfig';
 import type { AppConfigResponse } from '@/services/adminConfig';
+import { PERMISSIONS, type Permission } from '@/constants/permissions';
 
 export type AuthMethod = 'google' | 'apple' | 'manual';
 
@@ -15,6 +16,7 @@ export interface NavigationTab {
   icon: string;
   order: number;
   isSystem: boolean;
+  permissionKey?: Permission;
 }
 
 export interface AdminConfig {
@@ -74,11 +76,11 @@ const DEFAULT_CONFIG: AdminConfig = {
   },
   navigationConfig: {
     tabs: [
-      { id: 'home', name: 'Home', enabled: false, icon: 'home', order: 1, isSystem: true },
-      { id: 'feed', name: 'Feed', enabled: false, icon: 'rss', order: 2, isSystem: true },
-      { id: 'skate-square', name: 'Skate Square', enabled: false, icon: 'droplet', order: 3, isSystem: true },
-      { id: 'podcast', name: 'Podcast', enabled: false, icon: 'mic', order: 4, isSystem: true },
-      { id: 'settings', name: 'Settings', enabled: true, icon: 'settings', order: 5, isSystem: true },
+      { id: 'home', name: 'Home', enabled: false, icon: 'home', order: 1, isSystem: true, permissionKey: PERMISSIONS.FUNC_TAB_HOME },
+      { id: 'feed', name: 'Feed', enabled: false, icon: 'rss', order: 2, isSystem: true, permissionKey: PERMISSIONS.FUNC_TAB_FEED },
+      { id: 'skate-square', name: 'Skate Square', enabled: false, icon: 'droplet', order: 3, isSystem: true, permissionKey: PERMISSIONS.FUNC_TAB_SKATE_SQUARE },
+      { id: 'podcast', name: 'Podcast', enabled: false, icon: 'mic', order: 4, isSystem: true, permissionKey: PERMISSIONS.FUNC_TAB_PODCAST },
+      { id: 'settings', name: 'Settings', enabled: true, icon: 'settings', order: 5, isSystem: true, permissionKey: PERMISSIONS.FUNC_TAB_SETTINGS },
     ],
   },
 };
@@ -117,6 +119,7 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
         icon: t.iconName,
         order: t.sortOrder,
         isSystem: t.isSystem,
+        permissionKey: t.permissionKey as Permission | undefined,
       })),
     },
   };

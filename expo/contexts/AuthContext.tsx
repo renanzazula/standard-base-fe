@@ -6,6 +6,7 @@ import * as authApi from '@/services/auth';
 import * as userProfileApi from '@/services/userProfile';
 import * as tokenStorage from '@/services/tokenStorage';
 import { setOnAuthExpired } from '@/services/api';
+import { DEFAULT_ROLE_PERMISSIONS, type Permission } from '@/constants/permissions';
 
 export type UserRole = 'standard' | 'admin';
 
@@ -17,6 +18,7 @@ export interface User {
   provider: 'google' | 'apple' | 'manual';
   username?: string;
   avatar?: string;
+  permissions: Permission[];
 }
 
 interface AuthState {
@@ -28,16 +30,25 @@ interface AuthState {
 
 const USER_STORAGE_KEY = '@user_data';
 
+function resolvePermissions(role: UserRole, apiPermissions?: string[]): Permission[] {
+  if (apiPermissions && apiPermissions.length > 0) {
+    return apiPermissions as Permission[];
+  }
+  return DEFAULT_ROLE_PERMISSIONS[role] ?? DEFAULT_ROLE_PERMISSIONS.standard;
+}
+
 function mapAuthResponseToUser(
   response: authApi.AuthResponse,
   provider: 'google' | 'apple' | 'manual',
 ): User {
+  const role = response.role.toLowerCase() as UserRole;
   return {
     id: response.userId,
     email: response.email,
     name: response.displayName,
-    role: response.role.toLowerCase() as UserRole,
+    role,
     provider,
+    permissions: resolvePermissions(role, response.permissions),
   };
 }
 
@@ -48,12 +59,14 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     APPLE: 'apple',
   };
   const firstProvider = profile.providers[0] ?? 'EMAIL';
+  const role = profile.role.toLowerCase() as UserRole;
   return {
     id: profile.userId,
     email: profile.email,
     name: profile.displayName,
-    role: profile.role.toLowerCase() as UserRole,
+    role,
     provider: providerMap[firstProvider] ?? 'manual',
+    permissions: resolvePermissions(role, profile.permissions),
   };
 }
 

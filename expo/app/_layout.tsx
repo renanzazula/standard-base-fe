@@ -2,6 +2,8 @@ import { AdminConfigProvider, useAdminConfig } from '@/contexts/AdminConfigConte
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { PreferencesProvider, usePreferences } from '@/contexts/PreferencesContext';
 import { UserManagementProvider } from '@/contexts/UserManagementContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -12,10 +14,21 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PERMISSIONS]> = {
+  'user-management': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
+  'configure-authentication': PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH,
+  'session-configuration': PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG,
+  'language-settings': PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
+  'profile-restrictions': PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
+  'navigation-management': PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
+  'admin-config': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
+};
+
 function RootLayoutNav() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { isLoading: prefsLoading, loadUserPreferences, clearUserPreferences } = usePreferences();
   const { isLoading: configLoading, config } = useAdminConfig();
+  const { hasPermission } = usePermissions();
   const segments = useSegments();
   const router = useRouter();
 
@@ -46,14 +59,18 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === undefined;
-    const inProtectedRoute = segments[0] === 'admin-config' || segments[0] === 'navigation-management' || segments[0] === 'user-management' || segments[0] === 'profile-restrictions' || segments[0] === 'configure-authentication' || segments[0] === 'session-configuration' || segments[0] === 'language-settings';
+    const currentSegment = segments[0] as string | undefined;
+    const requiredPermission = currentSegment ? ROUTE_PERMISSION_MAP[currentSegment] : undefined;
+    const inProtectedRoute = requiredPermission !== undefined;
 
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/login');
     } else if (isAuthenticated && !inAuthGroup && !inProtectedRoute) {
       router.replace('/(tabs)/home');
+    } else if (isAuthenticated && inProtectedRoute && requiredPermission && !hasPermission(requiredPermission)) {
+      router.replace('/(tabs)/home');
     }
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isAuthenticated, isLoading, segments, router, hasPermission]);
 
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>

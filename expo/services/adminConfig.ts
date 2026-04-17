@@ -8,6 +8,7 @@ export interface NavigationTabResponse {
   enabled: boolean;
   sortOrder: number;
   isSystem: boolean;
+  permissionKey?: string;
 }
 
 export interface AppConfigResponse {

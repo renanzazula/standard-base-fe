@@ -18,37 +18,61 @@ This document provides a comprehensive overview of the tab bar navigation system
 
 ## Role-Based Access Control
 
-The application supports three user roles with different levels of access:
+Access is controlled by a two-layer system:
+
+1. **Global config** (`AdminConfigContext`) — admin toggles tabs on/off for the whole app
+2. **Permission system** (`constants/permissions.ts`) — each role carries a set of `FUNC_TAB_*` permission keys; a tab is visible only when **both** layers allow it
+
+### Permission Constants (`FUNC_TAB_*`)
+
+| Constant | Scope |
+|---|---|
+| `FUNC_TAB_HOME` | Home tab |
+| `FUNC_TAB_FEED` | Feed tab |
+| `FUNC_TAB_SKATE_SQUARE` | Skate Square tab |
+| `FUNC_TAB_PODCAST` | Podcast tab |
+| `FUNC_TAB_SETTINGS` | Settings tab |
+| `FUNC_TAB_SETTINGS_MANAGE_USERS` | Access User Management screen |
+| `FUNC_TAB_SETTINGS_MANAGE_USERS_INSERT` | Add users |
+| `FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE` | Edit/disable users |
+| `FUNC_TAB_SETTINGS_MANAGE_USERS_DELETE` | Delete users |
+| `FUNC_TAB_SETTINGS_CONFIGURE_AUTH` | Configure authentication methods |
+| `FUNC_TAB_SETTINGS_SESSION_CONFIG` | Configure session timeouts |
+| `FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS` | Manage available languages |
+| `FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS` | Set username/avatar policies |
+| `FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT` | Manage tab visibility/order |
+
+Permissions are resolved at login from `DEFAULT_ROLE_PERMISSIONS` (or the backend response if it returns a `permissions` array). They are stored on the `User` object and accessed via the `usePermissions()` hook.
 
 ### 1. Guest (Unauthenticated)
 - **Status**: Not logged in
-- **Access Level**: Restricted
+- **Permissions**: None
 - **Visible Tabs**: None (redirected to login)
 - **Capabilities**: Cannot access any tab until authenticated
 
 ### 2. Standard User (Authenticated)
 - **Status**: Logged in with role='standard'
-- **Access Level**: Basic
-- **Visible Tabs**: Tabs enabled by admin in Navigation Management
+- **Permissions**: `FUNC_TAB_HOME`, `FUNC_TAB_FEED`, `FUNC_TAB_SKATE_SQUARE`, `FUNC_TAB_PODCAST`, `FUNC_TAB_SETTINGS`
+- **Visible Tabs**: Tabs both `enabled` in admin config AND covered by their permissions
 - **Capabilities**: 
-  - View and interact with enabled tabs
+  - View and interact with permitted, enabled tabs
   - Access personal profile settings
   - Change language, theme, and preferences
   - Update username and avatar (if allowed by profile restrictions)
 
 ### 3. Admin (Authenticated)
 - **Status**: Logged in with role='admin'
-- **Access Level**: Full
-- **Visible Tabs**: All enabled tabs + Settings (always visible)
+- **Permissions**: All `FUNC_TAB_*` constants
+- **Visible Tabs**: All enabled tabs where the admin holds the matching permission
 - **Capabilities**:
   - All standard user capabilities
-  - Access administrative settings
-  - Manage system configuration
-  - Control authentication methods
-  - Manage user accounts
-  - Configure navigation tabs
-  - Set language and regional settings
-  - Define profile restrictions
+  - Access all admin settings links in Settings screen
+  - Manage users (view, enable/disable, update, delete)
+  - Configure authentication methods
+  - Configure session timeouts
+  - Manage available languages
+  - Set profile restrictions
+  - Manage navigation tabs
 
 ---
 

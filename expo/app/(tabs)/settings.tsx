@@ -1,6 +1,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import { useRouter } from 'expo-router';
 import {
   Moon,
@@ -29,6 +31,7 @@ export default function SettingsScreen() {
   const { colors, theme, toggleTheme, language, setLanguage } = usePreferences();
   const { user, logout, updateProfile } = useAuth();
   const { config } = useAdminConfig();
+  const { hasPermission, hasAnyPermission } = usePermissions();
   const router = useRouter();
   const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
 
@@ -889,11 +892,18 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {user?.role === 'admin' && (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('settings.adminConfiguration')}</Text>
-              <View style={styles.card}>
+        {hasAnyPermission([
+          PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
+          PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH,
+          PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG,
+          PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
+          PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
+          PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
+        ]) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.adminConfiguration')}</Text>
+            <View style={styles.card}>
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS) && (
                 <TouchableOpacity
                   style={styles.settingItem}
                   onPress={() => router.push('/user-management')}
@@ -913,6 +923,8 @@ export default function SettingsScreen() {
                     <ChevronRight size={20} color={colors.textSecondary} />
                   </View>
                 </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH) && (
                 <TouchableOpacity
                   style={styles.settingItem}
                   onPress={() => router.push('/configure-authentication')}
@@ -932,6 +944,8 @@ export default function SettingsScreen() {
                     <ChevronRight size={20} color={colors.textSecondary} />
                   </View>
                 </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG) && (
                 <TouchableOpacity
                   style={styles.settingItem}
                   onPress={() => router.push('/session-configuration')}
@@ -951,6 +965,8 @@ export default function SettingsScreen() {
                     <ChevronRight size={20} color={colors.textSecondary} />
                   </View>
                 </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS) && (
                 <TouchableOpacity
                   style={styles.settingItem}
                   onPress={() => router.push('/language-settings')}
@@ -970,6 +986,8 @@ export default function SettingsScreen() {
                     <ChevronRight size={20} color={colors.textSecondary} />
                   </View>
                 </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS) && (
                 <TouchableOpacity
                   style={styles.settingItem}
                   onPress={() => router.push('/profile-restrictions')}
@@ -989,6 +1007,8 @@ export default function SettingsScreen() {
                     <ChevronRight size={20} color={colors.textSecondary} />
                   </View>
                 </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT) && (
                 <TouchableOpacity
                   style={[styles.settingItem, styles.settingItemLast]}
                   onPress={() => router.push('/navigation-management')}
@@ -1008,11 +1028,9 @@ export default function SettingsScreen() {
                     <ChevronRight size={20} color={colors.textSecondary} />
                   </View>
                 </TouchableOpacity>
-              </View>
+              )}
             </View>
-
-
-          </>
+          </View>
         )}
 
         <View style={styles.section}>

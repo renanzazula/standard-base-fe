@@ -1,6 +1,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserManagement, ManagedUser } from '@/contexts/UserManagementContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/constants/permissions';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useRouter, Stack } from 'expo-router';
 import {
@@ -36,6 +38,7 @@ export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
   const { users, toggleUserStatus, deleteUser, updateUser } = useUserManagement();
   const { colors } = usePreferences();
+  const { hasPermission } = usePermissions();
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -472,7 +475,7 @@ export default function UserManagementScreen() {
     [colors, insets.top]
   );
 
-  if (currentUser?.role !== 'admin') {
+  if (!hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS)) {
     return (
       <View style={styles.container}>
         <View style={styles.accessDeniedContainer}>
@@ -717,35 +720,41 @@ export default function UserManagementScreen() {
               </View>
 
               <View style={styles.userActions}>
-                <TouchableOpacity style={styles.actionButton} onPress={() => handleEditUser(user)}>
-                  <Edit3 size={16} color={colors.text} />
-                  <Text style={styles.actionButtonText}>{t('common.edit')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => handleToggleStatus(user)}
-                  disabled={user.id === currentUser.id}
-                >
-                  {user.status === 'active' ? (
-                    <>
-                      <UserX size={16} color={colors.text} />
-                      <Text style={styles.actionButtonText}>{t('userManagement.disable')}</Text>
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck size={16} color={colors.text} />
-                      <Text style={styles.actionButtonText}>{t('userManagement.enable')}</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.deleteButton]}
-                  onPress={() => handleDeleteUser(user)}
-                  disabled={user.id === currentUser.id}
-                >
-                  <Trash2 size={16} color={colors.error} />
-                  <Text style={[styles.actionButtonText, styles.deleteButtonText]}>{t('common.delete')}</Text>
-                </TouchableOpacity>
+                {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
+                  <TouchableOpacity style={styles.actionButton} onPress={() => handleEditUser(user)}>
+                    <Edit3 size={16} color={colors.text} />
+                    <Text style={styles.actionButtonText}>{t('common.edit')}</Text>
+                  </TouchableOpacity>
+                )}
+                {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleToggleStatus(user)}
+                    disabled={user.id === currentUser.id}
+                  >
+                    {user.status === 'active' ? (
+                      <>
+                        <UserX size={16} color={colors.text} />
+                        <Text style={styles.actionButtonText}>{t('userManagement.disable')}</Text>
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck size={16} color={colors.text} />
+                        <Text style={styles.actionButtonText}>{t('userManagement.enable')}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+                {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_DELETE) && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.deleteButton]}
+                    onPress={() => handleDeleteUser(user)}
+                    disabled={user.id === currentUser.id}
+                  >
+                    <Trash2 size={16} color={colors.error} />
+                    <Text style={[styles.actionButtonText, styles.deleteButtonText]}>{t('common.delete')}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           ))

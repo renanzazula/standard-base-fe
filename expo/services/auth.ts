@@ -9,6 +9,7 @@ export interface AuthResponse {
   displayName: string;
   userId: string;
   role: string;
+  permissions?: string[];
 }
 
 export interface UserProfileResponse {
@@ -18,6 +19,7 @@ export interface UserProfileResponse {
   role: string;
   status: string;
   providers: string[];
+  permissions?: string[];
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
