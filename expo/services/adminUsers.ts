@@ -1,5 +1,17 @@
 import { apiFetch } from './api';
 
+export interface PermissionOverride {
+  permission: string;
+  granted: boolean;
+}
+
+export interface UserPermissionsResponse {
+  userId: string;
+  effectivePermissions: string[];
+  roleDefaults: string[];
+  overrides: PermissionOverride[];
+}
+
 export interface UserSummary {
   userId: string;
   email: string;
@@ -38,4 +50,18 @@ export function updateUser(
 
 export function deleteUser(userId: string): Promise<void> {
   return apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+}
+
+export function getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
+  return apiFetch(`/api/admin/users/${userId}/permissions`);
+}
+
+export function updateUserPermissions(
+  userId: string,
+  overrides: PermissionOverride[],
+): Promise<UserPermissionsResponse> {
+  return apiFetch(`/api/admin/users/${userId}/permissions`, {
+    method: 'PUT',
+    body: JSON.stringify({ overrides }),
+  });
 }

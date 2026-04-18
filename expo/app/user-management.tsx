@@ -32,6 +32,7 @@ import {
   Lock,
   CheckCircle,
   XCircle,
+  Key,
 } from 'lucide-react-native';
 
 export default function UserManagementScreen() {
@@ -726,6 +727,16 @@ export default function UserManagementScreen() {
                     <Text style={styles.actionButtonText}>{t('common.edit')}</Text>
                   </TouchableOpacity>
                 )}
+                {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) &&
+                  user.id !== currentUser.id && (
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => router.push(`/user-permissions?userId=${user.id}`)}
+                    >
+                      <Key size={16} color={colors.text} />
+                      <Text style={styles.actionButtonText}>{t('userManagement.managePermissions')}</Text>
+                    </TouchableOpacity>
+                  )}
                 {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
                   <TouchableOpacity
                     style={styles.actionButton}

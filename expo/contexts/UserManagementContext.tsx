@@ -2,7 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useEffect, useState } from 'react';
 import { User } from './AuthContext';
 import * as adminUsersApi from '@/services/adminUsers';
-import type { UserSummary } from '@/services/adminUsers';
+import type { UserSummary, UserPermissionsResponse, PermissionOverride } from '@/services/adminUsers';
 
 export type UserStatus = 'active' | 'disabled';
 
@@ -29,6 +29,8 @@ function mapToManagedUser(s: UserSummary): ManagedUser {
 export const [UserManagementProvider, useUserManagement] = createContextHook(() => {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedUserPermissions, setSelectedUserPermissions] = useState<UserPermissionsResponse | null>(null);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -79,6 +81,29 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     }
   };
 
+  const loadUserPermissions = async (userId: string) => {
+    setPermissionsLoading(true);
+    try {
+      const result = await adminUsersApi.getUserPermissions(userId);
+      setSelectedUserPermissions(result);
+    } catch (error) {
+      console.error('[UserManagement] Failed to load user permissions:', error);
+      setSelectedUserPermissions(null);
+    } finally {
+      setPermissionsLoading(false);
+    }
+  };
+
+  const saveUserPermissions = async (userId: string, overrides: PermissionOverride[]) => {
+    try {
+      const result = await adminUsersApi.updateUserPermissions(userId, overrides);
+      setSelectedUserPermissions(result);
+    } catch (error) {
+      console.error('[UserManagement] Failed to update user permissions:', error);
+      throw error;
+    }
+  };
+
   const addUser = async (_userData: Omit<ManagedUser, 'id' | 'createdAt'>) => {
     // Not yet implemented — requires POST /api/admin/users on the backend
     console.warn('[UserManagement] addUser is not yet supported by the backend');
@@ -109,10 +134,14 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
   return {
     users,
     isLoading,
+    selectedUserPermissions,
+    permissionsLoading,
     toggleUserStatus,
     deleteUser,
     updateUser,
     addUser,
+    loadUserPermissions,
+    saveUserPermissions,
     getUserById,
     getUsersByRole,
     getUsersByStatus,

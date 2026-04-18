@@ -29,6 +29,23 @@ const STANDARD_PERMISSIONS: Permission[] = [
   PERMISSIONS.FUNC_TAB_SETTINGS,
 ];
 
+export const PERMISSION_LABELS: Record<Permission, string> = {
+  FUNC_TAB_HOME: 'Home Tab',
+  FUNC_TAB_FEED: 'Feed Tab',
+  FUNC_TAB_SKATE_SQUARE: 'Skate Square Tab',
+  FUNC_TAB_PODCAST: 'Podcast Tab',
+  FUNC_TAB_SETTINGS: 'Settings Tab',
+  FUNC_TAB_SETTINGS_MANAGE_USERS: 'Manage Users',
+  FUNC_TAB_SETTINGS_MANAGE_USERS_INSERT: 'Create Users',
+  FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE: 'Edit Users',
+  FUNC_TAB_SETTINGS_MANAGE_USERS_DELETE: 'Delete Users',
+  FUNC_TAB_SETTINGS_CONFIGURE_AUTH: 'Configure Authentication',
+  FUNC_TAB_SETTINGS_SESSION_CONFIG: 'Session Configuration',
+  FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS: 'Language Settings',
+  FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS: 'Profile Restrictions',
+  FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT: 'Navigation Management',
+};
+
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   standard: STANDARD_PERMISSIONS,
   admin: [

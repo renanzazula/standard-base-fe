@@ -258,6 +258,21 @@ export const en = {
     viewAllUsers: 'View and manage all registered users',
     accessDenied: 'Access Denied',
     adminOnly: 'Only administrators can access user management',
+    managePermissions: 'Manage Permissions',
+  },
+  userPermissions: {
+    title: 'User Permissions',
+    subtitle: 'Configure functionalities and access for this user',
+    roleSection: 'Role',
+    functionalitiesSection: 'Functionalities',
+    sourceRoleDefault: 'Role Default',
+    sourceGranted: 'Granted',
+    sourceRevoked: 'Revoked',
+    roleChangeWarning: 'Changing the role will clear all permission overrides. The user will inherit the new role\'s default permissions.',
+    saveSuccess: 'Permissions updated successfully',
+    saveFailed: 'Failed to update permissions',
+    loading: 'Loading permissions...',
+    noOverrides: 'No overrides — using role defaults',
   },
 };
 
