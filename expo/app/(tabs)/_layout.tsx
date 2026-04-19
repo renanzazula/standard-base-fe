@@ -1,15 +1,22 @@
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAdminConfig } from '@/contexts/AdminConfigContext';
-import type { NavigationTab } from '@/contexts/AdminConfigContext';
-import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/contexts/AuthContext';
 import { Tabs } from 'expo-router';
 import { Home, Settings, Rss, Droplets, Mic } from 'lucide-react-native';
 import React from 'react';
 
+const SYSTEM_TABS = [
+  { id: 'home', icon: 'home', defaultName: 'Home' },
+  { id: 'feed', icon: 'rss', defaultName: 'Feed' },
+  { id: 'skate-square', icon: 'droplet', defaultName: 'Skate Square' },
+  { id: 'podcast', icon: 'mic', defaultName: 'Podcast' },
+  { id: 'settings', icon: 'settings', defaultName: 'Settings' },
+] as const;
+
 export default function TabLayout() {
   const { colors } = usePreferences();
   const { config } = useAdminConfig();
-  const { hasPermission } = usePermissions();
+  const { user } = useAuth();
 
   const getIconForTab = (iconName: string, color: string) => {
     switch (iconName) {
@@ -28,15 +35,19 @@ export default function TabLayout() {
     }
   };
 
-  const isTabVisible = (tab: NavigationTab): boolean => {
-    if (!tab.enabled) return false;
-    if (!tab.permissionKey) return true;
-    return hasPermission(tab.permissionKey);
-  };
+  const userPermissions = new Set(user?.permissions ?? []);
+  const hasCatalog = config.navigationConfig.tabs.length > 0;
 
-  const sortedTabs = [...config.navigationConfig.tabs].sort((a, b) => a.order - b.order);
+  const visibleTabIds = new Set(
+    hasCatalog
+      ? config.navigationConfig.tabs
+          .filter((tab) => tab.enabled && (!tab.permissionKey || userPermissions.has(tab.permissionKey)))
+          .map((tab) => tab.id)
+      : (user?.navigationTabs ?? []).map((tab) => tab.id)
+  );
 
-  console.log('[TabLayout] Rendering tabs in order:', sortedTabs.map(t => `${t.id}(${t.order})`).join(', '));
+  const getTabConfig = (tabId: string) =>
+    config.navigationConfig.tabs.find((t) => t.id === tabId);
 
   return (
     <Tabs
@@ -54,17 +65,17 @@ export default function TabLayout() {
         },
       }}
     >
-      {sortedTabs.map((tab) => {
-        const isVisible = isTabVisible(tab);
-        console.log(`[TabLayout] Tab ${tab.id}: visible=${isVisible}, order=${tab.order}`);
+      {SYSTEM_TABS.map((staticTab) => {
+        const catalogTab = getTabConfig(staticTab.id);
+        const isVisible = visibleTabIds.has(staticTab.id);
         return (
           <Tabs.Screen
-            key={tab.id}
-            name={tab.id}
+            key={staticTab.id}
+            name={staticTab.id}
             options={{
-              href: isVisible ? (`/${tab.id}` as any) : null,
-              title: tab.name,
-              tabBarIcon: ({ color }) => getIconForTab(tab.icon, color),
+              href: isVisible ? (`/${staticTab.id}` as any) : null,
+              title: catalogTab?.name ?? staticTab.defaultName,
+              tabBarIcon: ({ color }) => getIconForTab(catalogTab?.icon ?? staticTab.icon, color),
             }}
           />
         );

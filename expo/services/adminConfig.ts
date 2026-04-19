@@ -18,17 +18,23 @@ export interface AppConfigResponse {
   appleAuthEnabled: boolean;
   sessionDurationSeconds: number;
   refreshTokenDurationSeconds: number;
+  sessionAutoRefresh: boolean;
   defaultLanguage: string;
   availableLanguages: string[];
   defaultTimezone: string;
   defaultDateFormat: string;
   usernameMinLength: number;
   usernameMaxLength: number;
-  avatarUploadEnabled: boolean;
-  navigationTabs: NavigationTabResponse[];
+  avatarMaxSizeMb: number;
+  allowedAvatarFormats: string[];
+  navigationTabs?: NavigationTabResponse[];
 }
 
 export function getAppConfig(): Promise<AppConfigResponse> {
+  return apiFetch('/api/config');
+}
+
+export function getAdminConfig(): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config');
 }
 
@@ -43,6 +49,7 @@ export function updateAuthMethods(body: {
 export function updateSessionPolicy(body: {
   sessionDurationSeconds?: number;
   refreshTokenDurationSeconds?: number;
+  autoRefresh?: boolean;
 }): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config/session-policy', { method: 'PATCH', body: JSON.stringify(body) });
 }
@@ -64,7 +71,8 @@ export function updateRegionalPolicy(body: {
 export function updateProfilePolicy(body: {
   usernameMinLength?: number;
   usernameMaxLength?: number;
-  avatarUploadEnabled?: boolean;
+  avatarMaxSizeMb?: number;
+  allowedAvatarFormats?: string[];
 }): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config/profile-policy', { method: 'PATCH', body: JSON.stringify(body) });
 }

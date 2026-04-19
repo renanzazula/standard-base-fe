@@ -17,6 +17,7 @@ export interface UserSummary {
   email: string;
   displayName: string;
   username?: string;
+  providers?: string[];
   role: 'STANDARD' | 'ADMIN';
   status: 'ACTIVE' | 'DISABLED';
   createdAt?: string;
@@ -41,6 +42,15 @@ export function listUsers(params?: {
   return apiFetch(`/api/admin/users${qs}`);
 }
 
+export function createUser(body: {
+  email: string;
+  displayName: string;
+  temporaryPassword: string;
+  role?: 'STANDARD' | 'ADMIN';
+}): Promise<UserSummary> {
+  return apiFetch('/api/admin/users', { method: 'POST', body: JSON.stringify(body) });
+}
+
 export function updateUser(
   userId: string,
   body: { role?: 'STANDARD' | 'ADMIN'; status?: 'ACTIVE' | 'DISABLED' },
@@ -63,5 +73,24 @@ export function updateUserPermissions(
   return apiFetch(`/api/admin/users/${userId}/permissions`, {
     method: 'PUT',
     body: JSON.stringify({ overrides }),
+  });
+}
+
+export interface RolePermissionsResponse {
+  role: string;
+  permissions: string[];
+}
+
+export function getRolePermissions(): Promise<RolePermissionsResponse[]> {
+  return apiFetch('/api/admin/permissions');
+}
+
+export function updateRolePermissions(
+  role: string,
+  permissions: string[],
+): Promise<RolePermissionsResponse> {
+  return apiFetch(`/api/admin/permissions/${role}`, {
+    method: 'PUT',
+    body: JSON.stringify({ permissions }),
   });
 }

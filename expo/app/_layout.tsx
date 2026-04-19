@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 SplashScreen.preventAutoHideAsync();
@@ -26,9 +27,9 @@ const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PER
 };
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user, refreshProfile } = useAuth();
   const { isLoading: prefsLoading, loadUserPreferences, clearUserPreferences } = usePreferences();
-  const { isLoading: configLoading, config } = useAdminConfig();
+  const { isLoading: configLoading, config, reloadTabConfig } = useAdminConfig();
   const { hasPermission } = usePermissions();
   const segments = useSegments();
   const router = useRouter();
@@ -45,7 +46,7 @@ function RootLayoutNav() {
     if (isAuthenticated && user) {
       console.log('[RootLayout] User authenticated, loading preferences for:', user.id);
       loadUserPreferences(
-        user.id, 
+        user.id,
         config.languageConfig.defaultLanguage,
         config.regionalConfig.defaultTimezone,
         config.regionalConfig.defaultDateFormat
@@ -54,7 +55,29 @@ function RootLayoutNav() {
       console.log('[RootLayout] User logged out, clearing preferences');
       clearUserPreferences();
     }
-  }, [isAuthenticated, user?.id, user, loadUserPreferences, clearUserPreferences, config.languageConfig.defaultLanguage, config.regionalConfig.defaultTimezone, config.regionalConfig.defaultDateFormat]);
+  }, [isAuthenticated, user?.id]);
+
+  useEffect(() => {
+    if (!configLoading && isAuthenticated) {
+      if (user?.role === 'admin') {
+        reloadTabConfig();
+      }
+    }
+  }, [configLoading, isAuthenticated, user?.id]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        if (user?.role === 'admin') {
+          reloadTabConfig();
+        } else {
+          refreshProfile();
+        }
+      }
+    });
+    return () => subscription.remove();
+  }, [isAuthenticated, user?.role]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -79,6 +102,7 @@ function RootLayoutNav() {
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
       <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+      <Stack.Screen name="reset-password" options={{ headerShown: false }} />
       <Stack.Screen name="admin-config" options={{ headerShown: true }} />
       <Stack.Screen name="navigation-management" options={{ headerShown: true }} />
       <Stack.Screen name="user-management" options={{ headerShown: true, title: 'User Management' }} />

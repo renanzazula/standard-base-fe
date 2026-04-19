@@ -1,5 +1,8 @@
 import { apiFetch } from './api';
 import * as tokenStorage from './tokenStorage';
+import type { NavigationTabResponse } from './adminConfig';
+
+export type { NavigationTabResponse };
 
 export interface AuthResponse {
   accessToken: string;
@@ -10,6 +13,7 @@ export interface AuthResponse {
   userId: string;
   role: string;
   permissions?: string[];
+  navigationTabs?: NavigationTabResponse[];
 }
 
 export interface UserProfileResponse {
@@ -20,6 +24,7 @@ export interface UserProfileResponse {
   status: string;
   providers: string[];
   permissions?: string[];
+  navigationTabs?: NavigationTabResponse[];
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
@@ -55,6 +60,13 @@ export async function getCurrentUser(): Promise<UserProfileResponse> {
 
 export async function forgotPassword(email: string): Promise<void> {
   return apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+}
+
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+  return apiFetch('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  });
 }
 
 export async function refreshToken(token: string): Promise<AuthResponse> {

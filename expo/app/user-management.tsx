@@ -4,7 +4,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS } from '@/constants/permissions';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import {
   View,
   Text,
@@ -15,8 +15,9 @@ import {
   Modal,
   Pressable,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Users,
@@ -33,11 +34,16 @@ import {
   CheckCircle,
   XCircle,
   Key,
+  UserPlus,
 } from 'lucide-react-native';
 
 export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
-  const { users, toggleUserStatus, deleteUser, updateUser } = useUserManagement();
+  const { users, isLoading, loadError, loadUsers, toggleUserStatus, deleteUser, updateUser, addUser } = useUserManagement();
+
+  useFocusEffect(useCallback(() => {
+    loadUsers();
+  }, []));
   const { colors } = usePreferences();
   const { hasPermission } = usePermissions();
   const { t } = useTranslation();
@@ -49,10 +55,16 @@ export default function UserManagementScreen() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled'>('all');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [editName, setEditName] = useState('');
   const [editUsername, setEditUsername] = useState('');
   const [editRole, setEditRole] = useState<'admin' | 'standard'>('standard');
+  const [createEmail, setCreateEmail] = useState('');
+  const [createDisplayName, setCreateDisplayName] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
+  const [createRole, setCreateRole] = useState<'STANDARD' | 'ADMIN'>('STANDARD');
+  const [createLoading, setCreateLoading] = useState(false);
 
   const filteredUsers = useMemo(() => {
     let filtered = users;
@@ -560,6 +572,31 @@ export default function UserManagementScreen() {
     Alert.alert(t('common.success'), t('userManagement.userUpdated'));
   };
 
+  const handleCreateUser = async () => {
+    if (!createEmail.trim() || !createDisplayName.trim() || !createPassword) {
+      Alert.alert(t('common.error'), 'All fields are required');
+      return;
+    }
+    if (createPassword.length < 8) {
+      Alert.alert(t('common.error'), 'Password must be at least 8 characters');
+      return;
+    }
+    setCreateLoading(true);
+    try {
+      await addUser({ email: createEmail.trim(), displayName: createDisplayName.trim(), temporaryPassword: createPassword, role: createRole });
+      setCreateModalVisible(false);
+      setCreateEmail('');
+      setCreateDisplayName('');
+      setCreatePassword('');
+      setCreateRole('STANDARD');
+      Alert.alert(t('common.success'), 'User created successfully');
+    } catch {
+      Alert.alert(t('common.error'), 'Failed to create user. The email may already be in use.');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const getProviderIcon = (provider: string) => {
     switch (provider) {
       case 'google':
@@ -628,6 +665,14 @@ export default function UserManagementScreen() {
           >
             <Filter size={20} color={hasActiveFilters ? '#FFFFFF' : colors.text} />
           </TouchableOpacity>
+          {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
+            <TouchableOpacity
+              style={[styles.filterButton, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+              onPress={() => setCreateModalVisible(true)}
+            >
+              <UserPlus size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {hasActiveFilters && (
@@ -649,7 +694,20 @@ export default function UserManagementScreen() {
           </View>
         )}
 
-        {filteredUsers.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.emptyDescription, { marginTop: 16 }]}>Loading users...</Text>
+          </View>
+        ) : loadError ? (
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.error + '20' }]}>
+              <Users size={40} color={colors.error} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.error }]}>Backend unreachable</Text>
+            <Text style={styles.emptyDescription}>{loadError}</Text>
+          </View>
+        ) : filteredUsers.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
               <Users size={40} color={colors.textSecondary} />
@@ -832,6 +890,78 @@ export default function UserManagementScreen() {
               <TouchableOpacity style={styles.modalCloseButton} onPress={() => setFilterModalVisible(false)}>
                 <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
               </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={createModalVisible} transparent animationType="fade" onRequestClose={() => setCreateModalVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setCreateModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Create User</Text>
+            </View>
+            <View style={styles.modalBody}>
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Email</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={createEmail}
+                  onChangeText={setCreateEmail}
+                  placeholder="user@example.com"
+                  placeholderTextColor={colors.textSecondary}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Display Name</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={createDisplayName}
+                  onChangeText={setCreateDisplayName}
+                  placeholder="Full name"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Temporary Password</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={createPassword}
+                  onChangeText={setCreatePassword}
+                  placeholder="Min. 8 characters"
+                  placeholderTextColor={colors.textSecondary}
+                  secureTextEntry
+                />
+              </View>
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Role</Text>
+                <View style={styles.filterOptions}>
+                  <TouchableOpacity
+                    style={[styles.filterOption, createRole === 'STANDARD' && styles.filterOptionActive]}
+                    onPress={() => setCreateRole('STANDARD')}
+                  >
+                    <Text style={styles.filterOptionText}>{t('userManagement.standard')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterOption, createRole === 'ADMIN' && styles.filterOptionActive]}
+                    onPress={() => setCreateRole('ADMIN')}
+                  >
+                    <Text style={styles.filterOptionText}>{t('userManagement.admin')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+            <View style={styles.modalFooter}>
+              <View style={styles.modalActionButtons}>
+                <TouchableOpacity style={styles.modalCloseButton} onPress={() => setCreateModalVisible(false)} disabled={createLoading}>
+                  <Text style={styles.modalCloseButtonText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalActionButton, createLoading && { opacity: 0.6 }]} onPress={handleCreateUser} disabled={createLoading}>
+                  <Text style={styles.modalActionButtonText}>Create</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </Pressable>
         </Pressable>

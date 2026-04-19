@@ -2,7 +2,9 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useRef } from 'react';
 import { useAdminConfig } from './AdminConfigContext';
+import type { NavigationTab } from './AdminConfigContext';
 import * as authApi from '@/services/auth';
+import type { NavigationTabResponse } from '@/services/auth';
 import * as userProfileApi from '@/services/userProfile';
 import * as tokenStorage from '@/services/tokenStorage';
 import { setOnAuthExpired } from '@/services/api';
@@ -19,6 +21,7 @@ export interface User {
   username?: string;
   avatar?: string;
   permissions: Permission[];
+  navigationTabs: NavigationTab[];
 }
 
 interface AuthState {
@@ -30,10 +33,23 @@ interface AuthState {
 
 const USER_STORAGE_KEY = '@user_data';
 
+function mapNavigationTab(t: NavigationTabResponse): NavigationTab {
+  return {
+    id: t.tabId,
+    name: t.label,
+    enabled: t.enabled,
+    icon: t.iconName,
+    order: t.sortOrder,
+    isSystem: t.isSystem,
+    permissionKey: t.permissionKey as Permission | undefined,
+  };
+}
+
 function resolvePermissions(role: UserRole, apiPermissions?: string[]): Permission[] {
   if (apiPermissions && apiPermissions.length > 0) {
     return apiPermissions as Permission[];
   }
+  console.warn('[Auth] No permissions returned from API — falling back to client-side defaults for role:', role);
   return DEFAULT_ROLE_PERMISSIONS[role] ?? DEFAULT_ROLE_PERMISSIONS.standard;
 }
 
@@ -49,6 +65,7 @@ function mapAuthResponseToUser(
     role,
     provider,
     permissions: resolvePermissions(role, response.permissions),
+    navigationTabs: response.navigationTabs?.map(mapNavigationTab) ?? [],
   };
 }
 
@@ -67,6 +84,7 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     role,
     provider: providerMap[firstProvider] ?? 'manual',
     permissions: resolvePermissions(role, profile.permissions),
+    navigationTabs: profile.navigationTabs?.map(mapNavigationTab) ?? [],
   };
 }
 
@@ -215,6 +233,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return true;
   };
 
+  const refreshProfile = async () => {
+    try {
+      const profile = await authApi.getCurrentUser();
+      const updatedUser = mapProfileToUser(profile);
+      await saveUserCache(updatedUser);
+      setAuthState((prev) => ({ ...prev, user: updatedUser }));
+    } catch (error) {
+      console.error('[Auth] Failed to refresh profile:', error);
+    }
+  };
+
   const updateProfile = async (updates: Partial<Pick<User, 'username' | 'avatar'>>) => {
     if (!authState.user) return;
     const response = await userProfileApi.updateProfile({
@@ -242,5 +271,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     resetPassword,
     updateActivity,
     updateProfile,
+    refreshProfile,
   };
 });

@@ -19,7 +19,7 @@ function mapToManagedUser(s: UserSummary): ManagedUser {
     name: s.displayName,
     username: s.username,
     role: s.role.toLowerCase() as 'admin' | 'standard',
-    provider: 'manual',
+    provider: s.providers?.[0]?.toLowerCase() ?? 'manual',
     status: s.status.toLowerCase() as UserStatus,
     createdAt: s.createdAt ?? new Date().toISOString(),
     lastLogin: s.lastLoginAt,
@@ -29,19 +29,19 @@ function mapToManagedUser(s: UserSummary): ManagedUser {
 export const [UserManagementProvider, useUserManagement] = createContextHook(() => {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedUserPermissions, setSelectedUserPermissions] = useState<UserPermissionsResponse | null>(null);
   const [permissionsLoading, setPermissionsLoading] = useState(false);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
   const loadUsers = async () => {
+    setIsLoading(true);
+    setLoadError(null);
     try {
       const result = await adminUsersApi.listUsers();
       setUsers(result.users.map(mapToManagedUser));
     } catch (error) {
       console.error('[UserManagement] Failed to load users:', error);
+      setLoadError('Could not reach the backend. Check that the server is running.');
       setUsers([]);
     } finally {
       setIsLoading(false);
@@ -104,9 +104,14 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     }
   };
 
-  const addUser = async (_userData: Omit<ManagedUser, 'id' | 'createdAt'>) => {
-    // Not yet implemented — requires POST /api/admin/users on the backend
-    console.warn('[UserManagement] addUser is not yet supported by the backend');
+  const addUser = async (userData: { email: string; displayName: string; temporaryPassword: string; role?: 'STANDARD' | 'ADMIN' }) => {
+    const created = await adminUsersApi.createUser({
+      email: userData.email,
+      displayName: userData.displayName,
+      temporaryPassword: userData.temporaryPassword,
+      role: userData.role ?? 'STANDARD',
+    });
+    setUsers((prev) => [...prev, mapToManagedUser(created)]);
   };
 
   const getUserById = (userId: string): ManagedUser | undefined => {
@@ -134,8 +139,10 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
   return {
     users,
     isLoading,
+    loadError,
     selectedUserPermissions,
     permissionsLoading,
+    loadUsers,
     toggleUserStatus,
     deleteUser,
     updateUser,

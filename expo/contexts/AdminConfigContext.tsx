@@ -95,7 +95,7 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
     sessionConfig: {
       maxTime: response.sessionDurationSeconds * 1000,
       idleTime: response.refreshTokenDurationSeconds * 1000,
-      autoRefresh: true,
+      autoRefresh: response.sessionAutoRefresh ?? true,
     },
     languageConfig: {
       availableLanguages: response.availableLanguages as Language[],
@@ -108,11 +108,11 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
     profileConfig: {
       usernameMinLength: response.usernameMinLength,
       usernameMaxLength: response.usernameMaxLength,
-      avatarMaxSizeMB: response.avatarUploadEnabled ? 5 : 0,
-      allowedAvatarFormats: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
+      avatarMaxSizeMB: response.avatarMaxSizeMb ?? 5,
+      allowedAvatarFormats: response.allowedAvatarFormats ?? ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
     },
     navigationConfig: {
-      tabs: response.navigationTabs.map((t) => ({
+      tabs: (response.navigationTabs ?? []).map((t) => ({
         id: t.tabId,
         name: t.label,
         enabled: t.enabled,
@@ -145,6 +145,15 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     }
   };
 
+  const reloadTabConfig = async () => {
+    try {
+      const response = await adminConfigApi.getAdminConfig();
+      setConfig(mapConfigResponse(response));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to reload tab config:', error);
+    }
+  };
+
   const toggleAuthMethod = async (method: AuthMethod) => {
     try {
       const response = await adminConfigApi.updateAuthMethods({
@@ -164,6 +173,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
       const response = await adminConfigApi.updateSessionPolicy({
         sessionDurationSeconds: Math.round(merged.maxTime / 1000),
         refreshTokenDurationSeconds: Math.round(merged.idleTime / 1000),
+        autoRefresh: merged.autoRefresh,
       });
       setConfig(mapConfigResponse(response));
     } catch (error) {
@@ -225,8 +235,8 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
       const response = await adminConfigApi.updateProfilePolicy({
         usernameMinLength: profileConfig.usernameMinLength,
         usernameMaxLength: profileConfig.usernameMaxLength,
-        avatarUploadEnabled:
-          profileConfig.avatarMaxSizeMB !== undefined ? profileConfig.avatarMaxSizeMB > 0 : undefined,
+        avatarMaxSizeMb: profileConfig.avatarMaxSizeMB,
+        allowedAvatarFormats: profileConfig.allowedAvatarFormats,
       });
       setConfig(mapConfigResponse(response));
     } catch (error) {
@@ -308,6 +318,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
   return {
     config,
     isLoading,
+    reloadTabConfig,
     toggleAuthMethod,
     updateSessionConfig,
     toggleLanguageAvailability,

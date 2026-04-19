@@ -36,6 +36,7 @@ export const [PreferencesProvider, usePreferences] = createContextHook(() => {
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
       setThemeState(newTheme);
+      await userProfileApi.updatePreferences({ theme: newTheme.toUpperCase() });
     } catch (error) {
       console.error('Failed to save theme:', error);
     }
@@ -84,6 +85,13 @@ export const [PreferencesProvider, usePreferences] = createContextHook(() => {
       setLanguageState((prefs.language as Language) || DEFAULT_LANGUAGE);
       setTimezoneState(prefs.timezone || 'UTC');
       setDateFormatState((prefs.dateFormat as DateFormat) || 'MM/DD/YYYY');
+      if (prefs.theme) {
+        const normalised = prefs.theme.toLowerCase() as Theme;
+        if (normalised === 'dark' || normalised === 'light') {
+          setThemeState(normalised);
+          await AsyncStorage.setItem(THEME_STORAGE_KEY, normalised);
+        }
+      }
     } catch (error) {
       console.error('[Preferences] Failed to load preferences for user:', userId, error);
     }
