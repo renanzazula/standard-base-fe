@@ -259,6 +259,8 @@ export const en = {
     accessDenied: 'Access Denied',
     adminOnly: 'Only administrators can access user management',
     managePermissions: 'Manage Permissions',
+    profileDefaults: 'Profile Defaults',
+    profileDefaultsSubtitle: 'Default permissions for this role',
   },
   userPermissions: {
     title: 'User Permissions',
@@ -273,6 +275,15 @@ export const en = {
     saveFailed: 'Failed to update permissions',
     loading: 'Loading permissions...',
     noOverrides: 'No overrides — using role defaults',
+  },
+  profilePermissions: {
+    title: 'Profile Permissions',
+    subtitle: 'Set default functionalities for all users in this profile',
+    functionalitiesSection: 'Functionalities',
+    inheritanceInfo: 'Changes apply to all users in this profile. Users with individual overrides keep their custom settings on top of these defaults.',
+    saveSuccess: 'Profile permissions updated successfully',
+    saveFailed: 'Failed to update profile permissions',
+    loading: 'Loading profile permissions...',
   },
 };
 

@@ -34,7 +34,9 @@ Test credentials (mock auth seed): `user@example.com / password123` (standard) a
 | `/(tabs)/skate-square` | `expo/app/(tabs)/skate-square.tsx` | yes | any | Community / social feed. |
 | `/(tabs)/settings` | `expo/app/(tabs)/settings.tsx` | yes | any | Profile + preferences; admin entry-point. |
 | `/admin-config` | `expo/app/admin-config.tsx` | yes | admin | Admin landing page. |
-| `/user-management` | `expo/app/user-management.tsx` | yes | admin | List / disable / delete users. |
+| `/user-management` | `expo/app/user-management.tsx` | yes | admin | List / create / disable / delete users; entry point for permissions. |
+| `/user-permissions` | `expo/app/user-permissions.tsx` | yes | admin (`MANAGE_USERS_UPDATE`) | Per-user permission overrides (grant / revoke individual FUNC_* permissions). |
+| `/profile-permissions` | `expo/app/profile-permissions.tsx` | yes | admin (`MANAGE_USERS_UPDATE`) | Default permissions for a role (STANDARD or ADMIN). |
 | `/configure-authentication` | `expo/app/configure-authentication.tsx` | yes | admin | Toggle auth methods (Google / Apple / manual). |
 | `/session-configuration` | `expo/app/session-configuration.tsx` | yes | admin | Session max + idle + auto-refresh. |
 | `/language-settings` | `expo/app/language-settings.tsx` | yes | admin | Available languages and default. |
@@ -77,8 +79,16 @@ endpoint(s) invoked &rarr; linked use case**.
 | `(tabs)/settings.tsx` | Profile Restrictions (admin) | `/profile-restrictions` | _(none)_ | [UC10](#uc10) |
 | `(tabs)/settings.tsx` | Navigation Management (admin) | `/navigation-management` | _(none)_ | [UC6](#uc6) |
 | `user-management.tsx` | Load list | _(stays)_ | `GET /api/admin/users` | [UC5](#uc5) |
+| `user-management.tsx` | Create user | _(stays)_ | `POST /api/admin/users` | [UC5](#uc5) |
 | `user-management.tsx` | Toggle role / status | _(stays)_ | `PATCH /api/admin/users/{userId}` | [UC5](#uc5) |
 | `user-management.tsx` | Delete user | _(stays)_ | `DELETE /api/admin/users/{userId}` | [UC5](#uc5) |
+| `user-management.tsx` | Manage Permissions (per user) | `/user-permissions?userId=…` | _(none)_ | [UC11](#uc11) |
+| `user-management.tsx` | Profile Defaults → Standard | `/profile-permissions?role=STANDARD` | _(none)_ | [UC12](#uc12) |
+| `user-management.tsx` | Profile Defaults → Admin | `/profile-permissions?role=ADMIN` | _(none)_ | [UC12](#uc12) |
+| `user-permissions.tsx` | Load permissions | _(stays)_ | `GET /api/admin/users/{userId}/permissions` | [UC11](#uc11) |
+| `user-permissions.tsx` | Save overrides | _(stays)_ | `PUT /api/admin/users/{userId}/permissions` | [UC11](#uc11) |
+| `profile-permissions.tsx` | Load role defaults | _(stays)_ | `GET /api/admin/permissions` | [UC12](#uc12) |
+| `profile-permissions.tsx` | Save role defaults | _(stays)_ | `PUT /api/admin/permissions/{role}` | [UC12](#uc12) |
 | `configure-authentication.tsx` | Toggle Google/Apple/Email | _(stays)_ | `PATCH /api/admin/config/auth-methods` | [UC7](#uc7) |
 | `session-configuration.tsx` | Save sliders | _(stays)_ | `PATCH /api/admin/config/session-policy` | [UC8](#uc8) |
 | `language-settings.tsx` | Save selection | _(stays)_ | `PATCH /api/admin/config/language-policy` | [UC9](#uc9) |
@@ -119,8 +129,18 @@ Endpoints below come from `standard-base` &rarr; `src/main/resources/openapi/api
 | Method + path | Used by |
 | --- | --- |
 | `GET    /api/admin/users` | [UC5](#uc5) |
+| `POST   /api/admin/users` | [UC5](#uc5) |
 | `PATCH  /api/admin/users/{userId}` | [UC5](#uc5) |
 | `DELETE /api/admin/users/{userId}` | [UC5](#uc5) |
+| `GET    /api/admin/users/{userId}/permissions` | [UC11](#uc11) |
+| `PUT    /api/admin/users/{userId}/permissions` | [UC11](#uc11) |
+
+### Admin &mdash; permissions
+
+| Method + path | Used by |
+| --- | --- |
+| `GET /api/admin/permissions` | [UC12](#uc12) |
+| `PUT /api/admin/permissions/{role}` | [UC12](#uc12) |
 
 ### Admin &mdash; configuration
 
@@ -173,6 +193,8 @@ flowchart LR
 ```mermaid
 flowchart LR
     Settings[settings.tsx] --> UserMgmt["user-management.tsx<br/>GET /api/admin/users"]
+    UserMgmt --> UserPerms["user-permissions.tsx<br/>GET /PUT /api/admin/users/{id}/permissions"]
+    UserMgmt --> ProfilePerms["profile-permissions.tsx<br/>GET /api/admin/permissions<br/>PUT /api/admin/permissions/{role}"]
     Settings --> Auth["configure-authentication.tsx<br/>PATCH /api/admin/config/auth-methods"]
     Settings --> Session["session-configuration.tsx<br/>PATCH /api/admin/config/session-policy"]
     Settings --> Lang["language-settings.tsx<br/>PATCH /api/admin/config/language-policy"]
@@ -196,12 +218,14 @@ flowchart LR
         UC2((UC2<br/>Sign up))
         UC3((UC3<br/>Password recovery))
         UC4((UC4<br/>Profile / preferences / logout))
-        UC5((UC5<br/>Admin disables / deletes user))
+        UC5((UC5<br/>Admin disables / deletes / creates user))
         UC6((UC6<br/>Admin manages tabs))
         UC7((UC7<br/>Admin toggles auth providers))
         UC8((UC8<br/>Admin tunes session))
         UC9((UC9<br/>Admin manages languages))
         UC10((UC10<br/>Admin sets profile policy))
+        UC11((UC11<br/>Admin manages per-user permissions))
+        UC12((UC12<br/>Admin manages role default permissions))
     end
 
     %% --- Screens ---
@@ -213,6 +237,8 @@ flowchart LR
         STabs[(tabs) home / feed / podcast / skate-square]
         SSettings[(tabs)/settings.tsx]
         SUserMgmt[user-management.tsx]
+        SUserPerms[user-permissions.tsx]
+        SProfilePerms[profile-permissions.tsx]
         SAuthCfg[configure-authentication.tsx]
         SSession[session-configuration.tsx]
         SLang[language-settings.tsx]
@@ -234,8 +260,13 @@ flowchart LR
         EUserPrefsGet["GET /api/users/me/preferences"]:::user
         EUserPrefsPatch["PATCH /api/users/me/preferences"]:::user
         EAdmUsers["GET /api/admin/users"]:::adminU
+        EAdmUsersPost["POST /api/admin/users"]:::adminU
         EAdmUserPatch["PATCH /api/admin/users/{id}"]:::adminU
         EAdmUserDel["DELETE /api/admin/users/{id}"]:::adminU
+        EAdmUserPermsGet["GET /api/admin/users/{id}/permissions"]:::adminU
+        EAdmUserPermsPut["PUT /api/admin/users/{id}/permissions"]:::adminU
+        EAdmPermsGet["GET /api/admin/permissions"]:::adminU
+        EAdmPermsPut["PUT /api/admin/permissions/{role}"]:::adminU
         EAdmCfgGet["GET /api/admin/config"]:::adminC
         EAdmAuth["PATCH /api/admin/config/auth-methods"]:::adminC
         EAdmSession["PATCH /api/admin/config/session-policy"]:::adminC
@@ -267,6 +298,10 @@ flowchart LR
     UC9 --> SSettings
     UC10 --> SProfile
     UC10 --> SSettings
+    UC11 --> SUserMgmt
+    UC11 --> SUserPerms
+    UC12 --> SUserMgmt
+    UC12 --> SProfilePerms
 
     %% --- Screen -> Endpoint edges ---
     SLogin --> EAuthLogin
@@ -282,8 +317,13 @@ flowchart LR
     SSettings --> EUserPrefsPatch
     SSettings --> EAuthRefresh
     SUserMgmt --> EAdmUsers
+    SUserMgmt --> EAdmUsersPost
     SUserMgmt --> EAdmUserPatch
     SUserMgmt --> EAdmUserDel
+    SUserPerms --> EAdmUserPermsGet
+    SUserPerms --> EAdmUserPermsPut
+    SProfilePerms --> EAdmPermsGet
+    SProfilePerms --> EAdmPermsPut
     SAuthCfg --> EAdmAuth
     SSession --> EAdmSession
     SLang --> EAdmLang
@@ -351,14 +391,15 @@ journey with the endpoints invoked at every step.
   5. "Logout" &rarr; clear token &rarr; `router.replace('/login')`.
 
 <a id="uc5"></a>
-### UC5 &mdash; Admin disables / deletes user
+### UC5 &mdash; Admin creates / disables / deletes user
 
 - **Actor**: admin.
 - **Steps**:
   1. `(tabs)/settings.tsx` &rarr; "User Management" &rarr; `user-management.tsx`.
   2. List loads &rarr; `GET /api/admin/users` (with role/status/search filters).
-  3. Toggle a user's role or status &rarr; `PATCH /api/admin/users/{userId}`.
-  4. Delete &rarr; `DELETE /api/admin/users/{userId}`.
+  3. Create new user (+ icon) &rarr; fill modal &rarr; `POST /api/admin/users`.
+  4. Toggle a user's role or status &rarr; `PATCH /api/admin/users/{userId}`.
+  5. Delete &rarr; `DELETE /api/admin/users/{userId}`.
 
 <a id="uc6"></a>
 ### UC6 &mdash; Admin manages navigation tabs
@@ -405,6 +446,28 @@ journey with the endpoints invoked at every step.
 - **Steps**:
   1. `(tabs)/settings.tsx` &rarr; "Profile Restrictions" &rarr; `profile-restrictions.tsx`.
   2. Edit username length bounds and avatar policy &rarr; `PATCH /api/admin/config/profile-policy`.
+
+<a id="uc11"></a>
+### UC11 &mdash; Admin manages per-user permission overrides
+
+- **Actor**: admin (requires `FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE` permission).
+- **Pre**: self-targeting is blocked — the Key button is hidden for the logged-in admin's own row.
+- **Steps**:
+  1. `user-management.tsx` &rarr; tap Key icon on a user card &rarr; `user-permissions.tsx?userId=…`.
+  2. Screen loads current state &rarr; `GET /api/admin/users/{userId}/permissions` (returns `effectivePermissions`, `roleDefaults`, `overrides`).
+  3. Each permission shown with source badge: **Role Default** / **Granted** / **Revoked**.
+  4. Admin toggles individual switches; tap "Save" &rarr; `PUT /api/admin/users/{userId}/permissions` (full-replacement of overrides list).
+  5. **Note**: changing the user's role (via UC5 Edit) clears all overrides server-side.
+
+<a id="uc12"></a>
+### UC12 &mdash; Admin manages role default permissions
+
+- **Actor**: admin (requires `FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE` permission).
+- **Steps**:
+  1. `user-management.tsx` &rarr; "Profile Defaults" section &rarr; tap **Standard** or **Admin** row &rarr; `profile-permissions.tsx?role=STANDARD|ADMIN`.
+  2. Screen loads all role defaults &rarr; `GET /api/admin/permissions`.
+  3. Admin toggles per-permission switches; tap "Save" &rarr; `PUT /api/admin/permissions/{role}` (full-replacement).
+  4. Changes propagate automatically: effective permissions for every user of that role are recomputed as `roleDefaults ∪ grantedOverrides − revokedOverrides`.
 
 ---
 

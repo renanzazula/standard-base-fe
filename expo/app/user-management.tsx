@@ -35,6 +35,7 @@ import {
   XCircle,
   Key,
   UserPlus,
+  ChevronRight,
 } from 'lucide-react-native';
 
 export default function UserManagementScreen() {
@@ -449,6 +450,42 @@ export default function UserManagementScreen() {
           color: colors.textSecondary,
           textAlign: 'center',
         },
+        sectionTitle: {
+          fontSize: 13,
+          fontWeight: '700' as const,
+          color: colors.textSecondary,
+          textTransform: 'uppercase' as const,
+          letterSpacing: 0.8,
+          marginBottom: 12,
+          marginTop: 4,
+        },
+        profileDefaultsCard: {
+          backgroundColor: colors.card,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: colors.border,
+          overflow: 'hidden' as const,
+          marginBottom: 24,
+        },
+        profileRow: {
+          flexDirection: 'row' as const,
+          alignItems: 'center',
+          gap: 12,
+          padding: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        },
+        profileIconWrap: {
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          backgroundColor: colors.primary + '15',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        profileRowInfo: { flex: 1 },
+        profileRowTitle: { fontSize: 15, fontWeight: '600' as const, color: colors.text },
+        profileRowSubtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
         accessDeniedContainer: {
           flex: 1,
           alignItems: 'center',
@@ -648,6 +685,40 @@ export default function UserManagementScreen() {
             <Text style={styles.statLabel}>{t('userManagement.disabledUsers')}</Text>
           </View>
         </View>
+
+        {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
+          <>
+            <Text style={styles.sectionTitle}>{t('userManagement.profileDefaults')}</Text>
+            <View style={styles.profileDefaultsCard}>
+              <TouchableOpacity
+                style={styles.profileRow}
+                onPress={() => router.push('/profile-permissions?role=STANDARD')}
+              >
+                <View style={styles.profileIconWrap}>
+                  <UserIcon size={18} color={colors.primary} />
+                </View>
+                <View style={styles.profileRowInfo}>
+                  <Text style={styles.profileRowTitle}>{t('userManagement.standard')}</Text>
+                  <Text style={styles.profileRowSubtitle}>{t('userManagement.profileDefaultsSubtitle')}</Text>
+                </View>
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.profileRow, { borderBottomWidth: 0 }]}
+                onPress={() => router.push('/profile-permissions?role=ADMIN')}
+              >
+                <View style={styles.profileIconWrap}>
+                  <Shield size={18} color={colors.primary} />
+                </View>
+                <View style={styles.profileRowInfo}>
+                  <Text style={styles.profileRowTitle}>{t('userManagement.admin')}</Text>
+                  <Text style={styles.profileRowSubtitle}>{t('userManagement.profileDefaultsSubtitle')}</Text>
+                </View>
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         <View style={styles.searchContainer}>
           <View style={{ flex: 1, position: 'relative' }}>

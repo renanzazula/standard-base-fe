@@ -18,6 +18,7 @@ const queryClient = new QueryClient();
 const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PERMISSIONS]> = {
   'user-management': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
   'user-permissions': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE,
+  'profile-permissions': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE,
   'configure-authentication': PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH,
   'session-configuration': PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG,
   'language-settings': PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
@@ -107,6 +108,7 @@ function RootLayoutNav() {
       <Stack.Screen name="navigation-management" options={{ headerShown: true }} />
       <Stack.Screen name="user-management" options={{ headerShown: true, title: 'User Management' }} />
       <Stack.Screen name="user-permissions" options={{ headerShown: true, title: 'User Permissions' }} />
+      <Stack.Screen name="profile-permissions" options={{ headerShown: true, title: 'Profile Permissions' }} />
       <Stack.Screen name="profile-restrictions" options={{ headerShown: true }} />
       <Stack.Screen name="language-management" options={{ headerShown: true }} />
       <Stack.Screen name="configure-authentication" options={{ headerShown: true }} />

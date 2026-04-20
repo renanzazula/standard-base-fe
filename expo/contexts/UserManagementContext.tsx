@@ -2,7 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useEffect, useState } from 'react';
 import { User } from './AuthContext';
 import * as adminUsersApi from '@/services/adminUsers';
-import type { UserSummary, UserPermissionsResponse, PermissionOverride } from '@/services/adminUsers';
+import type { UserSummary, UserPermissionsResponse, PermissionOverride, RolePermissionsResponse } from '@/services/adminUsers';
 
 export type UserStatus = 'active' | 'disabled';
 
@@ -32,6 +32,8 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedUserPermissions, setSelectedUserPermissions] = useState<UserPermissionsResponse | null>(null);
   const [permissionsLoading, setPermissionsLoading] = useState(false);
+  const [rolePermissions, setRolePermissions] = useState<RolePermissionsResponse[]>([]);
+  const [rolePermissionsLoading, setRolePermissionsLoading] = useState(false);
 
   const loadUsers = async () => {
     setIsLoading(true);
@@ -104,6 +106,31 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     }
   };
 
+  const loadRolePermissions = async () => {
+    setRolePermissionsLoading(true);
+    try {
+      const result = await adminUsersApi.getRolePermissions();
+      setRolePermissions(result);
+    } catch (error) {
+      console.error('[UserManagement] Failed to load role permissions:', error);
+    } finally {
+      setRolePermissionsLoading(false);
+    }
+  };
+
+  const saveRolePermissions = async (role: string, permissions: string[]) => {
+    try {
+      const result = await adminUsersApi.updateRolePermissions(role, permissions);
+      setRolePermissions((prev) =>
+        prev.map((rp) => (rp.role.toUpperCase() === result.role.toUpperCase() ? result : rp)),
+      );
+      return result;
+    } catch (error) {
+      console.error('[UserManagement] Failed to update role permissions:', error);
+      throw error;
+    }
+  };
+
   const addUser = async (userData: { email: string; displayName: string; temporaryPassword: string; role?: 'STANDARD' | 'ADMIN' }) => {
     const created = await adminUsersApi.createUser({
       email: userData.email,
@@ -142,6 +169,8 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     loadError,
     selectedUserPermissions,
     permissionsLoading,
+    rolePermissions,
+    rolePermissionsLoading,
     loadUsers,
     toggleUserStatus,
     deleteUser,
@@ -149,6 +178,8 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     addUser,
     loadUserPermissions,
     saveUserPermissions,
+    loadRolePermissions,
+    saveRolePermissions,
     getUserById,
     getUsersByRole,
     getUsersByStatus,
