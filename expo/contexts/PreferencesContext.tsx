@@ -82,6 +82,7 @@ export const [PreferencesProvider, usePreferences] = createContextHook(() => {
   ) => {
     try {
       const prefs = await userProfileApi.getPreferences();
+      if (!prefs) return;
       setLanguageState((prefs.language as Language) || DEFAULT_LANGUAGE);
       setTimezoneState(prefs.timezone || 'UTC');
       setDateFormatState((prefs.dateFormat as DateFormat) || 'MM/DD/YYYY');

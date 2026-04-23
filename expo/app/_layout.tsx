@@ -110,7 +110,6 @@ function RootLayoutNav() {
       <Stack.Screen name="user-permissions" options={{ headerShown: true, title: 'User Permissions' }} />
       <Stack.Screen name="profile-permissions" options={{ headerShown: true, title: 'Profile Permissions' }} />
       <Stack.Screen name="profile-restrictions" options={{ headerShown: true }} />
-      <Stack.Screen name="language-management" options={{ headerShown: true }} />
       <Stack.Screen name="configure-authentication" options={{ headerShown: true }} />
       <Stack.Screen name="session-configuration" options={{ headerShown: true }} />
       <Stack.Screen name="language-settings" options={{ headerShown: true }} />

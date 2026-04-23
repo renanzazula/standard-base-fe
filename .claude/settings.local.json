@@ -3,7 +3,8 @@
     "allow": [
       "Bash(bun run *)",
       "Bash(xargs grep *)",
-      "Bash(xargs ls *)"
+      "Bash(xargs ls *)",
+      "Bash(wmic cpu *)"
     ]
   }
 }

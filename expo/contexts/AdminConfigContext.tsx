@@ -4,6 +4,7 @@ import { Language } from '@/constants/languages';
 import * as adminConfigApi from '@/services/adminConfig';
 import type { AppConfigResponse } from '@/services/adminConfig';
 import { PERMISSIONS, type Permission } from '@/constants/permissions';
+import { ENV } from '@/config/env';
 
 export type AuthMethod = 'google' | 'apple' | 'manual';
 
@@ -134,6 +135,10 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
   }, []);
 
   const loadConfig = async () => {
+    if (!ENV.HAS_BACKEND) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const response = await adminConfigApi.getAppConfig();
       setConfig(mapConfigResponse(response));
@@ -146,9 +151,10 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
   };
 
   const reloadTabConfig = async () => {
+    if (!ENV.HAS_BACKEND) return;
     try {
       const response = await adminConfigApi.getAdminConfig();
-      setConfig(mapConfigResponse(response));
+      if (response) setConfig(mapConfigResponse(response));
     } catch (error) {
       console.error('[AdminConfig] Failed to reload tab config:', error);
     }

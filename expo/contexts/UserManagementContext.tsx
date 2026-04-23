@@ -40,7 +40,7 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     setLoadError(null);
     try {
       const result = await adminUsersApi.listUsers();
-      setUsers(result.users.map(mapToManagedUser));
+      setUsers((result?.users ?? []).map(mapToManagedUser));
     } catch (error) {
       console.error('[UserManagement] Failed to load users:', error);
       setLoadError('Could not reach the backend. Check that the server is running.');
@@ -110,7 +110,7 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     setRolePermissionsLoading(true);
     try {
       const result = await adminUsersApi.getRolePermissions();
-      setRolePermissions(result);
+      setRolePermissions(result ?? []);
     } catch (error) {
       console.error('[UserManagement] Failed to load role permissions:', error);
     } finally {

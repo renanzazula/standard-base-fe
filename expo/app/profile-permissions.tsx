@@ -33,7 +33,8 @@ export default function ProfilePermissionsScreen() {
 
   useEffect(() => {
     loadRolePermissions();
-  }, [loadRolePermissions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const current = rolePermissions.find(
