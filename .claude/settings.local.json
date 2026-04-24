@@ -27,7 +27,9 @@
       "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short expo/core/ expo/modules/ expo/shared/)",
       "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short)",
       "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short --untracked-files=all expo/)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(npm install *)",
+      "Bash(npx expo *)"
     ]
   }
 }
