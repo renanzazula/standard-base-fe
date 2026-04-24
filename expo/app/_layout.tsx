@@ -1,9 +1,9 @@
-import { AdminConfigProvider, useAdminConfig } from '@/contexts/AdminConfigContext';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { PreferencesProvider, usePreferences } from '@/contexts/PreferencesContext';
-import { UserManagementProvider } from '@/contexts/UserManagementContext';
-import { usePermissions } from '@/hooks/usePermissions';
-import { PERMISSIONS } from '@/constants/permissions';
+import { AdminConfigProvider, useAdminConfig } from '@core/contexts/AdminConfigContext';
+import { AuthProvider, useAuth } from '@core/contexts/AuthContext';
+import { PreferencesProvider, usePreferences } from '@core/contexts/PreferencesContext';
+import { UserManagementProvider } from '@core/contexts/UserManagementContext';
+import { usePermissions } from '@shared/hooks/usePermissions';
+import { PERMISSIONS } from '@shared/constants/permissions';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
