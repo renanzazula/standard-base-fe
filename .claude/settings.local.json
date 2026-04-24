@@ -21,7 +21,8 @@
       "Bash(git -C \"C:/git_hub/standard-base\" rm -r --cached \"*/target/\")",
       "Bash(git -C \"C:/git_hub/standard-base\" rm -r --cached api-dto/target/)",
       "Bash(git -C \"C:/git_hub/standard-base\" ls-files --cached)",
-      "Bash(bun add *)"
+      "Bash(bun add *)",
+      "Bash(bun install *)"
     ]
   }
 }
