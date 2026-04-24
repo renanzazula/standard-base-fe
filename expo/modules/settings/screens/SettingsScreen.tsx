@@ -798,7 +798,7 @@ export default function SettingsScreen() {
                 <Image
                   source={{ uri: user.avatar }}
                   style={styles.cardHeaderAvatar}
-                  defaultSource={require('@/assets/images/icon.png')}
+                  defaultSource={require('../../../assets/images/icon.png')}
                 />
               ) : (
                 <View style={styles.cardIconContainer}>
