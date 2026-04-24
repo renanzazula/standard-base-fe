@@ -1,8 +1,0 @@
-[phases.install]
-cmds = ["npm install --legacy-peer-deps"]
-
-[phases.build]
-cmds = ["npm rebuild lightningcss && npx expo export --platform web"]
-
-[start]
-cmd = "npx serve -s dist -l $PORT"

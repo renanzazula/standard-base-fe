@@ -1,7 +1,0 @@
-[build]
-builder = "NIXPACKS"
-buildCommand = "npm install --legacy-peer-deps && npm rebuild lightningcss && npx expo export --platform web"
-
-[deploy]
-startCommand = "npx serve -s dist -l $PORT"
-restartPolicyType = "ON_FAILURE"
