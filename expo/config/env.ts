@@ -1,8 +1,1 @@
-const DEFAULT_API_BASE_URL = 'http://localhost:8080';
-const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
-
-export const ENV = {
-  API_BASE_URL: process.env.EXPO_PUBLIC_API_URL?.trim() || DEFAULT_API_BASE_URL,
-  TENANT_ID: process.env.EXPO_PUBLIC_TENANT_ID?.trim() || DEFAULT_TENANT_ID,
-  HAS_BACKEND: !!process.env.EXPO_PUBLIC_API_URL?.trim(),
-};
+export * from '@core/config/env';
