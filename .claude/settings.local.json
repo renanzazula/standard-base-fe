@@ -3,7 +3,33 @@
     "allow": [
       "Bash(bun run *)",
       "Bash(xargs grep *)",
-      "Bash(xargs ls *)"
+      "Bash(xargs ls *)",
+      "Bash(wmic cpu *)",
+      "Bash(cat)",
+      "Bash(chmod +x /tmp/final_audit.sh)",
+      "Bash(/tmp/final_audit.sh)",
+      "Bash(chmod +x /tmp/detailed_report.sh)",
+      "Bash(/tmp/detailed_report.sh)",
+      "Bash(awk '{print $NF}')",
+      "Bash(grep -v \"C:\\\\\\\\git_hub\\\\\\\\standard-base\\\\\\\\src\\\\\\\\main\")",
+      "Bash(grep -v \"\\\\\\\\\\\\\\\\src\\\\\\\\\\\\\\\\main\\\\\\\\\\\\\\\\java\\\\\\\\\\\\\\\\com\\\\\\\\\\\\\\\\standardbase\\\\\\\\\\\\\\\\src\")",
+      "Bash(cd /tmp)",
+      "Bash(bash class_mapper.sh)",
+      "Bash(grep -v \"^C:\\\\\\\\git_hub\\\\\\\\standard-base\\\\\\\\src\\\\\\\\main\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(git -C \"C:/git_hub/standard-base\" ls-files --cached \"*/target/*\")",
+      "Bash(git -C \"C:/git_hub/standard-base\" rm -r --cached \"*/target/\")",
+      "Bash(git -C \"C:/git_hub/standard-base\" rm -r --cached api-dto/target/)",
+      "Bash(git -C \"C:/git_hub/standard-base\" ls-files --cached)",
+      "Bash(bun add *)",
+      "Bash(bun install *)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" ls-files expo/core/)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short expo/core/ expo/modules/ expo/shared/)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short --untracked-files=all expo/)",
+      "Bash(git *)",
+      "Bash(npm install *)",
+      "Bash(npx expo *)"
     ]
   }
 }

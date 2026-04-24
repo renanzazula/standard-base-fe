@@ -1,6 +1,6 @@
-import { usePreferences } from '@/contexts/PreferencesContext';
-import { useAdminConfig } from '@/contexts/AdminConfigContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePreferences } from '@core/contexts/PreferencesContext';
+import { useAdminConfig } from '@core/contexts/AdminConfigContext';
+import { useAuth } from '@core/contexts/AuthContext';
 import { Tabs } from 'expo-router';
 import { Home, Settings, Rss, Droplets, Mic } from 'lucide-react-native';
 import React from 'react';
