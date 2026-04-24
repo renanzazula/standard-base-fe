@@ -513,9 +513,9 @@ Potential navigation improvements:
 
 ## Related Documentation
 
-- [NAVIGATION_MANAGEMENT_TECHNICAL.md](./NAVIGATION_MANAGEMENT_TECHNICAL.md) - Technical implementation details
-- [README.md](./README.md) - General project documentation
-- [TEST_CASES.md](./TEST_CASES.md) - Navigation testing scenarios
+- [NAVIGATION_MANAGEMENT_TECHNICAL.md](NAVIGATION_MANAGEMENT_TECHNICAL.md) - Technical implementation details
+- [README.md](../expo/README.md) - General project documentation
+- [TEST_CASES.md](TEST_CASES.md) - Navigation testing scenarios
 
 ---
 

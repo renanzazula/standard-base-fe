@@ -22,7 +22,12 @@
       "Bash(git -C \"C:/git_hub/standard-base\" rm -r --cached api-dto/target/)",
       "Bash(git -C \"C:/git_hub/standard-base\" ls-files --cached)",
       "Bash(bun add *)",
-      "Bash(bun install *)"
+      "Bash(bun install *)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" ls-files expo/core/)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short expo/core/ expo/modules/ expo/shared/)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short)",
+      "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short --untracked-files=all expo/)",
+      "Bash(git *)"
     ]
   }
 }
