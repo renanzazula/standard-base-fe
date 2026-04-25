@@ -1,15 +1,16 @@
-import { AdminConfigProvider, useAdminConfig } from '@core/contexts/AdminConfigContext';
-import { AuthProvider, useAuth } from '@core/contexts/AuthContext';
-import { PreferencesProvider, usePreferences } from '@core/contexts/PreferencesContext';
-import { UserManagementProvider } from '@core/contexts/UserManagementContext';
-import { usePermissions } from '@shared/hooks/usePermissions';
-import { PERMISSIONS } from '@shared/constants/permissions';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import {AdminConfigProvider, useAdminConfig} from '@core/contexts/AdminConfigContext';
+import {AuthProvider, useAuth} from '@core/contexts/AuthContext';
+import {PostsProvider} from '@core/contexts/PostsContext';
+import {PreferencesProvider, usePreferences} from '@core/contexts/PreferencesContext';
+import {UserManagementProvider} from '@core/contexts/UserManagementContext';
+import {usePermissions} from '@shared/hooks/usePermissions';
+import {PERMISSIONS} from '@shared/constants/permissions';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {Stack, useRouter, useSegments} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
-import { AppState } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import React, {useEffect} from 'react';
+import {AppState} from 'react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,7 +26,12 @@ const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PER
   'profile-restrictions': PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
   'navigation-management': PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
   'admin-config': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
+  'create-post': PERMISSIONS.FUNC_FEED_CREATE_POST,
+  'edit-post': PERMISSIONS.FUNC_FEED_EDIT_POST,
 };
+
+// Routes accessible to any authenticated user (no special permission required)
+const AUTHENTICATED_ROUTES = new Set(['post']);
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading: authLoading, user, refreshProfile } = useAuth();
@@ -86,13 +92,14 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === undefined;
     const currentSegment = segments[0] as string | undefined;
     const requiredPermission = currentSegment ? ROUTE_PERMISSION_MAP[currentSegment] : undefined;
-    const inProtectedRoute = requiredPermission !== undefined;
+    const inPermissionRoute = requiredPermission !== undefined;
+    const inAuthenticatedRoute = currentSegment ? AUTHENTICATED_ROUTES.has(currentSegment) : false;
 
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/login');
-    } else if (isAuthenticated && !inAuthGroup && !inProtectedRoute) {
+    } else if (isAuthenticated && !inAuthGroup && !inPermissionRoute && !inAuthenticatedRoute) {
       router.replace('/(tabs)/home');
-    } else if (isAuthenticated && inProtectedRoute && requiredPermission && !hasPermission(requiredPermission)) {
+    } else if (isAuthenticated && inPermissionRoute && requiredPermission && !hasPermission(requiredPermission)) {
       router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, isLoading, segments, router, hasPermission]);
@@ -113,6 +120,9 @@ function RootLayoutNav() {
       <Stack.Screen name="configure-authentication" options={{ headerShown: true }} />
       <Stack.Screen name="session-configuration" options={{ headerShown: true }} />
       <Stack.Screen name="language-settings" options={{ headerShown: true }} />
+      <Stack.Screen name="create-post" options={{ headerShown: true, title: 'Create Post', presentation: 'modal' }} />
+      <Stack.Screen name="edit-post/[id]" options={{ headerShown: true, title: 'Edit Post', presentation: 'modal' }} />
+      <Stack.Screen name="post/[slug]" options={{ headerShown: true, title: '' }} />
     </Stack>
   );
 }
@@ -125,7 +135,9 @@ export default function RootLayout() {
           <PreferencesProvider>
             <AuthProvider>
               <UserManagementProvider>
-                <RootLayoutNav />
+                <PostsProvider>
+                  <RootLayoutNav />
+                </PostsProvider>
               </UserManagementProvider>
             </AuthProvider>
           </PreferencesProvider>

@@ -1,0 +1,64 @@
+export type PostStatus = 'draft' | 'scheduled' | 'published';
+
+export type TextBlock = {
+  type: 'text';
+  data: { html: string };
+};
+
+export type ImageBlock = {
+  type: 'image';
+  data: { url: string; caption?: string; isUpload?: boolean };
+};
+
+export type VideoBlock = {
+  type: 'video';
+  data: { url: string; poster?: string };
+};
+
+export type QuoteBlock = {
+  type: 'quote';
+  data: { text: string; author?: string };
+};
+
+export type EmbedBlock = {
+  type: 'embed';
+  data: { platform: 'youtube' | 'vimeo'; id: string };
+};
+
+export type SpotifyBlock = {
+  type: 'spotify';
+  data: { url: string; spotifyType: 'track' | 'album' | 'playlist' | 'episode' | 'show'; spotifyId: string };
+};
+
+export type GalleryBlock = {
+  type: 'gallery';
+  data: { urls: string[]; isUpload?: boolean[] };
+};
+
+export type LinkBlock = {
+  type: 'link';
+  data: { url: string; title?: string; description?: string };
+};
+
+export type Block =
+  | TextBlock
+  | ImageBlock
+  | VideoBlock
+  | QuoteBlock
+  | EmbedBlock
+  | SpotifyBlock
+  | GalleryBlock
+  | LinkBlock;
+
+export type Post = {
+  id: string;
+  slug: string;
+  title: string;
+  status: PostStatus;
+  publishAt: string | null;
+  coverUrl: string;
+  blocks: Block[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+};

@@ -1,156 +1,227 @@
+import {usePosts} from '@core/contexts/PostsContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
-import {Rss, Star, TrendingUp, Users} from 'lucide-react-native';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {usePermissions} from '@shared/hooks/usePermissions';
+import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import type {Post} from '@shared/types/posts';
+import {Plus, Rss} from 'lucide-react-native';
+import {useCallback, useState} from 'react';
+import {ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View,} from 'react-native';
+import {useRouter} from 'expo-router';
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
+  const { colors } = usePreferences();
+  return (
+    <Pressable
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      onPress={onPress}
+    >
+      {post.coverUrl ? (
+        <Image source={{ uri: post.coverUrl }} style={styles.cardCover} resizeMode="cover" />
+      ) : null}
+      <View style={styles.cardBody}>
+        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+          {post.title}
+        </Text>
+        <Text style={[styles.cardDate, { color: colors.textSecondary }]}>
+          {formatDate(post.createdAt)}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
 
 export default function FeedScreen() {
   const { colors } = usePreferences();
   const { t } = useTranslation();
+  const { getPublishedPosts, isLoading, postsPerPage } = usePosts();
+  const { hasPermission } = usePermissions();
+  const router = useRouter();
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    scrollContent: {
-      padding: 20,
-    },
-    header: {
-      marginBottom: 32,
-    },
-    greeting: {
-      fontSize: 28,
-      fontWeight: '700' as const,
-      color: colors.text,
-      marginBottom: 8,
-    },
-    subGreeting: {
-      fontSize: 16,
-      color: colors.textSecondary,
-    },
-    placeholderCard: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      padding: 32,
-      marginBottom: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-    },
-    iconContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 20,
-    },
-    placeholderTitle: {
-      fontSize: 20,
-      fontWeight: '700' as const,
-      color: colors.text,
-      marginBottom: 8,
-      textAlign: 'center',
-    },
-    placeholderText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 20,
-    },
-    featureGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 12,
-    },
-    featureCard: {
-      flex: 1,
-      minWidth: '47%',
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: 20,
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    featureIcon: {
-      marginBottom: 12,
-    },
-    featureTitle: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: colors.text,
-      textAlign: 'center',
-    },
-    featureDescription: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 4,
-    },
-    sectionTitle: {
-      fontSize: 22,
-      fontWeight: '700' as const,
-      color: colors.text,
-      marginBottom: 16,
-      marginTop: 8,
-    },
-  });
+  const canCreate = hasPermission(PERMISSIONS.FUNC_FEED_CREATE_POST);
+
+  const [page, setPage] = useState(1);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const published = getPublishedPosts();
+  const visible = published.slice(0, page * postsPerPage);
+  const hasMore = visible.length < published.length;
+
+  const handleEndReached = useCallback(() => {
+    if (hasMore) setPage((p) => p + 1);
+  }, [hasMore]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(1);
+    setRefreshing(false);
+  }, []);
+
+  const handlePostPress = (post: Post) => {
+    router.push(`/post/${post.slug}` as any);
+  };
+
+  const handleCreatePress = () => {
+    router.push('/create-post' as any);
+  };
+
+  const ListEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <View style={[styles.emptyIcon, { backgroundColor: colors.surface }]}>
+        <Rss size={40} color={colors.primary} />
+      </View>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('feed.noPostsYet')}</Text>
+      {canCreate ? (
+        <Pressable
+          style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+          onPress={handleCreatePress}
+        >
+          <Text style={styles.emptyButtonText}>{t('feed.writeFirstPost')}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+
+  const ListFooter = () => {
+    if (isLoading) return <ActivityIndicator style={styles.footer} color={colors.primary} />;
+    if (published.length === 0) return null;
+    return (
+      <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+        {hasMore
+          ? t('feed.showingPosts')
+              .replace('{current}', String(visible.length))
+              .replace('{total}', String(published.length))
+          : t('feed.allPostsLoaded').replace('{total}', String(published.length))}
+      </Text>
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.greeting}>{t('feed.feedTitle')}</Text>
-          <Text style={styles.subGreeting}>{t('feed.feedSubtitle')}</Text>
-        </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <FlatList
+        data={visible}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <PostCard post={item} onPress={() => handlePostPress(item)} />}
+        contentContainerStyle={styles.listContent}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={isLoading ? null : <ListEmpty />}
+        ListFooterComponent={<ListFooter />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      />
 
-        <View style={styles.placeholderCard}>
-          <View style={styles.iconContainer}>
-            <Rss size={40} color={colors.primary} />
-          </View>
-          <Text style={styles.placeholderTitle}>{t('feed.comingSoon')}</Text>
-          <Text style={styles.placeholderText}>
-            {t('feed.feedDescription')}
-          </Text>
-        </View>
-
-        <Text style={styles.sectionTitle}>{t('feed.plannedFeatures')}</Text>
-        <View style={styles.featureGrid}>
-          <View style={styles.featureCard}>
-            <View style={styles.featureIcon}>
-              <TrendingUp size={32} color={colors.primary} />
-            </View>
-            <Text style={styles.featureTitle}>{t('feed.trending')}</Text>
-            <Text style={styles.featureDescription}>{t('feed.trendingDescription')}</Text>
-          </View>
-
-          <View style={styles.featureCard}>
-            <View style={styles.featureIcon}>
-              <Users size={32} color={colors.primary} />
-            </View>
-            <Text style={styles.featureTitle}>{t('feed.social')}</Text>
-            <Text style={styles.featureDescription}>{t('feed.socialDescription')}</Text>
-          </View>
-
-          <View style={styles.featureCard}>
-            <View style={styles.featureIcon}>
-              <Star size={32} color={colors.primary} />
-            </View>
-            <Text style={styles.featureTitle}>{t('feed.favorites')}</Text>
-            <Text style={styles.featureDescription}>{t('feed.favoritesDescription')}</Text>
-          </View>
-
-          <View style={styles.featureCard}>
-            <View style={styles.featureIcon}>
-              <Rss size={32} color={colors.primary} />
-            </View>
-            <Text style={styles.featureTitle}>{t('feed.updates')}</Text>
-            <Text style={styles.featureDescription}>{t('feed.updatesDescription')}</Text>
-          </View>
-        </View>
-      </ScrollView>
+      {canCreate ? (
+        <Pressable
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={handleCreatePress}
+        >
+          <Plus size={28} color="#fff" />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 100,
+    flexGrow: 1,
+  },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  cardCover: {
+    width: '100%',
+    height: 200,
+  },
+  cardBody: {
+    padding: 16,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  cardDate: {
+    fontSize: 13,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyIcon: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  emptyButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  emptyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footer: {
+    paddingVertical: 20,
+  },
+  footerText: {
+    textAlign: 'center',
+    fontSize: 13,
+    paddingVertical: 16,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+});

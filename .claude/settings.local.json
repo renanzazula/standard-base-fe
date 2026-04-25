@@ -29,7 +29,11 @@
       "Bash(git -C \"C:/git_hub/rork-standard-app\" status --short --untracked-files=all expo/)",
       "Bash(git *)",
       "Bash(npm install *)",
-      "Bash(npx expo *)"
+      "Bash(npx expo *)",
+      "Bash(mvn compile *)",
+      "Bash(npx tsc *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(mvn install *)"
     ]
   }
 }
