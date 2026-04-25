@@ -2,9 +2,9 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useEffect, useState} from 'react';
 import type {Block, Post, PostStatus} from '@shared/types/posts';
+import {getModuleConfig, getUserModuleConfig, updateModuleConfig} from '@core/services/moduleConfig';
 
 const POSTS_STORAGE_KEY = '@posts_data';
-const POSTS_PER_PAGE_KEY = '@posts_per_page';
 
 export const DEFAULT_POSTS_PER_PAGE = 10;
 
@@ -54,16 +54,26 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
 
   const loadPosts = async () => {
     try {
-      const [postsJson, perPageJson] = await Promise.all([
-        AsyncStorage.getItem(POSTS_STORAGE_KEY),
-        AsyncStorage.getItem(POSTS_PER_PAGE_KEY),
-      ]);
+      const postsJson = await AsyncStorage.getItem(POSTS_STORAGE_KEY);
       if (postsJson) setPosts(JSON.parse(postsJson));
-      if (perPageJson) setPostsPerPage(Number(perPageJson));
     } catch (error) {
       console.error('[Posts] Failed to load posts:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadFeedConfig = async () => {
+    try {
+      const [tenantConfig, userConfig] = await Promise.all([
+        getModuleConfig('FEED').catch(() => null),
+        getUserModuleConfig('FEED'),
+      ]);
+      const settings = userConfig?.settings ?? tenantConfig?.settings ?? {};
+      const perPage = typeof settings.postsPerPage === 'number' ? settings.postsPerPage : DEFAULT_POSTS_PER_PAGE;
+      setPostsPerPage(Math.min(50, Math.max(5, perPage)));
+    } catch {
+      // keep default on any error
     }
   };
 
@@ -111,8 +121,18 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
 
   const updatePostsPerPage = async (n: number): Promise<void> => {
     const clamped = Math.min(50, Math.max(5, n));
-    await AsyncStorage.setItem(POSTS_PER_PAGE_KEY, String(clamped));
+    await updateModuleConfig('FEED', { postsPerPage: clamped });
     setPostsPerPage(clamped);
+  };
+
+  const reloadFeedConfig = async (): Promise<void> => {
+    await loadFeedConfig();
+  };
+
+  const applyFeedConfig = (settings?: Record<string, unknown>): void => {
+    if (!settings) return;
+    const perPage = typeof settings.postsPerPage === 'number' ? settings.postsPerPage : DEFAULT_POSTS_PER_PAGE;
+    setPostsPerPage(Math.min(50, Math.max(5, perPage)));
   };
 
   return {
@@ -126,5 +146,7 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
     getPublishedPosts,
     resetPosts,
     updatePostsPerPage,
+    reloadFeedConfig,
+    applyFeedConfig,
   };
 });

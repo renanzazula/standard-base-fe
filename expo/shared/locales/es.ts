@@ -164,6 +164,8 @@ export const es: TranslationKeys = {
     adminConfiguration: 'Configuración de Administrador',
     navigationManagement: 'Gestión de Navegación',
     manageNavigationTabs: 'Administrar pestañas visibles en la navegación inferior',
+    postFeedConfiguration: 'Configuración de Feed y Publicaciones',
+    postFeedConfigurationDescription: 'Configurar ajustes de visualización del feed',
   },
   navigation: {
     navigationManagement: 'Gestión de Navegación',
@@ -255,6 +257,11 @@ export const es: TranslationKeys = {
     draft: 'Borrador',
     published: 'Publicado',
     scheduled: 'Programado',
+    feedSettings: 'Configuración del Feed',
+    postsPerPage: 'Publicaciones por Página',
+    postsPerPageDescription: 'Número de publicaciones a cargar por página (5–50)',
+    configSaved: 'Configuración del feed guardada',
+    configSaveFailed: 'Error al guardar la configuración del feed',
   },
   userManagement: {
     title: 'Gestión de Usuarios',

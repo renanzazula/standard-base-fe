@@ -74,27 +74,22 @@ export const [PreferencesProvider, usePreferences] = createContextHook(() => {
     }
   };
 
-  const loadUserPreferences = async (
-    userId: string,
-    _defaultLanguage?: Language,
-    _defaultTimezone?: string,
-    _defaultDateFormat?: DateFormat,
+  const applyUserPreferences = async (
+    prefs: { language?: string; theme?: string; timezone?: string; dateFormat?: string; notificationsEnabled?: boolean } | undefined,
+    defaultLanguage?: Language,
+    defaultTimezone?: string,
+    defaultDateFormat?: DateFormat,
   ) => {
-    try {
-      const prefs = await userProfileApi.getPreferences();
-      if (!prefs) return;
-      setLanguageState((prefs.language as Language) || DEFAULT_LANGUAGE);
-      setTimezoneState(prefs.timezone || 'UTC');
-      setDateFormatState((prefs.dateFormat as DateFormat) || 'MM/DD/YYYY');
-      if (prefs.theme) {
-        const normalised = prefs.theme.toLowerCase() as Theme;
-        if (normalised === 'dark' || normalised === 'light') {
-          setThemeState(normalised);
-          await AsyncStorage.setItem(THEME_STORAGE_KEY, normalised);
-        }
+    if (!prefs) return;
+    setLanguageState((prefs.language as Language) || defaultLanguage || DEFAULT_LANGUAGE);
+    setTimezoneState(prefs.timezone || defaultTimezone || 'UTC');
+    setDateFormatState((prefs.dateFormat as DateFormat) || defaultDateFormat || 'MM/DD/YYYY');
+    if (prefs.theme) {
+      const normalised = prefs.theme.toLowerCase() as Theme;
+      if (normalised === 'dark' || normalised === 'light') {
+        setThemeState(normalised);
+        await AsyncStorage.setItem(THEME_STORAGE_KEY, normalised);
       }
-    } catch (error) {
-      console.error('[Preferences] Failed to load preferences for user:', userId, error);
     }
   };
 
@@ -118,7 +113,7 @@ export const [PreferencesProvider, usePreferences] = createContextHook(() => {
     dateFormat,
     setDateFormat,
     isLoading,
-    loadUserPreferences,
+    applyUserPreferences,
     clearUserPreferences,
   };
 });

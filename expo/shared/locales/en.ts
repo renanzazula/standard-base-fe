@@ -162,6 +162,8 @@ export const en = {
     adminConfiguration: 'Admin Configuration',
     navigationManagement: 'Navigation Management',
     manageNavigationTabs: 'Manage visible tabs in bottom navigation',
+    postFeedConfiguration: 'Post & Feed Configuration',
+    postFeedConfigurationDescription: 'Configure feed display settings',
   },
   navigation: {
     navigationManagement: 'Navigation Management',
@@ -253,6 +255,11 @@ export const en = {
     draft: 'Draft',
     published: 'Published',
     scheduled: 'Scheduled',
+    feedSettings: 'Feed Settings',
+    postsPerPage: 'Posts Per Page',
+    postsPerPageDescription: 'Number of posts to load per page (5–50)',
+    configSaved: 'Feed configuration saved',
+    configSaveFailed: 'Failed to save feed configuration',
   },
   userManagement: {
     title: 'User Management',

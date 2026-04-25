@@ -4,6 +4,14 @@ import type {NavigationTabResponse} from './adminConfig';
 
 export type { NavigationTabResponse };
 
+export interface UserPreferencesDto {
+  language?: string;
+  theme?: string;
+  timezone?: string;
+  dateFormat?: string;
+  notificationsEnabled?: boolean;
+}
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -14,6 +22,8 @@ export interface AuthResponse {
   role: string;
   permissions?: string[];
   navigationTabs?: NavigationTabResponse[];
+  preferences?: UserPreferencesDto;
+  moduleConfigs?: Record<string, Record<string, unknown>>;
 }
 
 export interface UserProfileResponse {
@@ -25,6 +35,8 @@ export interface UserProfileResponse {
   providers: string[];
   permissions?: string[];
   navigationTabs?: NavigationTabResponse[];
+  preferences?: UserPreferencesDto;
+  moduleConfigs?: Record<string, Record<string, unknown>>;
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {

@@ -15,6 +15,7 @@ import {
     LogOut,
     Menu,
     Moon,
+    Rss,
     Shield,
     Sun,
     User,
@@ -911,6 +912,7 @@ export default function SettingsScreen() {
           PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
           PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
           PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
+          PERMISSIONS.FUNC_FEED_CONFIGURE,
         ]) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('settings.adminConfiguration')}</Text>
@@ -1022,7 +1024,7 @@ export default function SettingsScreen() {
               )}
               {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT) && (
                 <TouchableOpacity
-                  style={[styles.settingItem, styles.settingItemLast]}
+                  style={styles.settingItem}
                   onPress={() => router.push('/navigation-management')}
                   testID="navigation-management-link"
                   activeOpacity={0.7}
@@ -1034,6 +1036,27 @@ export default function SettingsScreen() {
                     <Text style={styles.settingTitle}>{t('settings.navigationManagement')}</Text>
                     <Text style={styles.settingDescription}>
                       {t('settings.manageNavigationTabs')}
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_FEED_CONFIGURE) && (
+                <TouchableOpacity
+                  style={[styles.settingItem, styles.settingItemLast]}
+                  onPress={() => router.push('/post-feed-config' as any)}
+                  testID="post-feed-config-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Rss size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>{t('settings.postFeedConfiguration')}</Text>
+                    <Text style={styles.settingDescription}>
+                      {t('settings.postFeedConfigurationDescription')}
                     </Text>
                   </View>
                   <View style={styles.settingAction}>

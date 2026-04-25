@@ -22,6 +22,14 @@ export interface User {
   avatar?: string;
   permissions: Permission[];
   navigationTabs: NavigationTab[];
+  preferences?: {
+    language: string;
+    theme: string;
+    timezone: string;
+    dateFormat: string;
+    notificationsEnabled: boolean;
+  };
+  moduleConfigs?: Record<string, Record<string, unknown>>;
 }
 
 interface AuthState {
@@ -66,6 +74,16 @@ function mapAuthResponseToUser(
     provider,
     permissions: resolvePermissions(role, response.permissions),
     navigationTabs: response.navigationTabs?.map(mapNavigationTab) ?? [],
+    preferences: response.preferences
+      ? {
+          language: response.preferences.language ?? 'en',
+          theme: response.preferences.theme ?? 'DARK',
+          timezone: response.preferences.timezone ?? 'UTC',
+          dateFormat: response.preferences.dateFormat ?? 'MM/DD/YYYY',
+          notificationsEnabled: response.preferences.notificationsEnabled ?? true,
+        }
+      : undefined,
+    moduleConfigs: response.moduleConfigs,
   };
 }
 
@@ -85,6 +103,16 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     provider: providerMap[firstProvider] ?? 'manual',
     permissions: resolvePermissions(role, profile.permissions),
     navigationTabs: profile.navigationTabs?.map(mapNavigationTab) ?? [],
+    preferences: profile.preferences
+      ? {
+          language: profile.preferences.language ?? 'en',
+          theme: profile.preferences.theme ?? 'DARK',
+          timezone: profile.preferences.timezone ?? 'UTC',
+          dateFormat: profile.preferences.dateFormat ?? 'MM/DD/YYYY',
+          notificationsEnabled: profile.preferences.notificationsEnabled ?? true,
+        }
+      : undefined,
+    moduleConfigs: profile.moduleConfigs,
   };
 }
 

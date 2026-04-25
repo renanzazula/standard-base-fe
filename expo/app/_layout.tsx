@@ -1,6 +1,6 @@
 import {AdminConfigProvider, useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {AuthProvider, useAuth} from '@core/contexts/AuthContext';
-import {PostsProvider} from '@core/contexts/PostsContext';
+import {PostsProvider, usePosts} from '@core/contexts/PostsContext';
 import {PreferencesProvider, usePreferences} from '@core/contexts/PreferencesContext';
 import {UserManagementProvider} from '@core/contexts/UserManagementContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
@@ -28,6 +28,7 @@ const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PER
   'admin-config': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
   'create-post': PERMISSIONS.FUNC_FEED_CREATE_POST,
   'edit-post': PERMISSIONS.FUNC_FEED_EDIT_POST,
+  'post-feed-config': PERMISSIONS.FUNC_FEED_CONFIGURE,
 };
 
 // Routes accessible to any authenticated user (no special permission required)
@@ -35,9 +36,10 @@ const AUTHENTICATED_ROUTES = new Set(['post']);
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading: authLoading, user, refreshProfile } = useAuth();
-  const { isLoading: prefsLoading, loadUserPreferences, clearUserPreferences } = usePreferences();
+  const { isLoading: prefsLoading, applyUserPreferences, clearUserPreferences } = usePreferences();
   const { isLoading: configLoading, config, reloadTabConfig } = useAdminConfig();
   const { hasPermission } = usePermissions();
+  const { applyFeedConfig } = usePosts();
   const segments = useSegments();
   const router = useRouter();
 
@@ -51,26 +53,17 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      console.log('[RootLayout] User authenticated, loading preferences for:', user.id);
-      loadUserPreferences(
-        user.id,
+      applyUserPreferences(
+        user.preferences,
         config.languageConfig.defaultLanguage,
         config.regionalConfig.defaultTimezone,
-        config.regionalConfig.defaultDateFormat
+        config.regionalConfig.defaultDateFormat,
       );
+      applyFeedConfig(user.moduleConfigs?.FEED);
     } else if (!isAuthenticated) {
-      console.log('[RootLayout] User logged out, clearing preferences');
       clearUserPreferences();
     }
   }, [isAuthenticated, user?.id]);
-
-  useEffect(() => {
-    if (!configLoading && isAuthenticated) {
-      if (user?.role === 'admin') {
-        reloadTabConfig();
-      }
-    }
-  }, [configLoading, isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -123,6 +116,7 @@ function RootLayoutNav() {
       <Stack.Screen name="create-post" options={{ headerShown: true, title: 'Create Post', presentation: 'modal' }} />
       <Stack.Screen name="edit-post/[id]" options={{ headerShown: true, title: 'Edit Post', presentation: 'modal' }} />
       <Stack.Screen name="post/[slug]" options={{ headerShown: true, title: '' }} />
+      <Stack.Screen name="post-feed-config" options={{ headerShown: true, title: 'Post & Feed Configuration' }} />
     </Stack>
   );
 }
