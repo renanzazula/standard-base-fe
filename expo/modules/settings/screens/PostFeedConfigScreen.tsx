@@ -1,13 +1,18 @@
 import {usePosts} from '@core/contexts/PostsContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
+import {usePermissions} from '@shared/hooks/usePermissions';
+import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
-import {Minus, Plus} from 'lucide-react-native';
+import {useRouter} from 'expo-router';
+import {ChevronRight, FileJson, Minus, Plus} from 'lucide-react-native';
 import {useState} from 'react';
-import {Alert, Pressable, ScrollView, StyleSheet, Text, View,} from 'react-native';
+import {Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 
 export default function PostFeedConfigScreen() {
   const {colors} = usePreferences();
   const {t} = useTranslation();
+  const {hasPermission} = usePermissions();
+  const router = useRouter();
   const {postsPerPage, updatePostsPerPage} = usePosts();
 
   const [localPerPage, setLocalPerPage] = useState(postsPerPage);
@@ -75,6 +80,32 @@ export default function PostFeedConfigScreen() {
           {saving ? t('common.loading') : t('common.save')}
         </Text>
       </Pressable>
+
+      {hasPermission(PERMISSIONS.FUNC_FEED_IMPORT_JSON) && (
+        <>
+          <Text style={[styles.sectionTitle, {color: colors.textSecondary, marginTop: 8}]}>
+            {t('feed.importJsonSection')}
+          </Text>
+          <View style={[styles.card, {backgroundColor: colors.card, borderColor: colors.border}]}>
+            <TouchableOpacity
+              style={styles.importRow}
+              onPress={() => router.push('/feed-import-json' as any)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.importIcon}>
+                <FileJson size={20} color={colors.text} />
+              </View>
+              <View style={styles.importInfo}>
+                <Text style={[styles.rowLabel, {color: colors.text}]}>{t('feed.importJson')}</Text>
+                <Text style={[styles.rowDescription, {color: colors.textSecondary}]}>
+                  {t('feed.importJsonDescription')}
+                </Text>
+              </View>
+              <ChevronRight size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -123,6 +154,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 24,
   },
   saveButtonText: {color: '#fff', fontSize: 16, fontWeight: '700'},
+  importRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  importIcon: {
+    width: 36,
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  importInfo: {flex: 1, marginRight: 8},
 });

@@ -29,6 +29,7 @@ const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PER
   'create-post': PERMISSIONS.FUNC_FEED_CREATE_POST,
   'edit-post': PERMISSIONS.FUNC_FEED_EDIT_POST,
   'post-feed-config': PERMISSIONS.FUNC_FEED_CONFIGURE,
+  'feed-import-json': PERMISSIONS.FUNC_FEED_IMPORT_JSON,
 };
 
 // Routes accessible to any authenticated user (no special permission required)
@@ -117,6 +118,7 @@ function RootLayoutNav() {
       <Stack.Screen name="edit-post/[id]" options={{ headerShown: true, title: 'Edit Post', presentation: 'modal' }} />
       <Stack.Screen name="post/[slug]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="post-feed-config" options={{ headerShown: true, title: 'Post & Feed Configuration' }} />
+      <Stack.Screen name="feed-import-json" options={{ headerShown: true, title: 'Import Posts from JSON' }} />
     </Stack>
   );
 }

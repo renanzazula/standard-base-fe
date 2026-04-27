@@ -119,6 +119,36 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
     setPosts([]);
   };
 
+  const importPosts = async (newPosts: Array<{
+    title: string;
+    coverUrl: string;
+    status: PostStatus;
+    publishAt: string | null;
+    blocks: Block[];
+  }>): Promise<{ imported: number }> => {
+    const now = new Date().toISOString();
+    const existingSlugs = new Set(posts.map((p) => p.slug));
+    const postsToAdd: Post[] = newPosts.map((input, idx) => {
+      const base = generateSlug(input.title);
+      let slug = base;
+      let counter = 1;
+      while (existingSlugs.has(slug)) {
+        slug = `${base}-${counter++}`;
+      }
+      existingSlugs.add(slug);
+      return {
+        id: (Date.now() + idx).toString(),
+        slug,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: 'import',
+        ...input,
+      };
+    });
+    await savePosts([...postsToAdd, ...posts]);
+    return {imported: postsToAdd.length};
+  };
+
   const updatePostsPerPage = async (n: number): Promise<void> => {
     const clamped = Math.min(50, Math.max(5, n));
     await updateModuleConfig('FEED', { postsPerPage: clamped });
@@ -145,6 +175,7 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
     getPostBySlug,
     getPublishedPosts,
     resetPosts,
+    importPosts,
     updatePostsPerPage,
     reloadFeedConfig,
     applyFeedConfig,

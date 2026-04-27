@@ -22,6 +22,7 @@ export const PERMISSIONS = {
   FUNC_FEED_EDIT_POST: 'FUNC_FEED_EDIT_POST',
   FUNC_FEED_DELETE_POST: 'FUNC_FEED_DELETE_POST',
   FUNC_FEED_CONFIGURE: 'FUNC_FEED_CONFIGURE',
+  FUNC_FEED_IMPORT_JSON: 'FUNC_FEED_IMPORT_JSON',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -49,6 +50,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   FUNC_FEED_EDIT_POST: 'Edit Posts',
   FUNC_FEED_DELETE_POST: 'Delete Posts',
   FUNC_FEED_CONFIGURE: 'Configure Feed',
+  FUNC_FEED_IMPORT_JSON: 'Import Posts from JSON',
 };
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -68,5 +70,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.FUNC_FEED_EDIT_POST,
     PERMISSIONS.FUNC_FEED_DELETE_POST,
     PERMISSIONS.FUNC_FEED_CONFIGURE,
+    PERMISSIONS.FUNC_FEED_IMPORT_JSON,
   ],
 };
