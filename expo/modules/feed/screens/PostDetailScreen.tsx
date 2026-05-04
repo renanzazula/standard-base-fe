@@ -4,9 +4,45 @@ import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import BlockRenderer from '../components/BlockRenderer';
-import {Pencil, Trash2} from 'lucide-react-native';
-import {Alert, Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ExternalLink, Facebook, Instagram, Linkedin, Pencil, Trash2, Twitter, Youtube} from 'lucide-react-native';
+import {Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useLocalSearchParams, useRouter} from 'expo-router';
+import Svg, {Path} from 'react-native-svg';
+
+type SocialPlatform = 'instagram' | 'facebook' | 'twitter' | 'youtube' | 'tiktok' | 'linkedin' | 'unknown';
+
+function detectPlatform(url: string): SocialPlatform {
+  try {
+    const host = new URL(url).hostname.replace('www.', '');
+    if (host.includes('instagram.com')) return 'instagram';
+    if (host.includes('facebook.com') || host.includes('fb.com')) return 'facebook';
+    if (host.includes('x.com') || host.includes('twitter.com')) return 'twitter';
+    if (host.includes('youtube.com') || host.includes('youtu.be')) return 'youtube';
+    if (host.includes('tiktok.com')) return 'tiktok';
+    if (host.includes('linkedin.com')) return 'linkedin';
+  } catch {}
+  return 'unknown';
+}
+
+function TikTokIcon({ size, color }: { size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <Path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.2 8.2 0 0 0 4.83 1.56V6.81a4.85 4.85 0 0 1-1.06-.12z" />
+    </Svg>
+  );
+}
+
+function SocialPlatformIcon({ platform, size, color }: { platform: SocialPlatform; size: number; color: string }) {
+  switch (platform) {
+    case 'instagram': return <Instagram size={size} color={color} />;
+    case 'facebook': return <Facebook size={size} color={color} />;
+    case 'twitter': return <Twitter size={size} color={color} />;
+    case 'youtube': return <Youtube size={size} color={color} />;
+    case 'tiktok': return <TikTokIcon size={size} color={color} />;
+    case 'linkedin': return <Linkedin size={size} color={color} />;
+    default: return <ExternalLink size={size} color={color} />;
+  }
+}
 
 function formatDate(iso: string): string {
   try {
@@ -75,6 +111,20 @@ export default function PostDetailScreen() {
         <Text style={[styles.date, { color: colors.textSecondary }]}>
           {t('feed.publishedOn')} {formatDate(post.createdAt)}
         </Text>
+
+        {post.socialMediaLinks && post.socialMediaLinks.length > 0 && (
+          <View style={styles.socialLinks}>
+            {post.socialMediaLinks.map((link, i) => (
+              <Pressable
+                key={i}
+                style={[styles.socialIconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={() => Linking.openURL(link.url)}
+              >
+                <SocialPlatformIcon platform={detectPlatform(link.url)} size={22} color={colors.primary} />
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         {(canEdit || canDelete) ? (
           <View style={styles.actions}>
@@ -168,5 +218,19 @@ const styles = StyleSheet.create({
   },
   notFoundText: {
     fontSize: 16,
+  },
+  socialLinks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
+  socialIconButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 21,
+    borderWidth: 1,
   },
 });

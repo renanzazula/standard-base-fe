@@ -50,6 +50,10 @@ export type Block =
   | GalleryBlock
   | LinkBlock;
 
+export type SocialMediaLink = {
+  url: string;
+};
+
 export type Post = {
   id: string;
   slug: string;
@@ -58,6 +62,7 @@ export type Post = {
   publishAt: string | null;
   coverUrl: string;
   blocks: Block[];
+  socialMediaLinks?: SocialMediaLink[];
   createdAt: string;
   updatedAt: string;
   createdBy: string;

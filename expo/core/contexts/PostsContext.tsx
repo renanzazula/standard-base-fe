@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useEffect, useState} from 'react';
-import type {Block, Post, PostStatus} from '@shared/types/posts';
+import type {Block, Post, PostStatus, SocialMediaLink} from '@shared/types/posts';
 import {getModuleConfig, getUserModuleConfig, updateModuleConfig} from '@core/services/moduleConfig';
 
 const POSTS_STORAGE_KEY = '@posts_data';
@@ -41,6 +41,7 @@ export type NewPostInput = {
   coverUrl: string;
   blocks: Block[];
   createdBy: string;
+  socialMediaLinks?: SocialMediaLink[];
 };
 
 export const [PostsProvider, usePosts] = createContextHook(() => {

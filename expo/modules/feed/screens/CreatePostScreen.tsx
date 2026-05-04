@@ -2,7 +2,7 @@ import {extractSpotifyInfo, usePosts} from '@core/contexts/PostsContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useAuth} from '@core/contexts/AuthContext';
 import {useTranslation} from '@shared/hooks/useTranslation';
-import type {Block, PostStatus} from '@shared/types/posts';
+import type {Block, PostStatus, SocialMediaLink} from '@shared/types/posts';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -74,6 +74,12 @@ function toBlock(editor: BlockEditor): Block | null {
     default:
       return null;
   }
+}
+
+type SocialLinkEditor = { url: string };
+
+function isValidUrl(url: string): boolean {
+  return /^https?:\/\/.+/.test(url.trim());
 }
 
 const BLOCK_TYPES: Array<{ type: BlockEditor['type']; label: string }> = [
@@ -286,6 +292,7 @@ export default function CreatePostScreen() {
   const [coverUrl, setCoverUrl] = useState('');
   const [status, setStatus] = useState<PostStatus>('published');
   const [blockEditors, setBlockEditors] = useState<BlockEditor[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLinkEditor[]>([]);
   const [saving, setSaving] = useState(false);
 
   const handleAddBlock = (type: BlockEditor['type']) => {
@@ -315,6 +322,17 @@ export default function CreatePostScreen() {
       return;
     }
 
+    for (const link of socialLinks) {
+      if (!isValidUrl(link.url)) {
+        Alert.alert(t('common.error'), t('feed.validationInvalidUrl'));
+        return;
+      }
+    }
+
+    const validSocialLinks: SocialMediaLink[] = socialLinks.map(l => ({
+      url: l.url.trim(),
+    }));
+
     setSaving(true);
     try {
       await addPost({
@@ -324,6 +342,7 @@ export default function CreatePostScreen() {
         publishAt: null,
         blocks,
         createdBy: user?.id ?? 'unknown',
+        socialMediaLinks: validSocialLinks.length > 0 ? validSocialLinks : undefined,
       });
       router.back();
     } catch (error) {
@@ -378,6 +397,34 @@ export default function CreatePostScreen() {
             </Pressable>
           ))}
         </View>
+
+        <Text style={[labelStyle, { marginTop: 16 }]}>{t('feed.socialMediaLinks')}</Text>
+        {socialLinks.map((link, i) => (
+          <View key={i} style={[styles.blockRow, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+            <View style={styles.blockRowHeader}>
+              <Text style={[styles.blockType, { color: colors.primary }]}>{t('feed.socialUrl')}</Text>
+              <Pressable onPress={() => setSocialLinks(prev => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
+                <X size={18} color={colors.error} />
+              </Pressable>
+            </View>
+            <TextInput
+              style={inputStyle}
+              value={link.url}
+              onChangeText={(v) => setSocialLinks(prev => prev.map((l, idx) => idx === i ? { ...l, url: v } : l))}
+              placeholder={t('feed.socialUrlPlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+          </View>
+        ))}
+        <Pressable
+          style={[styles.addBlockButton, { borderColor: colors.primary, marginTop: 12 }]}
+          onPress={() => setSocialLinks(prev => [...prev, { url: '' }])}
+        >
+          <Plus size={14} color={colors.primary} />
+          <Text style={[styles.addBlockText, { color: colors.primary }]}>{t('feed.addSocialLink')}</Text>
+        </Pressable>
 
         <Text style={[labelStyle, { marginTop: 16 }]}>{t('feed.contentBlocks')}</Text>
         {blockEditors.map((editor, i) => (
