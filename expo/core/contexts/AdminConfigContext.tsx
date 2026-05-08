@@ -113,15 +113,17 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
       allowedAvatarFormats: response.allowedAvatarFormats ?? ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
     },
     navigationConfig: {
-      tabs: (response.navigationTabs ?? []).map((t) => ({
-        id: t.tabId,
-        name: t.label,
-        enabled: t.enabled,
-        icon: t.iconName,
-        order: t.sortOrder,
-        isSystem: t.isSystem,
-        permissionKey: t.permissionKey as Permission | undefined,
-      })),
+      tabs: (response.navigationTabs ?? []).length > 0
+        ? (response.navigationTabs ?? []).map((t) => ({
+            id: t.tabId,
+            name: t.label,
+            enabled: t.enabled,
+            icon: t.iconName,
+            order: t.sortOrder,
+            isSystem: t.isSystem,
+            permissionKey: t.permissionKey as Permission | undefined,
+          }))
+        : DEFAULT_CONFIG.navigationConfig.tabs,
     },
   };
 }
