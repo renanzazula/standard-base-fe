@@ -18,6 +18,7 @@ export interface NavigationTab {
   order: number;
   isSystem: boolean;
   permissionKey?: Permission;
+  configs?: Record<string, Record<string, unknown>>;
 }
 
 export interface AdminConfig {

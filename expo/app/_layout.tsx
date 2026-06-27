@@ -60,7 +60,7 @@ function RootLayoutNav() {
         config.regionalConfig.defaultTimezone,
         config.regionalConfig.defaultDateFormat,
       );
-      applyFeedConfig(user.moduleConfigs?.FEED);
+      applyFeedConfig(user.navigationTabs.find(t => t.configs?.FEED != null)?.configs?.FEED);
     } else if (!isAuthenticated) {
       clearUserPreferences();
     }

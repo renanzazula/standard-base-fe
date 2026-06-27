@@ -29,7 +29,6 @@ export interface User {
     dateFormat: string;
     notificationsEnabled: boolean;
   };
-  moduleConfigs?: Record<string, Record<string, unknown>>;
 }
 
 interface AuthState {
@@ -50,6 +49,7 @@ function mapNavigationTab(t: NavigationTabResponse): NavigationTab {
     order: t.sortOrder,
     isSystem: t.isSystem,
     permissionKey: t.permissionKey as Permission | undefined,
+    configs: t.configs,
   };
 }
 
@@ -83,7 +83,6 @@ function mapAuthResponseToUser(
           notificationsEnabled: response.preferences.notificationsEnabled ?? true,
         }
       : undefined,
-    moduleConfigs: response.moduleConfigs,
   };
 }
 
@@ -112,7 +111,6 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
           notificationsEnabled: profile.preferences.notificationsEnabled ?? true,
         }
       : undefined,
-    moduleConfigs: profile.moduleConfigs,
   };
 }
 
@@ -124,7 +122,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     lastActivity: Date.now(),
   });
   const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { config } = useAdminConfig();
+  const { config, reloadTabConfig } = useAdminConfig();
 
   useEffect(() => {
     setOnAuthExpired(() => {
@@ -155,6 +153,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isLoading: false,
           lastActivity: Date.now(),
         });
+        reloadTabConfig();
         return;
       }
     } catch (error) {
@@ -207,6 +206,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isLoading: false,
       lastActivity: Date.now(),
     });
+    reloadTabConfig();
     return true;
   };
 
@@ -241,6 +241,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isLoading: false,
       lastActivity: Date.now(),
     });
+    reloadTabConfig();
     return true;
   };
 

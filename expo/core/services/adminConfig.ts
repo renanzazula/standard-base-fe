@@ -9,6 +9,7 @@ export interface NavigationTabResponse {
   sortOrder: number;
   isSystem: boolean;
   permissionKey?: string;
+  configs?: Record<string, Record<string, unknown>>;
 }
 
 export interface AppConfigResponse {

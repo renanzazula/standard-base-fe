@@ -33,7 +33,16 @@
       "Bash(mvn compile *)",
       "Bash(npx tsc *)",
       "Bash(node_modules/.bin/tsc --noEmit)",
-      "Bash(mvn install *)"
+      "Bash(mvn install *)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(Get-ChildItem C:\\\\git_hub\\\\rork-standard-app *)",
+      "Bash(rtk ls *)",
+      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\" -Force | Where-Object { $_.Name -ne \"node_modules\" } | Select-Object Name, PSIsContainer | Format-Table)",
+      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\app\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\core\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\modules\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\shared\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\__tests__\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)"
     ]
   }
 }

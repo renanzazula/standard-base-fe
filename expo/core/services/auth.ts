@@ -23,7 +23,6 @@ export interface AuthResponse {
   permissions?: string[];
   navigationTabs?: NavigationTabResponse[];
   preferences?: UserPreferencesDto;
-  moduleConfigs?: Record<string, Record<string, unknown>>;
 }
 
 export interface UserProfileResponse {
@@ -36,7 +35,6 @@ export interface UserProfileResponse {
   permissions?: string[];
   navigationTabs?: NavigationTabResponse[];
   preferences?: UserPreferencesDto;
-  moduleConfigs?: Record<string, Record<string, unknown>>;
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
