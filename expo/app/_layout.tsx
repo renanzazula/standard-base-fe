@@ -30,6 +30,8 @@ const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PER
   'edit-post': PERMISSIONS.FUNC_FEED_EDIT_POST,
   'post-feed-config': PERMISSIONS.FUNC_FEED_CONFIGURE,
   'feed-import-json': PERMISSIONS.FUNC_FEED_IMPORT_JSON,
+  'podcast-config': PERMISSIONS.FUNC_PODCAST_CONFIGURE,
+  'podcast-import-json': PERMISSIONS.FUNC_PODCAST_IMPORT_JSON,
 };
 
 // Routes accessible to any authenticated user (no special permission required)
@@ -40,7 +42,7 @@ function RootLayoutNav() {
   const { isLoading: prefsLoading, applyUserPreferences, clearUserPreferences } = usePreferences();
   const { isLoading: configLoading, config, reloadTabConfig } = useAdminConfig();
   const { hasPermission } = usePermissions();
-  const { applyFeedConfig } = usePosts();
+  const { applyFeedConfig, applyPodcastConfig } = usePosts();
   const segments = useSegments();
   const router = useRouter();
 
@@ -61,6 +63,7 @@ function RootLayoutNav() {
         config.regionalConfig.defaultDateFormat,
       );
       applyFeedConfig(user.navigationTabs.find(t => t.configs?.FEED != null)?.configs?.FEED);
+      applyPodcastConfig(user.navigationTabs.find(t => t.configs?.PODCAST != null)?.configs?.PODCAST);
     } else if (!isAuthenticated) {
       clearUserPreferences();
     }
@@ -119,6 +122,8 @@ function RootLayoutNav() {
       <Stack.Screen name="post/[slug]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="post-feed-config" options={{ headerShown: true, title: 'Post & Feed Configuration' }} />
       <Stack.Screen name="feed-import-json" options={{ headerShown: true, title: 'Import Posts from JSON' }} />
+      <Stack.Screen name="podcast-config" options={{ headerShown: true, title: 'Podcast Configuration' }} />
+      <Stack.Screen name="podcast-import-json" options={{ headerShown: true, title: 'Import Episodes from JSON' }} />
     </Stack>
   );
 }

@@ -5,34 +5,34 @@ import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useRouter} from 'expo-router';
 import {
-    Camera,
-    Check,
-    ChevronRight,
-    Clock,
-    Edit3,
-    Globe,
-    Lock,
-    LogOut,
-    Menu,
-    Moon,
-    Rss,
-    Shield,
-    Sun,
-    User,
-    Users,
+  Camera,
+  Check,
+  ChevronRight,
+  Clock,
+  Edit3,
+  Globe,
+  Lock,
+  LogOut,
+  Menu,
+  Mic,
+  Moon,
+  Shield,
+  Sun,
+  User,
+  Users,
 } from 'lucide-react-native';
 import {
-    Alert,
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import React from 'react';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
@@ -912,7 +912,7 @@ export default function SettingsScreen() {
           PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
           PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
           PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
-          PERMISSIONS.FUNC_FEED_CONFIGURE,
+          PERMISSIONS.FUNC_PODCAST_CONFIGURE,
         ]) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('settings.adminConfiguration')}</Text>
@@ -1043,20 +1043,20 @@ export default function SettingsScreen() {
                   </View>
                 </TouchableOpacity>
               )}
-              {hasPermission(PERMISSIONS.FUNC_FEED_CONFIGURE) && (
+              {hasPermission(PERMISSIONS.FUNC_PODCAST_CONFIGURE) && (
                 <TouchableOpacity
                   style={[styles.settingItem, styles.settingItemLast]}
-                  onPress={() => router.push('/post-feed-config' as any)}
-                  testID="post-feed-config-link"
+                  onPress={() => router.push('/podcast-config' as any)}
+                  testID="podcast-config-link"
                   activeOpacity={0.7}
                 >
                   <View style={styles.settingIcon}>
-                    <Rss size={20} color={colors.text} />
+                    <Mic size={20} color={colors.text} />
                   </View>
                   <View style={styles.settingContent}>
-                    <Text style={styles.settingTitle}>{t('settings.postFeedConfiguration')}</Text>
+                    <Text style={styles.settingTitle}>{t('settings.podcastConfiguration')}</Text>
                     <Text style={styles.settingDescription}>
-                      {t('settings.postFeedConfigurationDescription')}
+                      {t('settings.podcastConfigurationDescription')}
                     </Text>
                   </View>
                   <View style={styles.settingAction}>

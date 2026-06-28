@@ -48,6 +48,7 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [postsPerPage, setPostsPerPage] = useState(DEFAULT_POSTS_PER_PAGE);
+  const [podcastPostsPerPage, setPodcastPostsPerPage] = useState(DEFAULT_POSTS_PER_PAGE);
 
   useEffect(() => {
     loadPosts();
@@ -156,6 +157,12 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
     setPostsPerPage(clamped);
   };
 
+  const updatePodcastPostsPerPage = async (n: number): Promise<void> => {
+    const clamped = Math.min(50, Math.max(5, n));
+    await updateModuleConfig('PODCAST', { postsPerPage: clamped });
+    setPodcastPostsPerPage(clamped);
+  };
+
   const reloadFeedConfig = async (): Promise<void> => {
     await loadFeedConfig();
   };
@@ -166,10 +173,17 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
     setPostsPerPage(Math.min(50, Math.max(5, perPage)));
   };
 
+  const applyPodcastConfig = (settings?: Record<string, unknown>): void => {
+    if (!settings) return;
+    const perPage = typeof settings.postsPerPage === 'number' ? settings.postsPerPage : DEFAULT_POSTS_PER_PAGE;
+    setPodcastPostsPerPage(Math.min(50, Math.max(5, perPage)));
+  };
+
   return {
     posts,
     isLoading,
     postsPerPage,
+    podcastPostsPerPage,
     addPost,
     updatePost,
     deletePost,
@@ -178,7 +192,9 @@ export const [PostsProvider, usePosts] = createContextHook(() => {
     resetPosts,
     importPosts,
     updatePostsPerPage,
+    updatePodcastPostsPerPage,
     reloadFeedConfig,
     applyFeedConfig,
+    applyPodcastConfig,
   };
 });

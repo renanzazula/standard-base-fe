@@ -66,8 +66,8 @@ export default function PostDetailScreen() {
 
   const post = getPostBySlug(slug ?? '');
 
-  const canEdit = hasPermission(PERMISSIONS.FUNC_FEED_EDIT_POST);
-  const canDelete = hasPermission(PERMISSIONS.FUNC_FEED_DELETE_POST);
+  const canEdit = hasPermission(PERMISSIONS.FUNC_FEED_EDIT_POST) || hasPermission(PERMISSIONS.FUNC_PODCAST_EDIT_POST);
+  const canDelete = hasPermission(PERMISSIONS.FUNC_FEED_DELETE_POST) || hasPermission(PERMISSIONS.FUNC_PODCAST_DELETE_POST);
 
   if (!post) {
     return (
