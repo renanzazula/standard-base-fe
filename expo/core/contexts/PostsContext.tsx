@@ -4,6 +4,25 @@ import {useEffect, useState} from 'react';
 import type {Block, Post, PostStatus, SocialMediaLink} from '@shared/types/posts';
 import {getModuleConfig, getUserModuleConfig, updateModuleConfig} from '@core/services/moduleConfig';
 
+export type PostsContextValue = {
+  posts: Post[];
+  isLoading: boolean;
+  postsPerPage: number;
+  podcastPostsPerPage: number;
+  addPost: (input: NewPostInput) => Promise<void>;
+  updatePost: (id: string, updates: Partial<Post>) => Promise<void>;
+  deletePost: (id: string) => Promise<void>;
+  getPostBySlug: (slug: string) => Post | undefined;
+  getPublishedPosts: () => Post[];
+  resetPosts: () => Promise<void>;
+  importPosts: (newPosts: Array<{ title: string; coverUrl: string; status: PostStatus; publishAt: string | null; blocks: Block[] }>) => Promise<{ imported: number }>;
+  updatePostsPerPage: (n: number) => Promise<void>;
+  updatePodcastPostsPerPage: (n: number) => Promise<void>;
+  reloadFeedConfig: () => Promise<void>;
+  applyFeedConfig: (settings?: Record<string, unknown>) => void;
+  applyPodcastConfig: (settings?: Record<string, unknown>) => void;
+};
+
 const POSTS_STORAGE_KEY = '@posts_data';
 
 export const DEFAULT_POSTS_PER_PAGE = 10;
@@ -44,7 +63,7 @@ export type NewPostInput = {
   socialMediaLinks?: SocialMediaLink[];
 };
 
-export const [PostsProvider, usePosts] = createContextHook(() => {
+export const [PostsProvider, usePosts] = createContextHook((): PostsContextValue => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [postsPerPage, setPostsPerPage] = useState(DEFAULT_POSTS_PER_PAGE);
