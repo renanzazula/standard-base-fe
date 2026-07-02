@@ -6,6 +6,7 @@ import {useTranslation} from '@shared/hooks/useTranslation';
 import {FileJson, Upload} from 'lucide-react-native';
 import {useRef, useState} from 'react';
 import {Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
 export default function PodcastImportScreen() {
   const {colors} = usePreferences();
@@ -174,7 +175,7 @@ export default function PodcastImportScreen() {
 
 const styles = StyleSheet.create({
   container: {flex: 1},
-  content: {padding: 20, paddingBottom: 60},
+  content: {padding: 20, paddingBottom: 60, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center'},
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',

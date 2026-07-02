@@ -3,6 +3,8 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {Activity, Home, Shield, User} from 'lucide-react-native';
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {AVAILABLE_LANGUAGES} from '@shared/constants/languages';
+import {FONTS} from '@shared/constants/typography';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {useTranslation} from '@shared/hooks/useTranslation';
 
 export default function HomeScreen() {
@@ -21,13 +23,16 @@ export default function HomeScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     header: {
       marginBottom: 32,
     },
     greeting: {
       fontSize: 28,
-      fontWeight: '700' as const,
+      fontFamily: FONTS.display,
       color: colors.text,
       marginBottom: 8,
     },

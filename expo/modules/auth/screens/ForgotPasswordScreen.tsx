@@ -3,17 +3,19 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useRouter} from 'expo-router';
 import {ArrowLeft, KeyRound, Mail} from 'lucide-react-native';
 import {useState} from 'react';
+import {FONTS} from '@shared/constants/typography';
+import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -65,6 +67,9 @@ export default function ForgotPasswordScreen() {
     scrollContent: {
       flexGrow: 1,
       padding: 24,
+      width: '100%',
+      maxWidth: MAX_FORM_WIDTH,
+      alignSelf: 'center',
     },
     backButton: {
       flexDirection: 'row',
@@ -92,7 +97,7 @@ export default function ForgotPasswordScreen() {
     },
     title: {
       fontSize: 32,
-      fontWeight: '700' as const,
+      fontFamily: FONTS.display,
       color: colors.text,
       marginBottom: 8,
     },

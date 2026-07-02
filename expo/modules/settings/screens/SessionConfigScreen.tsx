@@ -3,6 +3,7 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {Stack} from 'expo-router';
 import {Clock, Minus, Plus} from 'lucide-react-native';
 import {ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View} from 'react-native';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
 export default function SessionConfigScreen() {
   const { colors } = usePreferences();
@@ -21,6 +22,9 @@ export default function SessionConfigScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     section: {
       marginBottom: 32,

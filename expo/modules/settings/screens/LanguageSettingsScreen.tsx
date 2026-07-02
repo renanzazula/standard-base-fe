@@ -4,6 +4,7 @@ import {Stack} from 'expo-router';
 import {Globe, ToggleLeft, ToggleRight, Trash2} from 'lucide-react-native';
 import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
 export default function LanguageSettingsScreen() {
   const { colors } = usePreferences();
@@ -16,6 +17,9 @@ export default function LanguageSettingsScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     section: {
       marginBottom: 32,

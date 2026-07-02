@@ -2,20 +2,21 @@ import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useAuth} from '@core/contexts/AuthContext';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useRouter} from 'expo-router';
 import {
-  Apple,
-  ChevronRight,
-  Chrome,
-  Clock,
-  Globe,
-  Mail,
-  Minus,
-  Plus,
-  Shield,
-  ToggleLeft,
-  ToggleRight,
-  Trash2
+    Apple,
+    ChevronRight,
+    Chrome,
+    Clock,
+    Globe,
+    Mail,
+    Minus,
+    Plus,
+    Shield,
+    ToggleLeft,
+    ToggleRight,
+    Trash2
 } from 'lucide-react-native';
 import {Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View} from 'react-native';
 
@@ -38,6 +39,9 @@ export default function AdminConfigScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     section: {
       marginBottom: 32,

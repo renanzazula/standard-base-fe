@@ -4,6 +4,7 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useFocusEffect, useRouter} from 'expo-router';
 import {
     ActivityIndicator,
@@ -101,7 +102,7 @@ export default function UserManagementScreen() {
     () =>
       StyleSheet.create({
         container: { flex: 1, backgroundColor: colors.background },
-        scrollContent: { padding: 20, paddingTop: 20 + insets.top },
+        scrollContent: { padding: 20, paddingTop: 20 + insets.top, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
         header: { marginBottom: 24 },
         title: { fontSize: 32, fontWeight: '700' as const, color: colors.text, marginBottom: 8 },
         subtitle: { fontSize: 16, color: colors.textSecondary },

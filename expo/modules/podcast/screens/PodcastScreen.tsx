@@ -6,6 +6,8 @@ import {useTranslation} from '@shared/hooks/useTranslation';
 import type {Post} from '@shared/types/posts';
 import {Mic, Plus} from 'lucide-react-native';
 import {useCallback, useState} from 'react';
+import {FONTS} from '@shared/constants/typography';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View} from 'react-native';
 import {useRouter} from 'expo-router';
 
@@ -30,7 +32,11 @@ function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
     >
       {post.coverUrl ? (
         <Image source={{ uri: post.coverUrl }} style={styles.cardCover} resizeMode="cover" />
-      ) : null}
+      ) : (
+        <View style={[styles.cardCoverPlaceholder, { backgroundColor: colors.accentPodcast + '1a' }]}>
+          <Mic size={28} color={colors.accentPodcast} />
+        </View>
+      )}
       <View style={styles.cardBody}>
         <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
           {post.title}
@@ -79,13 +85,13 @@ export default function PodcastScreen() {
 
   const ListEmpty = () => (
     <View style={styles.emptyContainer}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.surface }]}>
-        <Mic size={40} color={colors.primary} />
+      <View style={[styles.emptyIcon, { backgroundColor: colors.accentPodcast + '1a' }]}>
+        <Mic size={40} color={colors.accentPodcast} />
       </View>
       <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('podcast.noPostsYet')}</Text>
       {canCreate ? (
         <Pressable
-          style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+          style={[styles.emptyButton, { backgroundColor: colors.accentPodcast }]}
           onPress={handleCreatePress}
         >
           <Text style={styles.emptyButtonText}>{t('podcast.writeFirstPost')}</Text>
@@ -130,7 +136,7 @@ export default function PodcastScreen() {
 
       {canCreate ? (
         <Pressable
-          style={[styles.fab, { backgroundColor: colors.primary }]}
+          style={[styles.fab, { backgroundColor: colors.accentPodcast }]}
           onPress={handleCreatePress}
         >
           <Plus size={28} color="#fff" />
@@ -148,6 +154,9 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 100,
     flexGrow: 1,
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
   },
   card: {
     borderRadius: 16,
@@ -158,6 +167,12 @@ const styles = StyleSheet.create({
   cardCover: {
     width: '100%',
     height: 200,
+  },
+  cardCoverPlaceholder: {
+    width: '100%',
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardBody: {
     padding: 16,
@@ -187,7 +202,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontFamily: FONTS.display,
     textAlign: 'center',
     marginBottom: 20,
   },

@@ -1,5 +1,6 @@
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack} from 'expo-router';
 import {Apple, Chrome, Mail} from 'lucide-react-native';
 import {ScrollView, StyleSheet, Switch, Text, View} from 'react-native';
@@ -15,6 +16,9 @@ export default function ConfigureAuthScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     section: {
       marginBottom: 32,

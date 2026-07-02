@@ -3,16 +3,17 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useAuth} from '@core/contexts/AuthContext';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import type {Block, PostStatus, SocialMediaLink} from '@shared/types/posts';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import {useRouter} from 'expo-router';
 import {useState} from 'react';
@@ -466,7 +467,7 @@ export default function CreatePostScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 20, paddingBottom: 60 },
+  content: { padding: 20, paddingBottom: 60, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
   fieldLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 14 },
   input: {
     borderWidth: 1,

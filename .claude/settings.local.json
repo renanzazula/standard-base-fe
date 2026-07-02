@@ -42,7 +42,9 @@
       "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\core\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
       "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\modules\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
       "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\shared\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
-      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\__tests__\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)"
+      "PowerShell(Get-ChildItem \"C:\\\\git_hub\\\\rork-standard-app\\\\expo\\\\__tests__\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)",
+      "WebSearch",
+      "Bash(claude plugins *)"
     ]
   }
 }

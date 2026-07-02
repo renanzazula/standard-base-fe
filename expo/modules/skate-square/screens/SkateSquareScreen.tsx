@@ -1,5 +1,7 @@
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {usePreferences} from '@core/contexts/PreferencesContext';
+import {FONTS} from '@shared/constants/typography';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Flame} from 'lucide-react-native';
 
 export default function SkateSquareScreen() {
@@ -12,6 +14,9 @@ export default function SkateSquareScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     header: {
       alignItems: 'center',
@@ -29,7 +34,7 @@ export default function SkateSquareScreen() {
     },
     title: {
       fontSize: 28,
-      fontWeight: '700' as const,
+      fontFamily: FONTS.display,
       color: colors.text,
       marginBottom: 8,
     },

@@ -1,5 +1,6 @@
 import {NavigationTab, useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack} from 'expo-router';
 import {ChevronDown, ChevronUp, Edit3, GripVertical, Menu, Plus, Trash2} from 'lucide-react-native';
 import {
@@ -147,6 +148,9 @@ export default function NavigationManagementScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     section: {
       marginBottom: 24,

@@ -3,6 +3,7 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import type {Permission} from '@shared/constants/permissions';
 import {PERMISSION_LABELS, PERMISSIONS} from '@shared/constants/permissions';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useLocalSearchParams} from 'expo-router';
 import {ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
 import React, {useEffect, useMemo, useState} from 'react';
@@ -61,7 +62,7 @@ export default function ProfilePermissionsScreen() {
     () =>
       StyleSheet.create({
         container: { flex: 1, backgroundColor: colors.background },
-        scrollContent: { padding: 20, paddingTop: 20 + insets.top },
+        scrollContent: { padding: 20, paddingTop: 20 + insets.top, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
         infoBanner: {
           flexDirection: 'row' as const,
           alignItems: 'flex-start' as const,

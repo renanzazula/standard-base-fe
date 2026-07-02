@@ -5,6 +5,8 @@ import {useRouter} from 'expo-router';
 import {Apple as AppleIcon, Chrome, Lock, LogIn, Mail} from 'lucide-react-native';
 import {useState} from 'react';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {FONTS} from '@shared/constants/typography';
+import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {ApiError} from '@core/services/api';
 import {
     ActivityIndicator,
@@ -111,6 +113,9 @@ export default function LoginScreen() {
       flexGrow: 1,
       justifyContent: 'center',
       padding: 24,
+      width: '100%',
+      maxWidth: MAX_FORM_WIDTH,
+      alignSelf: 'center',
     },
     header: {
       alignItems: 'center',
@@ -127,7 +132,7 @@ export default function LoginScreen() {
     },
     title: {
       fontSize: 32,
-      fontWeight: '700' as const,
+      fontFamily: FONTS.display,
       color: colors.text,
       marginBottom: 8,
     },

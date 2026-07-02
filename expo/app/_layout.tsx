@@ -6,9 +6,11 @@ import {UserManagementProvider} from '@core/contexts/UserManagementContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {Fraunces_700Bold, useFonts} from '@expo-google-fonts/fraunces';
+import {DarkTheme, DefaultTheme, ThemeProvider} from '@react-navigation/native';
 import {Stack, useRouter, useSegments} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, {useEffect} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {AppState} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
@@ -39,14 +41,32 @@ const AUTHENTICATED_ROUTES = new Set(['post']);
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading: authLoading, user, refreshProfile } = useAuth();
-  const { isLoading: prefsLoading, applyUserPreferences, clearUserPreferences } = usePreferences();
+  const { colors, theme, isLoading: prefsLoading, applyUserPreferences, clearUserPreferences } = usePreferences();
   const { isLoading: configLoading, config, reloadTabConfig } = useAdminConfig();
   const { hasPermission } = usePermissions();
   const { applyFeedConfig, applyPodcastConfig } = usePosts();
   const segments = useSegments();
   const router = useRouter();
+  const [fontsLoaded] = useFonts({ Fraunces_700Bold });
 
-  const isLoading = authLoading || prefsLoading || configLoading;
+  const isLoading = authLoading || prefsLoading || configLoading || !fontsLoaded;
+
+  const navigationTheme = useMemo(() => {
+    const base = theme === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      dark: theme === 'dark',
+      colors: {
+        ...base.colors,
+        primary: colors.primary,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.error,
+      },
+    };
+  }, [theme, colors]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -102,7 +122,14 @@ function RootLayoutNav() {
   }, [isAuthenticated, isLoading, segments, router, hasPermission]);
 
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+    <ThemeProvider value={navigationTheme}>
+    <Stack
+      screenOptions={{
+        headerBackTitle: 'Back',
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.text,
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
@@ -125,6 +152,7 @@ function RootLayoutNav() {
       <Stack.Screen name="podcast-config" options={{ headerShown: true, title: 'Podcast Configuration' }} />
       <Stack.Screen name="podcast-import-json" options={{ headerShown: true, title: 'Import Episodes from JSON' }} />
     </Stack>
+    </ThemeProvider>
   );
 }
 

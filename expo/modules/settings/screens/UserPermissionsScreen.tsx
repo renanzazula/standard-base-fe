@@ -5,6 +5,7 @@ import {useTranslation} from '@shared/hooks/useTranslation';
 import type {Permission} from '@shared/constants/permissions';
 import {PERMISSION_LABELS, PERMISSIONS} from '@shared/constants/permissions';
 import type {PermissionOverride} from '@core/services/adminUsers';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useLocalSearchParams, useRouter} from 'expo-router';
 import {ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
 import React, {useEffect, useMemo, useState} from 'react';
@@ -119,7 +120,7 @@ export default function UserPermissionsScreen() {
     () =>
       StyleSheet.create({
         container: { flex: 1, backgroundColor: colors.background },
-        scrollContent: { padding: 20, paddingTop: 20 + insets.top },
+        scrollContent: { padding: 20, paddingTop: 20 + insets.top, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
         header: { marginBottom: 24 },
         title: { fontSize: 28, fontWeight: '700' as const, color: colors.text, marginBottom: 4 },
         subtitle: { fontSize: 14, color: colors.textSecondary },

@@ -3,6 +3,7 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import BlockRenderer from '../components/BlockRenderer';
 import {ExternalLink, Facebook, Instagram, Linkedin, Pencil, Trash2, Twitter, Youtube} from 'lucide-react-native';
 import {Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
@@ -167,6 +168,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 48,
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
   },
   cover: {
     width: '100%',

@@ -4,6 +4,7 @@ import {Stack} from 'expo-router';
 import {Minus, Plus, Shield} from 'lucide-react-native';
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
 export default function ProfileRestrictionsScreen() {
   const { colors } = usePreferences();
@@ -17,6 +18,9 @@ export default function ProfileRestrictionsScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     section: {
       marginBottom: 32,

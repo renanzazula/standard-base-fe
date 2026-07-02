@@ -7,6 +7,7 @@ import {useRouter} from 'expo-router';
 import {ChevronRight, FileJson, Minus, Plus} from 'lucide-react-native';
 import {useState} from 'react';
 import {Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
 export default function PostFeedConfigScreen() {
   const {colors} = usePreferences();
@@ -112,7 +113,7 @@ export default function PostFeedConfigScreen() {
 
 const styles = StyleSheet.create({
   container: {flex: 1},
-  content: {padding: 20, paddingBottom: 60},
+  content: {padding: 20, paddingBottom: 60, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center'},
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',

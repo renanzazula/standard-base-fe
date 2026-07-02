@@ -5,37 +5,39 @@ import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useRouter} from 'expo-router';
 import {
-  Camera,
-  Check,
-  ChevronRight,
-  Clock,
-  Edit3,
-  Globe,
-  Lock,
-  LogOut,
-  Menu,
-  Mic,
-  Moon,
-  Shield,
-  Sun,
-  User,
-  Users,
+    Camera,
+    Check,
+    ChevronRight,
+    Clock,
+    Edit3,
+    Globe,
+    Lock,
+    LogOut,
+    Menu,
+    Mic,
+    Moon,
+    Shield,
+    Sun,
+    User,
+    Users,
 } from 'lucide-react-native';
 import {
-  Alert,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import React from 'react';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
+import {FONTS} from '@shared/constants/typography';
+import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {useTranslation} from '@shared/hooks/useTranslation';
 
 import * as ImagePicker from 'expo-image-picker';
@@ -173,13 +175,16 @@ export default function SettingsScreen() {
     },
     scrollContent: {
       padding: 20,
+      width: '100%',
+      maxWidth: MAX_CONTENT_WIDTH,
+      alignSelf: 'center',
     },
     header: {
       marginBottom: 32,
     },
     title: {
       fontSize: 32,
-      fontWeight: '700' as const,
+      fontFamily: FONTS.display,
       color: colors.text,
       marginBottom: 8,
     },

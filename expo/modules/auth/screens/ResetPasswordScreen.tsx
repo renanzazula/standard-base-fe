@@ -3,6 +3,8 @@ import * as authApi from '@core/services/auth';
 import {useLocalSearchParams, useRouter} from 'expo-router';
 import {ArrowLeft, Eye, EyeOff, KeyRound} from 'lucide-react-native';
 import {useState} from 'react';
+import {FONTS} from '@shared/constants/typography';
+import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {
     ActivityIndicator,
     Alert,
@@ -57,7 +59,7 @@ export default function ResetPasswordScreen() {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { flexGrow: 1, padding: 24 },
+    scrollContent: { flexGrow: 1, padding: 24, width: '100%', maxWidth: MAX_FORM_WIDTH, alignSelf: 'center' },
     backButton: { flexDirection: 'row', alignItems: 'center', marginBottom: 32 },
     backButtonText: { fontSize: 16, color: colors.primary, fontWeight: '600' as const, marginLeft: 8 },
     header: { alignItems: 'center', marginBottom: 48 },
@@ -66,7 +68,7 @@ export default function ResetPasswordScreen() {
       backgroundColor: colors.primary,
       alignItems: 'center', justifyContent: 'center', marginBottom: 16,
     },
-    title: { fontSize: 32, fontWeight: '700' as const, color: colors.text, marginBottom: 8 },
+    title: { fontSize: 32, fontFamily: FONTS.display, color: colors.text, marginBottom: 8 },
     subtitle: { fontSize: 16, color: colors.textSecondary, textAlign: 'center', paddingHorizontal: 20 },
     inputContainer: { marginBottom: 16 },
     label: { fontSize: 14, fontWeight: '600' as const, color: colors.text, marginBottom: 8 },
