@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Standard App",
-    "slug": "standard-app",
+    "slug": "skateboard-podcast-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -29,9 +29,10 @@
       },
       "package": "app.rork.standard-app",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -53,6 +54,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": "https://rork.com/"
+      },
+      "eas": {
+        "projectId": "20d9488c-c171-43f5-ae2a-fb40405964fb"
+      }
+    },
+    "owner": "renanzazula"
   }
 }
