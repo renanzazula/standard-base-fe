@@ -52,35 +52,32 @@ function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
 export default function PodcastScreen() {
   const { colors } = usePreferences();
   const { t } = useTranslation();
-  const { getPublishedPosts, isLoading, podcastPostsPerPage } = usePosts();
+  const { podcast } = usePosts();
   const { hasPermission } = usePermissions();
   const router = useRouter();
 
   const canCreate = hasPermission(PERMISSIONS.FUNC_PODCAST_CREATE_POST);
 
-  const [page, setPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
 
-  const published = getPublishedPosts();
-  const visible = published.slice(0, page * podcastPostsPerPage);
-  const hasMore = visible.length < published.length;
+  const { posts: visible, total, isLoading, hasMore, loadMore, refresh } = podcast;
 
   const handleEndReached = useCallback(() => {
-    if (hasMore) setPage((p) => p + 1);
-  }, [hasMore]);
+    if (hasMore) loadMore();
+  }, [hasMore, loadMore]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setPage(1);
+    await refresh();
     setRefreshing(false);
-  }, []);
+  }, [refresh]);
 
   const handlePostPress = (post: Post) => {
     router.push(`/post/${post.slug}` as any);
   };
 
   const handleCreatePress = () => {
-    router.push('/create-post' as any);
+    router.push('/create-post?resource=podcast' as any);
   };
 
   const ListEmpty = () => (
@@ -102,14 +99,14 @@ export default function PodcastScreen() {
 
   const ListFooter = () => {
     if (isLoading) return <ActivityIndicator style={styles.footer} color={colors.primary} />;
-    if (published.length === 0) return null;
+    if (total === 0) return null;
     return (
       <Text style={[styles.footerText, { color: colors.textSecondary }]}>
         {hasMore
           ? t('podcast.showingPosts')
               .replace('{current}', String(visible.length))
-              .replace('{total}', String(published.length))
-          : t('podcast.allPostsLoaded').replace('{total}', String(published.length))}
+              .replace('{total}', String(total))
+          : t('podcast.allPostsLoaded').replace('{total}', String(total))}
       </Text>
     );
   };

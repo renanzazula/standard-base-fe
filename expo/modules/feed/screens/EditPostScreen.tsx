@@ -224,13 +224,17 @@ function BlockEditorRow({
 }
 
 export default function EditPostScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { posts, updatePost } = usePosts();
+  const { id, resource } = useLocalSearchParams<{ id: string; resource?: string }>();
+  const { posts, feed, podcast, updatePost } = usePosts();
   const { colors } = usePreferences();
   const { t } = useTranslation();
   const router = useRouter();
 
-  const post = posts.find((p) => p.id === id);
+  const postResource = resource === 'podcast' ? 'podcast' : 'posts';
+  const post =
+    posts.find((p) => p.id === id) ??
+    feed.posts.find((p) => p.id === id) ??
+    podcast.posts.find((p) => p.id === id);
 
   const [title, setTitle] = useState(post?.title ?? '');
   const [coverUrl, setCoverUrl] = useState(post?.coverUrl ?? '');
@@ -299,7 +303,7 @@ export default function EditPostScreen() {
         status,
         blocks,
         socialMediaLinks: validSocialLinks.length > 0 ? validSocialLinks : undefined,
-      });
+      }, postResource);
       router.back();
     } catch (error) {
       Alert.alert(t('common.error'), String(error));

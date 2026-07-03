@@ -5,17 +5,17 @@ import {useTranslation} from '@shared/hooks/useTranslation';
 import type {Block, PostStatus, SocialMediaLink} from '@shared/types/posts';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import {useRouter} from 'expo-router';
+import {useLocalSearchParams, useRouter} from 'expo-router';
 import {useState} from 'react';
 import {Plus, X} from 'lucide-react-native';
 
@@ -288,6 +288,8 @@ export default function CreatePostScreen() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const router = useRouter();
+  const { resource } = useLocalSearchParams<{ resource?: string }>();
+  const postResource = resource === 'podcast' ? 'podcast' : 'posts';
 
   const [title, setTitle] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
@@ -344,7 +346,7 @@ export default function CreatePostScreen() {
         blocks,
         createdBy: user?.id ?? 'unknown',
         socialMediaLinks: validSocialLinks.length > 0 ? validSocialLinks : undefined,
-      });
+      }, postResource);
       router.back();
     } catch (error) {
       Alert.alert(t('common.error'), String(error));

@@ -5,8 +5,12 @@ import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import BlockRenderer from '../components/BlockRenderer';
+import {ENV} from '@core/config/env';
+import type {PostResource} from '@core/services/posts';
+import type {Post} from '@shared/types/posts';
 import {ExternalLink, Facebook, Instagram, Linkedin, Pencil, Trash2, Twitter, Youtube} from 'lucide-react-native';
-import {Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {useEffect, useState} from 'react';
+import {ActivityIndicator, Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useLocalSearchParams, useRouter} from 'expo-router';
 import Svg, {Path} from 'react-native-svg';
 
@@ -59,18 +63,44 @@ function formatDate(iso: string): string {
 
 export default function PostDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { getPostBySlug, deletePost } = usePosts();
+  const { getPostBySlug, deletePost, fetchPostBySlug, podcast } = usePosts();
   const { colors } = usePreferences();
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
   const router = useRouter();
 
-  const post = getPostBySlug(slug ?? '');
+  const localPost = getPostBySlug(slug ?? '');
+  const [remote, setRemote] = useState<{ post: Post; resource: PostResource } | null>(null);
+  const [resolving, setResolving] = useState(!localPost && ENV.HAS_BACKEND);
+  const post = localPost ?? remote?.post ?? undefined;
+  const resource: PostResource =
+    remote?.resource ?? (podcast.posts.some((p) => p.slug === slug) ? 'podcast' : 'posts');
+
+  useEffect(() => {
+    if (localPost || !ENV.HAS_BACKEND || !slug) return;
+    let cancelled = false;
+    setResolving(true);
+    fetchPostBySlug(slug).then((fetched) => {
+      if (cancelled) return;
+      setRemote(fetched);
+      setResolving(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, localPost, fetchPostBySlug]);
 
   const canEdit = hasPermission(PERMISSIONS.FUNC_FEED_EDIT_POST) || hasPermission(PERMISSIONS.FUNC_PODCAST_EDIT_POST);
   const canDelete = hasPermission(PERMISSIONS.FUNC_FEED_DELETE_POST) || hasPermission(PERMISSIONS.FUNC_PODCAST_DELETE_POST);
 
   if (!post) {
+    if (resolving) {
+      return (
+        <View style={[styles.notFound, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      );
+    }
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.textSecondary }]}>
@@ -81,7 +111,7 @@ export default function PostDetailScreen() {
   }
 
   const handleEdit = () => {
-    router.push(`/edit-post/${post.id}` as any);
+    router.push(`/edit-post/${post.id}?resource=${resource}` as any);
   };
 
   const handleDelete = () => {
@@ -91,7 +121,7 @@ export default function PostDetailScreen() {
         text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
-          await deletePost(post.id);
+          await deletePost(post.id, resource);
           router.back();
         },
       },

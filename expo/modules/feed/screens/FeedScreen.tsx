@@ -52,28 +52,25 @@ function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
 export default function FeedScreen() {
   const { colors } = usePreferences();
   const { t } = useTranslation();
-  const { getPublishedPosts, isLoading, postsPerPage } = usePosts();
+  const { feed } = usePosts();
   const { hasPermission } = usePermissions();
   const router = useRouter();
 
   const canCreate = hasPermission(PERMISSIONS.FUNC_FEED_CREATE_POST);
 
-  const [page, setPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
 
-  const published = getPublishedPosts();
-  const visible = published.slice(0, page * postsPerPage);
-  const hasMore = visible.length < published.length;
+  const { posts: visible, total, isLoading, hasMore, loadMore, refresh } = feed;
 
   const handleEndReached = useCallback(() => {
-    if (hasMore) setPage((p) => p + 1);
-  }, [hasMore]);
+    if (hasMore) loadMore();
+  }, [hasMore, loadMore]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setPage(1);
+    await refresh();
     setRefreshing(false);
-  }, []);
+  }, [refresh]);
 
   const handlePostPress = (post: Post) => {
     router.push(`/post/${post.slug}` as any);
@@ -102,14 +99,14 @@ export default function FeedScreen() {
 
   const ListFooter = () => {
     if (isLoading) return <ActivityIndicator style={styles.footer} color={colors.primary} />;
-    if (published.length === 0) return null;
+    if (total === 0) return null;
     return (
       <Text style={[styles.footerText, { color: colors.textSecondary }]}>
         {hasMore
           ? t('feed.showingPosts')
               .replace('{current}', String(visible.length))
-              .replace('{total}', String(published.length))
-          : t('feed.allPostsLoaded').replace('{total}', String(published.length))}
+              .replace('{total}', String(total))
+          : t('feed.allPostsLoaded').replace('{total}', String(total))}
       </Text>
     );
   };
