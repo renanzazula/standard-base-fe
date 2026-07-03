@@ -1,9 +1,19 @@
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import type {Block} from '@shared/types/posts';
+import {useVideoPlayer, VideoView} from 'expo-video';
 import {ExternalLink, Music, Quote, Video} from 'lucide-react-native';
 import {Image, Linking, Platform, Pressable, StyleSheet, Text, View} from 'react-native';
 
 type Props = { block: Block };
+
+function NativeVideoBlock({ url }: { url: string }) {
+  const player = useVideoPlayer(url);
+  return (
+    <View style={styles.embedContainer}>
+      <VideoView player={player} style={styles.video} allowsFullscreen allowsPictureInPicture />
+    </View>
+  );
+}
 
 export default function BlockRenderer({ block }: Props) {
   const { colors } = usePreferences();
@@ -39,12 +49,7 @@ export default function BlockRenderer({ block }: Props) {
           </View>
         );
       }
-      return (
-        <View style={[styles.placeholder, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Video size={32} color={colors.textSecondary} />
-          <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>Video: {block.data.url}</Text>
-        </View>
-      );
+      return <NativeVideoBlock url={block.data.url} />;
 
     case 'quote':
       return (
@@ -75,13 +80,19 @@ export default function BlockRenderer({ block }: Props) {
         );
       }
       const label = block.data.platform === 'youtube' ? 'YouTube' : 'Vimeo';
+      const watchUrl =
+        block.data.platform === 'youtube'
+          ? `https://www.youtube.com/watch?v=${block.data.id}`
+          : `https://vimeo.com/${block.data.id}`;
       return (
-        <View style={[styles.placeholder, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Video size={32} color={colors.textSecondary} />
-          <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>
-            {label}: {block.data.id}
-          </Text>
-        </View>
+        <Pressable
+          style={[styles.linkCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={() => Linking.openURL(watchUrl)}
+        >
+          <Video size={24} color={colors.primary} />
+          <Text style={[styles.linkTitle, { color: colors.text }]}>Watch on {label}</Text>
+          <ExternalLink size={16} color={colors.textSecondary} />
+        </Pressable>
       );
     }
 
@@ -194,18 +205,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
-  placeholder: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  placeholderText: {
-    fontSize: 14,
-    flex: 1,
+  video: {
+    width: '100%',
+    height: 220,
   },
   gallery: {
     flexDirection: 'row',

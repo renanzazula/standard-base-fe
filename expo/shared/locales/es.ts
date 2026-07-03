@@ -276,7 +276,6 @@ export const es: TranslationKeys = {
     importPartial: '{imported} importadas, {failed} fallidas',
     importFailed: 'Error en la importación',
     importInvalidJson: 'Archivo JSON inválido. Se esperaba un array de objetos.',
-    importWebOnly: 'La importación JSON solo está disponible en la web',
     socialMediaLinks: 'Redes Sociales',
     socialPlatform: 'Plataforma',
     socialPlatformPlaceholder: 'ej. Instagram',
@@ -310,7 +309,6 @@ export const es: TranslationKeys = {
     importPartial: '{imported} importados, {failed} fallidos',
     importFailed: 'Error al importar',
     importInvalidJson: 'Archivo JSON inválido. Se esperaba un array de objetos de episodio.',
-    importWebOnly: 'La importación JSON solo está disponible en web',
   },
   userManagement: {
     title: 'Gestión de Usuarios',

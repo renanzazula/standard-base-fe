@@ -274,7 +274,6 @@ export const en = {
     importPartial: '{imported} imported, {failed} failed',
     importFailed: 'Import failed',
     importInvalidJson: 'Invalid JSON file. Expected an array of post objects.',
-    importWebOnly: 'JSON import is available on web only',
     socialMediaLinks: 'Social Media Links',
     socialPlatform: 'Platform',
     socialPlatformPlaceholder: 'e.g. Instagram',
@@ -308,7 +307,6 @@ export const en = {
     importPartial: '{imported} imported, {failed} failed',
     importFailed: 'Import failed',
     importInvalidJson: 'Invalid JSON file. Expected an array of episode objects.',
-    importWebOnly: 'JSON import is available on web only',
   },
   userManagement: {
     title: 'User Management',

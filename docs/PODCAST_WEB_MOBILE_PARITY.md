@@ -17,10 +17,10 @@ text/image/quote/gallery/link blocks) differs between platforms.
 | Compose an episode (any block type) | ✅ Full | ✅ Full | None |
 | Podcast settings (episodes per page) | ✅ Full | ✅ Full | None |
 | `text` / `image` / `quote` / `gallery` / `link` blocks | ✅ Full | ✅ Full | None |
-| `video` block playback | ✅ Inline `<video>` player | ❌ Inert placeholder (icon + raw URL, not tappable) | **High** — content is unreachable on mobile |
-| `embed` block (YouTube/Vimeo) playback | ✅ Live `<iframe>` | ❌ Inert placeholder (icon + raw id, not tappable) | **High** — content is unreachable on mobile |
+| `video` block playback | ✅ Inline `<video>` player | ✅ Inline native player via `expo-video` | None (closed) |
+| `embed` block (YouTube/Vimeo) playback | ✅ Live `<iframe>` | ⚠️ Tappable card, opens watch URL via `Linking.openURL` | **Low** — same intentional degrade as `spotify` |
 | `spotify` block playback | ✅ Live embedded player | ⚠️ Tappable card, opens Spotify app/browser via `Linking.openURL` | **Low** — degraded but usable |
-| JSON bulk import | ✅ Full (file picker → preview → import) | ❌ Alert only, feature does not exist | **High** — no workaround on device |
+| JSON bulk import | ✅ Full (file picker → preview → import) | ✅ Full via `expo-document-picker` + `expo-file-system` | None (closed) |
 
 Note: this table is about *rendering/interaction* parity given the same data.
 It does not cover the separate storage-sync issue (posts live in per-device
@@ -51,12 +51,12 @@ fallback implemented alongside it.
    platform-agnostic already — only the file-acquisition step is missing a
    native path.
 
-## Proposed remediation (not implemented — for review)
+## Remediation (implemented)
 
 ### JSON import → add a native file picker
 
-Add `expo-document-picker` (not currently a dependency) and branch
-`handleSelectFile` on platform instead of dead-ending:
+`expo-document-picker` was added and `handleSelectFile` now branches on
+platform instead of dead-ending:
 
 - Web: keep the existing hidden `<input type="file">` + `FileReader` path,
   unchanged.

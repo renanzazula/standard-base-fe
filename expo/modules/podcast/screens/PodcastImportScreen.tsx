@@ -3,6 +3,8 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import type {PodcastEpisodeJson} from '@core/services/feedImport';
 import {convertEpisodesToPosts, parsePodcastJson} from '@core/services/feedImport';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import * as DocumentPicker from 'expo-document-picker';
+import {readAsStringAsync} from 'expo-file-system/legacy';
 import {FileJson, Upload} from 'lucide-react-native';
 import {useRef, useState} from 'react';
 import {Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
@@ -18,12 +20,27 @@ export default function PodcastImportScreen() {
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleSelectFile = () => {
-    if (Platform.OS !== 'web') {
-      Alert.alert(t('common.error'), t('podcast.importWebOnly'));
+  const handleSelectFile = async () => {
+    if (Platform.OS === 'web') {
+      fileInputRef.current?.click();
       return;
     }
-    fileInputRef.current?.click();
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/json',
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    try {
+      const raw = await readAsStringAsync(asset.uri);
+      const parsed = parsePodcastJson(raw);
+      setEpisodes(parsed);
+      setFileName(asset.name);
+    } catch {
+      Alert.alert(t('common.error'), t('podcast.importInvalidJson'));
+      setEpisodes([]);
+      setFileName(null);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +68,7 @@ export default function PodcastImportScreen() {
     setImporting(true);
     try {
       const posts = convertEpisodesToPosts(episodes);
-      const result = await importPosts(posts);
+      const result = await importPosts(posts, 'podcast');
       if (result.imported === episodes.length) {
         Alert.alert(
           t('common.success'),
