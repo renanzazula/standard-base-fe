@@ -10,6 +10,7 @@ import {Fraunces_700Bold, useFonts} from '@expo-google-fonts/fraunces';
 import {DarkTheme, DefaultTheme, ThemeProvider} from '@react-navigation/native';
 import {Stack, useRouter, useSegments} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import {StatusBar} from 'expo-status-bar';
 import React, {useEffect, useMemo} from 'react';
 import {AppState} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -123,10 +124,12 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={navigationTheme}>
+    <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
     <Stack
       screenOptions={{
         headerBackTitle: 'Back',
-        headerStyle: { backgroundColor: colors.surface },
+        headerStyle: { backgroundColor: colors.background },
+        headerShadowVisible: false,
         headerTintColor: colors.text,
       }}
     >

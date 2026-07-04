@@ -182,7 +182,7 @@ export default function UserPermissionsScreen() {
           marginTop: 24,
           marginBottom: 24,
         },
-        saveButtonText: { fontSize: 16, fontWeight: '700' as const, color: '#FFFFFF' },
+        saveButtonText: { fontSize: 16, fontWeight: '700' as const, color: colors.onAccent },
         center: { flex: 1, alignItems: 'center' as const, justifyContent: 'center' as const },
         loadingText: { marginTop: 12, color: colors.textSecondary },
       }),

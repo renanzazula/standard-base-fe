@@ -260,7 +260,7 @@ export default function UserManagementScreen() {
         },
         modalActionButtons: { flexDirection: 'row', gap: 12 },
         modalActionButton: { flex: 1, backgroundColor: colors.primary, borderRadius: 12, padding: 16, alignItems: 'center' },
-        modalActionButtonText: { fontSize: 16, fontWeight: '600' as const, color: '#FFFFFF' },
+        modalActionButtonText: { fontSize: 16, fontWeight: '600' as const, color: colors.onAccent },
         emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
         emptyIcon: {
           width: 80,
@@ -321,7 +321,7 @@ export default function UserManagementScreen() {
         accessDeniedTitle: { fontSize: 24, fontWeight: '700' as const, marginBottom: 12, textAlign: 'center' },
         accessDeniedText: { fontSize: 16, textAlign: 'center', marginBottom: 32 },
         backButton: { borderRadius: 12, paddingHorizontal: 32, paddingVertical: 16 },
-        backButtonText: { fontSize: 16, fontWeight: '600' as const, color: '#FFFFFF' },
+        backButtonText: { fontSize: 16, fontWeight: '600' as const, color: colors.onAccent },
       }),
     [colors, insets.top],
   );
@@ -535,7 +535,7 @@ export default function UserManagementScreen() {
               style={[styles.filterButton, hasActiveFilters && styles.filterButtonActive]}
               onPress={() => setFilterModalVisible(true)}
             >
-              <Filter size={20} color={hasActiveFilters ? '#FFFFFF' : colors.text} />
+              <Filter size={20} color={hasActiveFilters ? colors.onAccent : colors.text} />
             </TouchableOpacity>
             {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
               <TouchableOpacity

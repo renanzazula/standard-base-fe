@@ -95,7 +95,7 @@ export default function HomeScreen() {
     badgeText: {
       fontSize: 12,
       fontWeight: '700' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
       textTransform: 'uppercase' as const,
     },
     sectionTitle: {

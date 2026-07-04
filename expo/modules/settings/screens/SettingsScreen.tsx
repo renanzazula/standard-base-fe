@@ -318,7 +318,7 @@ export default function SettingsScreen() {
     badgeText: {
       fontSize: 11,
       fontWeight: '700' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
       textTransform: 'uppercase' as const,
     },
     sessionRow: {
@@ -462,7 +462,7 @@ export default function SettingsScreen() {
       color: colors.textSecondary,
     },
     modeButtonTextActive: {
-      color: '#FFFFFF',
+      color: colors.onAccent,
     },
     validationStatus: {
       flexDirection: 'row',
@@ -580,7 +580,7 @@ export default function SettingsScreen() {
     defaultBadgeText: {
       fontSize: 10,
       fontWeight: '700' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
       textTransform: 'uppercase' as const,
     },
     setDefaultButton: {
@@ -756,7 +756,7 @@ export default function SettingsScreen() {
     modalActionButtonText: {
       fontSize: 16,
       fontWeight: '600' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
     },
     divider: {
       height: 1,

@@ -3,13 +3,29 @@ import {usePreferences} from '@core/contexts/PreferencesContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {RADII} from '@shared/constants/themes';
 import type {Post} from '@shared/types/posts';
-import {Mic, Plus} from 'lucide-react-native';
+import {getDuration, getYoutubeId, youtubeThumbnail} from '../services/episodeMeta';
+import {LinearGradient} from 'expo-linear-gradient';
+import {Clock, Mic, Play, Plus} from 'lucide-react-native';
 import {useCallback, useState} from 'react';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {ActivityIndicator, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View} from 'react-native';
 import {useRouter} from 'expo-router';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+
+// Overlay colors sit on top of episode imagery, so they stay dark in both
+// themes (see docs/README-ui-migration.md §4)
+const OVERLAY = {
+  scrim: ['transparent', 'rgba(0,0,0,0.85)'] as const,
+  gold: '#F2A900',
+  onGold: '#1A1A1C',
+  title: '#FFFFFF',
+  meta: 'rgba(255,255,255,0.78)',
+  playBg: 'rgba(255,255,255,0.18)',
+  playBorder: 'rgba(255,255,255,0.35)',
+};
 
 function formatDate(iso: string): string {
   try {
@@ -23,44 +39,77 @@ function formatDate(iso: string): string {
   }
 }
 
-function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
-  const { colors } = usePreferences();
+function EpisodeCard({post, episodeNumber, onPress}: {post: Post; episodeNumber: number; onPress: () => void}) {
+  const {colors} = usePreferences();
+  const youtubeId = getYoutubeId(post);
+  const [thumbFailed, setThumbFailed] = useState(false);
+  const duration = getDuration(post);
+
+  const imageUri =
+    post.coverUrl ||
+    (youtubeId ? youtubeThumbnail(youtubeId, thumbFailed ? 'hqdefault' : 'maxresdefault') : null);
+
   return (
     <Pressable
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      style={[styles.card, {borderColor: colors.border, backgroundColor: colors.surface}]}
       onPress={onPress}
     >
-      {post.coverUrl ? (
-        <Image source={{ uri: post.coverUrl }} style={styles.cardCover} resizeMode="cover" />
+      {imageUri ? (
+        <Image
+          source={{uri: imageUri}}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          onError={() => {
+            if (!post.coverUrl && !thumbFailed) setThumbFailed(true);
+          }}
+        />
       ) : (
-        <View style={[styles.cardCoverPlaceholder, { backgroundColor: colors.accentPodcast + '1a' }]}>
-          <Mic size={28} color={colors.accentPodcast} />
+        <View style={[StyleSheet.absoluteFill, styles.coverPlaceholder, {backgroundColor: colors.surfaceHigh}]}>
+          <Mic size={40} color={colors.textFaint} />
         </View>
       )}
-      <View style={styles.cardBody}>
-        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-          {post.title}
-        </Text>
-        <Text style={[styles.cardDate, { color: colors.textSecondary }]}>
-          {formatDate(post.createdAt)}
-        </Text>
+
+      <LinearGradient colors={OVERLAY.scrim} style={styles.scrim} />
+
+      <View style={styles.cardContent}>
+        <View style={styles.cardInfo}>
+          <View style={styles.epBadge}>
+            <Text style={styles.epBadgeText}>EP #{episodeNumber}</Text>
+          </View>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {post.title}
+          </Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaText}>{formatDate(post.publishAt ?? post.createdAt)}</Text>
+            {duration ? (
+              <>
+                <Clock size={13} color={OVERLAY.meta} />
+                <Text style={styles.metaText}>{duration}</Text>
+              </>
+            ) : null}
+          </View>
+        </View>
+        <View style={styles.playButton}>
+          <Play size={20} color={OVERLAY.title} fill={OVERLAY.title} />
+        </View>
       </View>
     </Pressable>
   );
 }
 
 export default function PodcastScreen() {
-  const { colors } = usePreferences();
-  const { t } = useTranslation();
-  const { podcast } = usePosts();
-  const { hasPermission } = usePermissions();
+  const {colors} = usePreferences();
+  const {t} = useTranslation();
+  const {podcast} = usePosts();
+  const {hasPermission} = usePermissions();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const canCreate = hasPermission(PERMISSIONS.FUNC_PODCAST_CREATE_POST);
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const { posts: visible, total, isLoading, hasMore, loadMore, refresh } = podcast;
+  const {posts: visible, total, isLoading, hasMore, loadMore, refresh} = podcast;
 
   const handleEndReached = useCallback(() => {
     if (hasMore) loadMore();
@@ -72,36 +121,47 @@ export default function PodcastScreen() {
     setRefreshing(false);
   }, [refresh]);
 
-  const handlePostPress = (post: Post) => {
-    router.push(`/post/${post.slug}` as any);
+  const handlePostPress = (post: Post, episodeNumber: number) => {
+    router.push(`/post/${post.slug}?ep=${episodeNumber}` as any);
   };
 
   const handleCreatePress = () => {
     router.push('/create-post?resource=podcast' as any);
   };
 
+  const ListHeader = () => (
+    <View style={styles.screenHeader}>
+      <Text style={[styles.screenTitle, {color: colors.text}]}>Podcast</Text>
+      <Text style={[styles.screenSubtitle, {color: colors.textDim}]}>
+        {t('podcast.episodeCount').replace('{count}', String(total))}
+      </Text>
+    </View>
+  );
+
   const ListEmpty = () => (
     <View style={styles.emptyContainer}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.accentPodcast + '1a' }]}>
-        <Mic size={40} color={colors.accentPodcast} />
+      <View style={[styles.emptyIcon, {backgroundColor: colors.accentSoft}]}>
+        <Mic size={40} color={colors.accent} />
       </View>
-      <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('podcast.noPostsYet')}</Text>
+      <Text style={[styles.emptyTitle, {color: colors.text}]}>{t('podcast.noPostsYet')}</Text>
       {canCreate ? (
         <Pressable
-          style={[styles.emptyButton, { backgroundColor: colors.accentPodcast }]}
+          style={[styles.emptyButton, {backgroundColor: colors.accent}]}
           onPress={handleCreatePress}
         >
-          <Text style={styles.emptyButtonText}>{t('podcast.writeFirstPost')}</Text>
+          <Text style={[styles.emptyButtonText, {color: colors.onAccent}]}>
+            {t('podcast.writeFirstPost')}
+          </Text>
         </Pressable>
       ) : null}
     </View>
   );
 
   const ListFooter = () => {
-    if (isLoading) return <ActivityIndicator style={styles.footer} color={colors.primary} />;
+    if (isLoading) return <ActivityIndicator style={styles.footer} color={colors.accent} />;
     if (total === 0) return null;
     return (
-      <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+      <Text style={[styles.footerText, {color: colors.textDim}]}>
         {hasMore
           ? t('podcast.showingPosts')
               .replace('{current}', String(visible.length))
@@ -112,31 +172,34 @@ export default function PodcastScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <FlatList
         data={visible}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PostCard post={item} onPress={() => handlePostPress(item)} />}
-        contentContainerStyle={styles.listContent}
+        renderItem={({item, index}) => (
+          <EpisodeCard
+            post={item}
+            episodeNumber={total - index}
+            onPress={() => handlePostPress(item, total - index)}
+          />
+        )}
+        contentContainerStyle={[styles.listContent, {paddingTop: insets.top + 16}]}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
+        ListHeaderComponent={<ListHeader />}
         ListEmptyComponent={isLoading ? null : <ListEmpty />}
         ListFooterComponent={<ListFooter />}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.accent} />
         }
       />
 
       {canCreate ? (
         <Pressable
-          style={[styles.fab, { backgroundColor: colors.accentPodcast }]}
+          style={[styles.fab, {backgroundColor: colors.accent, shadowColor: colors.accent}]}
           onPress={handleCreatePress}
         >
-          <Plus size={28} color="#fff" />
+          <Plus size={28} color={colors.onAccent} />
         </Pressable>
       ) : null}
     </View>
@@ -148,39 +211,93 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
     paddingBottom: 100,
     flexGrow: 1,
     width: '100%',
     maxWidth: MAX_CONTENT_WIDTH,
     alignSelf: 'center',
   },
+  screenHeader: {
+    marginBottom: 18,
+  },
+  screenTitle: {
+    fontSize: 26,
+    fontFamily: FONTS.display,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  screenSubtitle: {
+    fontSize: 13,
+    marginTop: 4,
+  },
   card: {
-    borderRadius: 16,
+    height: 240,
+    borderRadius: RADII.card,
     borderWidth: 1,
-    marginBottom: 16,
+    marginBottom: 14,
     overflow: 'hidden',
   },
-  cardCover: {
-    width: '100%',
-    height: 200,
-  },
-  cardCoverPlaceholder: {
-    width: '100%',
-    height: 200,
+  coverPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardBody: {
+  scrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 150,
+  },
+  cardContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
     padding: 16,
   },
+  cardInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  epBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: OVERLAY.gold,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginBottom: 8,
+  },
+  epBadgeText: {
+    color: OVERLAY.onGold,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   cardTitle: {
+    color: OVERLAY.title,
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 6,
   },
-  cardDate: {
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metaText: {
+    color: OVERLAY.meta,
     fontSize: 13,
+  },
+  playButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: OVERLAY.playBg,
+    borderWidth: 1,
+    borderColor: OVERLAY.playBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
@@ -206,10 +323,9 @@ const styles = StyleSheet.create({
   emptyButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: RADII.control,
   },
   emptyButtonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -230,10 +346,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     elevation: 6,
   },
 });

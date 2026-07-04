@@ -85,7 +85,7 @@ export default function ResetPasswordScreen() {
       flexDirection: 'row', marginTop: 24,
     },
     submitButtonDisabled: { opacity: 0.6 },
-    submitButtonText: { fontSize: 16, fontWeight: '700' as const, color: '#FFFFFF', marginLeft: 8 },
+    submitButtonText: { fontSize: 16, fontWeight: '700' as const, color: colors.onAccent, marginLeft: 8 },
   });
 
   return (

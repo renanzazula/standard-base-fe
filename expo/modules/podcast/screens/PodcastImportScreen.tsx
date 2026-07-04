@@ -180,7 +180,7 @@ export default function PodcastImportScreen() {
         onPress={handleImport}
         disabled={!hasFile || importing}
       >
-        <Text style={styles.importButtonText}>
+        <Text style={[styles.importButtonText, {color: colors.onAccent}]}>
           {importing
             ? t('podcast.importing')
             : t('podcast.importPosts').replace('{count}', String(episodes.length))}

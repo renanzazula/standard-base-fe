@@ -204,7 +204,7 @@ export default function AdminConfigScreen() {
     statusText: {
       fontSize: 10,
       fontWeight: '600' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
     },
     iconButton: {
       width: 36,
@@ -595,7 +595,7 @@ export default function AdminConfigScreen() {
                               backgroundColor: colors.primary,
                             }}
                           >
-                            <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' as const }}>
+                            <Text style={{ fontSize: 10, color: colors.onAccent, fontWeight: '600' as const }}>
                               DEFAULT
                             </Text>
                           </View>

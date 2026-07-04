@@ -284,6 +284,12 @@ export const en = {
     validationPlatformRequired: 'Platform name is required',
   },
   podcast: {
+    episodeCount: '{count} episodes',
+    watch: 'Watch',
+    listenOnSpotify: 'Listen on Spotify',
+    showMore: 'Show more',
+    showLess: 'Show less',
+    recordedOn: 'Recorded on {date}',
     noPostsYet: 'No episodes yet',
     writeFirstPost: 'Add your first episode',
     showingPosts: 'Showing {current} of {total} episodes',

@@ -280,7 +280,7 @@ export default function NavigationManagementScreen() {
     addButtonText: {
       fontSize: 16,
       fontWeight: '700' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
       marginLeft: 8,
     },
     infoBox: {
@@ -371,7 +371,7 @@ export default function NavigationManagementScreen() {
     modalActionButtonText: {
       fontSize: 16,
       fontWeight: '600' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
     },
   });
 

@@ -415,7 +415,7 @@ export default function EditPostScreen() {
           onPress={handleSubmit}
           disabled={saving}
         >
-          <Text style={styles.submitText}>
+          <Text style={[styles.submitText, {color: colors.onAccent}]}>
             {saving ? t('common.loading') : t('feed.editPost')}
           </Text>
         </Pressable>

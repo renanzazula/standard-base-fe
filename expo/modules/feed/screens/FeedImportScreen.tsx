@@ -180,7 +180,7 @@ export default function FeedImportScreen() {
         onPress={handleImport}
         disabled={!hasFile || importing}
       >
-        <Text style={styles.importButtonText}>
+        <Text style={[styles.importButtonText, {color: colors.onAccent}]}>
           {importing
             ? t('feed.importing')
             : t('feed.importPosts').replace('{count}', String(episodes.length))}

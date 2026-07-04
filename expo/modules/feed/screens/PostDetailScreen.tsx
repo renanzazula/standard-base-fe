@@ -5,6 +5,7 @@ import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import BlockRenderer from '../components/BlockRenderer';
+import PodcastEpisodeDetail from '@modules/podcast/components/PodcastEpisodeDetail';
 import {ENV} from '@core/config/env';
 import type {PostResource} from '@core/services/posts';
 import type {Post} from '@shared/types/posts';
@@ -62,7 +63,7 @@ function formatDate(iso: string): string {
 }
 
 export default function PostDetailScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, ep } = useLocalSearchParams<{ slug: string; ep?: string }>();
   const { getPostBySlug, deletePost, fetchPostBySlug, podcast } = usePosts();
   const { colors } = usePreferences();
   const { t } = useTranslation();
@@ -127,6 +128,19 @@ export default function PostDetailScreen() {
       },
     ]);
   };
+
+  if (resource === 'podcast') {
+    return (
+      <PodcastEpisodeDetail
+        post={post}
+        episodeNumber={ep ? Number(ep) || null : null}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+    );
+  }
 
   return (
     <ScrollView

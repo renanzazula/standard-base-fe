@@ -1,9 +1,12 @@
 import { usePreferences } from '@core/contexts/PreferencesContext';
 import { useAdminConfig } from '@core/contexts/AdminConfigContext';
 import { useAuth } from '@core/contexts/AuthContext';
+import { RADII } from '@shared/constants/themes';
+import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
 import { Home, Settings, Rss, Droplets, Mic } from 'lucide-react-native';
 import React from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
 const SYSTEM_TABS = [
   { id: 'home', icon: 'home', defaultName: 'Home' },
@@ -14,7 +17,7 @@ const SYSTEM_TABS = [
 ] as const;
 
 export default function TabLayout() {
-  const { colors } = usePreferences();
+  const { colors, theme } = usePreferences();
   const { config } = useAdminConfig();
   const { user } = useAuth();
 
@@ -49,20 +52,33 @@ export default function TabLayout() {
   const getTabConfig = (tabId: string) =>
     config.navigationConfig.tabs.find((t) => t.id === tabId);
 
+  const useBlurBar = Platform.OS === 'ios';
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textDim,
+        tabBarLabelStyle: styles.tabLabel,
         headerShown: true,
-        headerStyle: {
-          backgroundColor: colors.surface,
-        },
+        headerStyle: { backgroundColor: colors.background },
+        headerShadowVisible: false,
         headerTintColor: colors.text,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: useBlurBar ? 'transparent' : colors.surface,
+          borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
+          ...(useBlurBar ? { position: 'absolute' as const } : null),
         },
+        tabBarBackground: useBlurBar
+          ? () => (
+              <BlurView
+                tint={theme === 'dark' ? 'dark' : 'light'}
+                intensity={80}
+                style={StyleSheet.absoluteFill}
+              />
+            )
+          : undefined,
       }}
     >
       {SYSTEM_TABS.map((staticTab) => {
@@ -75,7 +91,12 @@ export default function TabLayout() {
             options={{
               href: isVisible ? (`/${staticTab.id}` as any) : null,
               title: catalogTab?.name ?? staticTab.defaultName,
-              tabBarIcon: ({ color }) => getIconForTab(catalogTab?.icon ?? staticTab.icon, color),
+              headerShown: staticTab.id !== 'podcast',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconPill, focused && { backgroundColor: colors.accentSoft }]}>
+                  {getIconForTab(catalogTab?.icon ?? staticTab.icon, color)}
+                </View>
+              ),
             }}
           />
         );
@@ -83,3 +104,15 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  iconPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 3,
+    borderRadius: RADII.pill,
+  },
+});

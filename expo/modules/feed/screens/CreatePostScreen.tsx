@@ -458,7 +458,7 @@ export default function CreatePostScreen() {
           onPress={handleSubmit}
           disabled={saving}
         >
-          <Text style={styles.submitText}>
+          <Text style={[styles.submitText, {color: colors.onAccent}]}>
             {saving ? t('common.loading') : t('feed.createPost')}
           </Text>
         </Pressable>

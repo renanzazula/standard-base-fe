@@ -286,6 +286,12 @@ export const es: TranslationKeys = {
     validationPlatformRequired: 'El nombre de la plataforma es obligatorio',
   },
   podcast: {
+    episodeCount: '{count} episodios',
+    watch: 'Ver',
+    listenOnSpotify: 'Escuchar en Spotify',
+    showMore: 'Ver más',
+    showLess: 'Ver menos',
+    recordedOn: 'Grabado el {date}',
     noPostsYet: 'Aún no hay episodios',
     writeFirstPost: 'Agrega tu primer episodio',
     showingPosts: 'Mostrando {current} de {total} episodios',

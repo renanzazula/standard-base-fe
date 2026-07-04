@@ -77,7 +77,7 @@ export default function PostFeedConfigScreen() {
         onPress={handleSave}
         disabled={saving}
       >
-        <Text style={styles.saveButtonText}>
+        <Text style={[styles.saveButtonText, {color: colors.onAccent}]}>
           {saving ? t('common.loading') : t('common.save')}
         </Text>
       </Pressable>

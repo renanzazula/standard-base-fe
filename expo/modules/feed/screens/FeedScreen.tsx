@@ -91,7 +91,7 @@ export default function FeedScreen() {
           style={[styles.emptyButton, { backgroundColor: colors.accentFeed }]}
           onPress={handleCreatePress}
         >
-          <Text style={styles.emptyButtonText}>{t('feed.writeFirstPost')}</Text>
+          <Text style={[styles.emptyButtonText, {color: colors.onAccent}]}>{t('feed.writeFirstPost')}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -133,10 +133,10 @@ export default function FeedScreen() {
 
       {canCreate ? (
         <Pressable
-          style={[styles.fab, { backgroundColor: colors.accentFeed }]}
+          style={[styles.fab, { backgroundColor: colors.accentFeed, shadowColor: colors.accent }]}
           onPress={handleCreatePress}
         >
-          <Plus size={28} color="#fff" />
+          <Plus size={28} color={colors.onAccent} />
         </Pressable>
       ) : null}
     </View>

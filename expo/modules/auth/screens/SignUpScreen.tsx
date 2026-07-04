@@ -190,7 +190,7 @@ export default function SignUpScreen() {
     signUpButtonText: {
       fontSize: 16,
       fontWeight: '700' as const,
-      color: '#FFFFFF',
+      color: colors.onAccent,
       marginLeft: 8,
     },
     divider: {
