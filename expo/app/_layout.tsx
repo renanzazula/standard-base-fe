@@ -5,6 +5,7 @@ import {PreferencesProvider, usePreferences} from '@core/contexts/PreferencesCon
 import {UserManagementProvider} from '@core/contexts/UserManagementContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
+import SplashGate from '@modules/splash/SplashGate';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {Fraunces_700Bold, useFonts} from '@expo-google-fonts/fraunces';
 import {DarkTheme, DefaultTheme, ThemeProvider} from '@react-navigation/native';
@@ -155,6 +156,7 @@ function RootLayoutNav() {
       <Stack.Screen name="podcast-config" options={{ headerShown: true, title: 'Podcast Configuration' }} />
       <Stack.Screen name="podcast-import-json" options={{ headerShown: true, title: 'Import Episodes from JSON' }} />
     </Stack>
+    {!isLoading ? <SplashGate /> : null}
     </ThemeProvider>
   );
 }

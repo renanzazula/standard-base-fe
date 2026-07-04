@@ -396,4 +396,7 @@ export const es: TranslationKeys = {
     saveFailed: 'Error al actualizar los permisos del perfil',
     loading: 'Cargando permisos del perfil...',
   },
+  splash: {
+    continue: 'Continuar',
+  },
 };

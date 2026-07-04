@@ -394,6 +394,9 @@ export const en = {
     saveFailed: 'Failed to update profile permissions',
     loading: 'Loading profile permissions...',
   },
+  splash: {
+    continue: 'Continue',
+  },
 };
 
 export type TranslationKeys = typeof en;

@@ -29,6 +29,8 @@ export const PERMISSIONS = {
   FUNC_PODCAST_DELETE_POST: 'FUNC_PODCAST_DELETE_POST',
   FUNC_PODCAST_CONFIGURE: 'FUNC_PODCAST_CONFIGURE',
   FUNC_PODCAST_IMPORT_JSON: 'FUNC_PODCAST_IMPORT_JSON',
+  // Feature-level: splash
+  FUNC_SPLASH_MANAGE: 'FUNC_SPLASH_MANAGE',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -62,6 +64,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   FUNC_PODCAST_DELETE_POST: 'Delete Podcast Posts',
   FUNC_PODCAST_CONFIGURE: 'Configure Podcast',
   FUNC_PODCAST_IMPORT_JSON: 'Import Podcast Posts from JSON',
+  FUNC_SPLASH_MANAGE: 'Manage Splash Screens',
 };
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -87,5 +90,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.FUNC_PODCAST_DELETE_POST,
     PERMISSIONS.FUNC_PODCAST_CONFIGURE,
     PERMISSIONS.FUNC_PODCAST_IMPORT_JSON,
+    PERMISSIONS.FUNC_SPLASH_MANAGE,
   ],
 };
