@@ -20,6 +20,13 @@ export function youtubeThumbnail(id: string, quality: 'maxresdefault' | 'hqdefau
   return `https://img.youtube.com/vi/${id}/${quality}.jpg`;
 }
 
+// Imported titles carry the show's own numbering ("… Skateboard Podcast #87");
+// that is the authoritative episode id, not the post's position in the feed.
+export function getEpisodeNumber(post: Post): number | null {
+  const match = post.title.match(/#(\d+)\s*$/) ?? post.title.match(/#(\d+)/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
 export function getSpotifyEmbedUrl(post: Post): string | null {
   for (const block of post.blocks) {
     if (block.type === 'spotify') {

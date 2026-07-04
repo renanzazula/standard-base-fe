@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
@@ -9,16 +10,15 @@ import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {ApiError} from '@core/services/api';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -35,7 +35,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert(t('common.error'), t('auth.enterEmailAndPassword'));
+      showAlert(t('common.error'), t('auth.enterEmailAndPassword'));
       return;
     }
 
@@ -45,15 +45,15 @@ export default function LoginScreen() {
       if (success) {
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert(t('auth.loginFailed'), t('auth.invalidCredentials'));
+        showAlert(t('auth.loginFailed'), t('auth.invalidCredentials'));
       }
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert(t('auth.loginFailed'), error.message);
+        showAlert(t('auth.loginFailed'), error.message);
       } else if (error instanceof Error && error.message === 'User account is disabled') {
-        Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
+        showAlert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
-        Alert.alert(t('common.error'), t('auth.loginError'));
+        showAlert(t('common.error'), t('auth.loginError'));
       }
     } finally {
       setIsLoading(false);
@@ -67,15 +67,15 @@ export default function LoginScreen() {
       if (success) {
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert(t('auth.loginFailed'), 'Google login failed');
+        showAlert(t('auth.loginFailed'), 'Google login failed');
       }
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert(t('auth.loginFailed'), error.message);
+        showAlert(t('auth.loginFailed'), error.message);
       } else if (error instanceof Error && error.message === 'User account is disabled') {
-        Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
+        showAlert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
-        Alert.alert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Google login');
+        showAlert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Google login');
       }
     } finally {
       setIsLoading(false);
@@ -89,15 +89,15 @@ export default function LoginScreen() {
       if (success) {
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert(t('auth.loginFailed'), 'Apple login failed');
+        showAlert(t('auth.loginFailed'), 'Apple login failed');
       }
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert(t('auth.loginFailed'), error.message);
+        showAlert(t('auth.loginFailed'), error.message);
       } else if (error instanceof Error && error.message === 'User account is disabled') {
-        Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
+        showAlert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
-        Alert.alert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Apple login');
+        showAlert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Apple login');
       }
     } finally {
       setIsLoading(false);

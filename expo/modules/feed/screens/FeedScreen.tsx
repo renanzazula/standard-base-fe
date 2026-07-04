@@ -101,13 +101,23 @@ export default function FeedScreen() {
     if (isLoading) return <ActivityIndicator style={styles.footer} color={colors.primary} />;
     if (total === 0) return null;
     return (
-      <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-        {hasMore
-          ? t('feed.showingPosts')
-              .replace('{current}', String(visible.length))
-              .replace('{total}', String(total))
-          : t('feed.allPostsLoaded').replace('{total}', String(total))}
-      </Text>
+      <View>
+        <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+          {hasMore
+            ? t('feed.showingPosts')
+                .replace('{current}', String(visible.length))
+                .replace('{total}', String(total))
+            : t('feed.allPostsLoaded').replace('{total}', String(total))}
+        </Text>
+        {hasMore ? (
+          <Pressable
+            style={[styles.loadMoreButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+            onPress={loadMore}
+          >
+            <Text style={[styles.loadMoreText, { color: colors.text }]}>{t('feed.loadMore')}</Text>
+          </Pressable>
+        ) : null}
+      </View>
     );
   };
 
@@ -215,6 +225,18 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingVertical: 20,
+  },
+  loadMoreButton: {
+    alignSelf: 'center',
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  loadMoreText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   footerText: {
     textAlign: 'center',

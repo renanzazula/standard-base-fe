@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {useUserManagement} from '@core/contexts/UserManagementContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useTranslation} from '@shared/hooks/useTranslation';
@@ -5,7 +6,7 @@ import type {Permission} from '@shared/constants/permissions';
 import {PERMISSION_LABELS, PERMISSIONS} from '@shared/constants/permissions';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useLocalSearchParams} from 'expo-router';
-import {ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
+import {ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Info} from 'lucide-react-native';
@@ -50,9 +51,9 @@ export default function ProfilePermissionsScreen() {
     setSaving(true);
     try {
       await saveRolePermissions(role.toUpperCase(), Array.from(pendingPermissions));
-      Alert.alert(t('common.success'), t('profilePermissions.saveSuccess'));
+      showAlert(t('common.success'), t('profilePermissions.saveSuccess'));
     } catch {
-      Alert.alert(t('common.error'), t('profilePermissions.saveFailed'));
+      showAlert(t('common.error'), t('profilePermissions.saveFailed'));
     } finally {
       setSaving(false);
     }

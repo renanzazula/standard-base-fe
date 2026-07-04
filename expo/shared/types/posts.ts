@@ -52,6 +52,7 @@ export type Block =
 
 export type SocialMediaLink = {
   url: string;
+  platform?: string;
 };
 
 export type Post = {

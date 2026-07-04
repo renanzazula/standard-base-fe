@@ -30,7 +30,7 @@ export type PostsContextValue = {
   getPostBySlug: (slug: string) => Post | undefined;
   getPublishedPosts: () => Post[];
   resetPosts: () => Promise<void>;
-  importPosts: (newPosts: Array<{ title: string; coverUrl: string; status: PostStatus; publishAt: string | null; blocks: Block[] }>, resource?: postsApi.PostResource) => Promise<{ imported: number }>;
+  importPosts: (newPosts: Array<{ title: string; coverUrl: string; status: PostStatus; publishAt: string | null; blocks: Block[]; socialMediaLinks?: SocialMediaLink[] }>, resource?: postsApi.PostResource) => Promise<{ imported: number }>;
   updatePostsPerPage: (n: number) => Promise<void>;
   updatePodcastPostsPerPage: (n: number) => Promise<void>;
   reloadFeedConfig: () => Promise<void>;
@@ -176,6 +176,14 @@ export const [PostsProvider, usePosts] = createContextHook((): PostsContextValue
   }, []);
 
   useEffect(() => {
+    // The AsyncStorage store is the offline fallback only. In backend mode,
+    // stale local copies (with legacy timestamp ids) must not shadow the
+    // remote posts in getPostBySlug/findLoadedPost — edits would PUT to
+    // /api/admin/.../<timestamp> and fail UUID parsing.
+    if (ENV.HAS_BACKEND) {
+      setIsLoading(false);
+      return;
+    }
     loadPosts();
   }, []);
 
@@ -294,6 +302,7 @@ export const [PostsProvider, usePosts] = createContextHook((): PostsContextValue
     status: PostStatus;
     publishAt: string | null;
     blocks: Block[];
+    socialMediaLinks?: SocialMediaLink[];
   }>, resource: postsApi.PostResource = 'posts'): Promise<{ imported: number }> => {
     if (ENV.HAS_BACKEND) {
       const result = await postsApi.importPosts(resource, newPosts);

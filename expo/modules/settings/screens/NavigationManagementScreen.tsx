@@ -1,20 +1,10 @@
+import {showAlert} from '@shared/utils/alert';
 import {NavigationTab, useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack} from 'expo-router';
 import {ChevronDown, ChevronUp, Edit3, GripVertical, Menu, Plus, Trash2} from 'lucide-react-native';
-import {
-    Alert,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import {Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import React from 'react';
 import {useTranslation} from '@shared/hooks/useTranslation';
 
@@ -34,7 +24,7 @@ export default function NavigationManagementScreen() {
     if (!tab) return;
 
     if (tab.id === 'settings') {
-      Alert.alert(
+      showAlert(
         t('navigation.settingsAlwaysVisible'),
         t('navigation.settingsAlwaysVisibleDescription')
       );
@@ -53,7 +43,7 @@ export default function NavigationManagementScreen() {
 
   const handleSaveEdit = () => {
     if (!editingTab || !newTabName.trim()) {
-      Alert.alert(t('common.error'), t('navigation.tabNameRequired'));
+      showAlert(t('common.error'), t('navigation.tabNameRequired'));
       return;
     }
 
@@ -62,18 +52,18 @@ export default function NavigationManagementScreen() {
     setEditModalVisible(false);
     setEditingTab(null);
     setNewTabName('');
-    Alert.alert(t('common.success'), t('navigation.tabNameUpdated'));
+    showAlert(t('common.success'), t('navigation.tabNameUpdated'));
   };
 
   const handleAddTab = () => {
     if (!newTabName.trim() || !newTabId.trim()) {
-      Alert.alert(t('common.error'), t('navigation.tabDetailsRequired'));
+      showAlert(t('common.error'), t('navigation.tabDetailsRequired'));
       return;
     }
 
     const existingTab = config.navigationConfig.tabs.find((t) => t.id === newTabId.trim());
     if (existingTab) {
-      Alert.alert(t('common.error'), t('navigation.tabIdExists'));
+      showAlert(t('common.error'), t('navigation.tabIdExists'));
       return;
     }
 
@@ -89,17 +79,17 @@ export default function NavigationManagementScreen() {
     setNewTabName('');
     setNewTabId('');
     setNewTabIcon('home');
-    Alert.alert(t('common.success'), t('navigation.tabAdded'));
+    showAlert(t('common.success'), t('navigation.tabAdded'));
   };
 
   const handleRemoveTab = (tabId: string) => {
     const tab = config.navigationConfig.tabs.find((t) => t.id === tabId);
     if (!tab || tab.isSystem) {
-      Alert.alert(t('common.error'), t('navigation.cannotRemoveSystemTab'));
+      showAlert(t('common.error'), t('navigation.cannotRemoveSystemTab'));
       return;
     }
 
-    Alert.alert(
+    showAlert(
       t('navigation.removeTab'),
       t('navigation.removeTabConfirm'),
       [
@@ -110,7 +100,7 @@ export default function NavigationManagementScreen() {
           onPress: () => {
             console.log(`[NavigationManagement] Removing custom tab: ${tabId}`);
             removeCustomTab(tabId);
-            Alert.alert(t('common.success'), t('navigation.tabRemoved'));
+            showAlert(t('common.success'), t('navigation.tabRemoved'));
           },
         },
       ]

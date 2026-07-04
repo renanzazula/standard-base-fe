@@ -5,7 +5,7 @@ import {PERMISSIONS} from '@shared/constants/permissions';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {RADII} from '@shared/constants/themes';
 import type {Post} from '@shared/types/posts';
-import {getDuration, getYoutubeId, youtubeThumbnail} from '../services/episodeMeta';
+import {getDuration, getEpisodeNumber, getYoutubeId, youtubeThumbnail} from '../services/episodeMeta';
 import {LinearGradient} from 'expo-linear-gradient';
 import {Clock, Mic, Play, Plus} from 'lucide-react-native';
 import {useCallback, useState} from 'react';
@@ -161,13 +161,23 @@ export default function PodcastScreen() {
     if (isLoading) return <ActivityIndicator style={styles.footer} color={colors.accent} />;
     if (total === 0) return null;
     return (
-      <Text style={[styles.footerText, {color: colors.textDim}]}>
-        {hasMore
-          ? t('podcast.showingPosts')
-              .replace('{current}', String(visible.length))
-              .replace('{total}', String(total))
-          : t('podcast.allPostsLoaded').replace('{total}', String(total))}
-      </Text>
+      <View>
+        <Text style={[styles.footerText, {color: colors.textDim}]}>
+          {hasMore
+            ? t('podcast.showingPosts')
+                .replace('{current}', String(visible.length))
+                .replace('{total}', String(total))
+            : t('podcast.allPostsLoaded').replace('{total}', String(total))}
+        </Text>
+        {hasMore ? (
+          <Pressable
+            style={[styles.loadMoreButton, {borderColor: colors.border, backgroundColor: colors.surface}]}
+            onPress={loadMore}
+          >
+            <Text style={[styles.loadMoreText, {color: colors.text}]}>{t('podcast.loadMore')}</Text>
+          </Pressable>
+        ) : null}
+      </View>
     );
   };
 
@@ -176,13 +186,16 @@ export default function PodcastScreen() {
       <FlatList
         data={visible}
         keyExtractor={(item) => item.id}
-        renderItem={({item, index}) => (
-          <EpisodeCard
-            post={item}
-            episodeNumber={total - index}
-            onPress={() => handlePostPress(item, total - index)}
-          />
-        )}
+        renderItem={({item, index}) => {
+          const episodeNumber = getEpisodeNumber(item) ?? total - index;
+          return (
+            <EpisodeCard
+              post={item}
+              episodeNumber={episodeNumber}
+              onPress={() => handlePostPress(item, episodeNumber)}
+            />
+          );
+        }}
         contentContainerStyle={[styles.listContent, {paddingTop: insets.top + 16}]}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
@@ -331,6 +344,18 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingVertical: 20,
+  },
+  loadMoreButton: {
+    alignSelf: 'center',
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  loadMoreText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   footerText: {
     textAlign: 'center',

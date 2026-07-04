@@ -1,8 +1,9 @@
+import {showAlert} from '@shared/utils/alert';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {Stack} from 'expo-router';
 import {Globe, ToggleLeft, ToggleRight, Trash2} from 'lucide-react-native';
-import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
@@ -144,12 +145,12 @@ export default function LanguageSettingsScreen() {
 
     if (isCurrentlyEnabled) {
       if (config.languageConfig.availableLanguages.length === 1) {
-        Alert.alert('Cannot Disable', 'At least one language must remain enabled.', [{ text: 'OK' }]);
+        showAlert('Cannot Disable', 'At least one language must remain enabled.', [{ text: 'OK' }]);
         return;
       }
 
       if (langCode === config.languageConfig.defaultLanguage) {
-        Alert.alert(
+        showAlert(
           'Cannot Disable',
           'Cannot disable the default language. Please set a different language as default first.',
           [{ text: 'OK' }],
@@ -157,7 +158,7 @@ export default function LanguageSettingsScreen() {
         return;
       }
 
-      Alert.alert(
+      showAlert(
         'Disable Language',
         `Are you sure you want to disable ${AVAILABLE_LANGUAGES[langCode].name}? Users will no longer be able to select this language.`,
         [
@@ -174,7 +175,7 @@ export default function LanguageSettingsScreen() {
     const isCurrentlyEnabled = config.languageConfig.availableLanguages.includes(langCode);
 
     if (!isCurrentlyEnabled) {
-      Alert.alert(
+      showAlert(
         'Language Disabled',
         `${AVAILABLE_LANGUAGES[langCode].name} is already disabled. Enable it first if you want to use it again.`,
         [{ text: 'OK' }],
@@ -183,12 +184,12 @@ export default function LanguageSettingsScreen() {
     }
 
     if (config.languageConfig.availableLanguages.length === 1) {
-      Alert.alert('Cannot Remove', 'At least one language must remain enabled.', [{ text: 'OK' }]);
+      showAlert('Cannot Remove', 'At least one language must remain enabled.', [{ text: 'OK' }]);
       return;
     }
 
     if (langCode === config.languageConfig.defaultLanguage) {
-      Alert.alert(
+      showAlert(
         'Cannot Remove',
         'Cannot remove the default language. Please set a different language as default first.',
         [{ text: 'OK' }],
@@ -196,7 +197,7 @@ export default function LanguageSettingsScreen() {
       return;
     }
 
-    Alert.alert(
+    showAlert(
       'Remove Language',
       `Are you sure you want to remove ${AVAILABLE_LANGUAGES[langCode].name}? This will disable it for all users.`,
       [
@@ -207,7 +208,7 @@ export default function LanguageSettingsScreen() {
   };
 
   const handleSetDefaultLanguage = (langCode: Language) => {
-    Alert.alert(
+    showAlert(
       'Set Default Language',
       `Set ${AVAILABLE_LANGUAGES[langCode].name} as the default language? This will be used for new users and as a fallback.`,
       [

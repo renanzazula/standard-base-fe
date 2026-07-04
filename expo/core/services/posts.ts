@@ -78,6 +78,7 @@ export type ImportPostItem = {
   status: PostStatus;
   publishAt?: string | null;
   blocks: Block[];
+  socialMediaLinks?: SocialMediaLink[];
 };
 
 export type ImportResult = {
@@ -127,6 +128,7 @@ export async function importPosts(resource: PostResource, items: ImportPostItem[
         status: item.status,
         publishAt: item.publishAt ?? undefined,
         blocks: item.blocks,
+        socialMediaLinks: item.socialMediaLinks,
       })),
     }),
   });

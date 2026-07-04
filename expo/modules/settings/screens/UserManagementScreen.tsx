@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
 import {ManagedUser, useUserManagement} from '@core/contexts/UserManagementContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
@@ -8,7 +9,6 @@ import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useFocusEffect, useRouter} from 'expo-router';
 import {
     ActivityIndicator,
-    Alert,
     Modal,
     Pressable,
     ScrollView,
@@ -349,7 +349,7 @@ export default function UserManagementScreen() {
 
   const handleToggleStatus = (user: ManagedUser) => {
     const isDisabling = user.status === 'active';
-    Alert.alert(
+    showAlert(
       isDisabling ? t('userManagement.disableUser') : t('userManagement.enableUser'),
       isDisabling ? t('userManagement.disableConfirm') : t('userManagement.enableConfirm'),
       [
@@ -358,7 +358,7 @@ export default function UserManagementScreen() {
           text: t('common.confirm'),
           onPress: async () => {
             await toggleUserStatus(user.id);
-            Alert.alert(t('common.success'), isDisabling ? t('userManagement.userDisabled') : t('userManagement.userEnabled'));
+            showAlert(t('common.success'), isDisabling ? t('userManagement.userDisabled') : t('userManagement.userEnabled'));
           },
         },
       ],
@@ -367,18 +367,18 @@ export default function UserManagementScreen() {
 
   const handleDeleteUser = (user: ManagedUser) => {
     if (user.id === currentUser.id) {
-      Alert.alert(t('common.error'), 'You cannot delete your own account');
+      showAlert(t('common.error'), 'You cannot delete your own account');
       return;
     }
 
-    Alert.alert(t('userManagement.deleteUser'), t('userManagement.deleteConfirm'), [
+    showAlert(t('userManagement.deleteUser'), t('userManagement.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           await deleteUser(user.id);
-          Alert.alert(t('common.success'), t('userManagement.userDeleted'));
+          showAlert(t('common.success'), t('userManagement.userDeleted'));
         },
       },
     ]);
@@ -396,7 +396,7 @@ export default function UserManagementScreen() {
     if (!selectedUser) return;
 
     if (!editName.trim()) {
-      Alert.alert(t('common.error'), 'Name is required');
+      showAlert(t('common.error'), 'Name is required');
       return;
     }
 
@@ -407,16 +407,16 @@ export default function UserManagementScreen() {
     });
 
     setEditModalVisible(false);
-    Alert.alert(t('common.success'), t('userManagement.userUpdated'));
+    showAlert(t('common.success'), t('userManagement.userUpdated'));
   };
 
   const handleCreateUser = async () => {
     if (!createEmail.trim() || !createDisplayName.trim() || !createPassword) {
-      Alert.alert(t('common.error'), 'All fields are required');
+      showAlert(t('common.error'), 'All fields are required');
       return;
     }
     if (createPassword.length < 8) {
-      Alert.alert(t('common.error'), 'Password must be at least 8 characters');
+      showAlert(t('common.error'), 'Password must be at least 8 characters');
       return;
     }
     setCreateLoading(true);
@@ -427,9 +427,9 @@ export default function UserManagementScreen() {
       setCreateDisplayName('');
       setCreatePassword('');
       setCreateRole('STANDARD');
-      Alert.alert(t('common.success'), 'User created successfully');
+      showAlert(t('common.success'), 'User created successfully');
     } catch {
-      Alert.alert(t('common.error'), 'Failed to create user. The email may already be in use.');
+      showAlert(t('common.error'), 'Failed to create user. The email may already be in use.');
     } finally {
       setCreateLoading(false);
     }

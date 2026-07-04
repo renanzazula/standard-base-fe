@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
@@ -8,16 +9,15 @@ import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {ApiError} from '@core/services/api';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -35,17 +35,17 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showAlert('Error', 'Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      showAlert('Error', 'Passwords do not match');
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+      showAlert('Error', 'Password must be at least 8 characters');
       return;
     }
 
@@ -55,13 +55,13 @@ export default function SignUpScreen() {
       if (success) {
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert('Sign Up Failed', 'Unable to create account');
+        showAlert('Sign Up Failed', 'Unable to create account');
       }
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert('Sign Up Failed', error.message);
+        showAlert('Sign Up Failed', error.message);
       } else {
-        Alert.alert('Error', 'An error occurred during sign up');
+        showAlert('Error', 'An error occurred during sign up');
       }
     } finally {
       setIsLoading(false);
@@ -75,13 +75,13 @@ export default function SignUpScreen() {
       if (success) {
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert('Sign Up Failed', 'Google sign up failed');
+        showAlert('Sign Up Failed', 'Google sign up failed');
       }
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert('Sign Up Failed', error.message);
+        showAlert('Sign Up Failed', error.message);
       } else {
-        Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred during Google sign up');
+        showAlert('Error', error instanceof Error ? error.message : 'An error occurred during Google sign up');
       }
     } finally {
       setIsLoading(false);
@@ -95,13 +95,13 @@ export default function SignUpScreen() {
       if (success) {
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert('Sign Up Failed', 'Apple sign up failed');
+        showAlert('Sign Up Failed', 'Apple sign up failed');
       }
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert('Sign Up Failed', error.message);
+        showAlert('Sign Up Failed', error.message);
       } else {
-        Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred during Apple sign up');
+        showAlert('Error', error instanceof Error ? error.message : 'An error occurred during Apple sign up');
       }
     } finally {
       setIsLoading(false);

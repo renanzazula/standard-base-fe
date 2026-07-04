@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
@@ -5,34 +6,34 @@ import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useRouter} from 'expo-router';
 import {
-    Camera,
-    Check,
-    ChevronRight,
-    Clock,
-    Edit3,
-    Globe,
-    Lock,
-    LogOut,
-    Menu,
-    Mic,
-    Moon,
-    Shield,
-    Sun,
-    User,
-    Users,
+  Camera,
+  Check,
+  ChevronRight,
+  Clock,
+  Edit3,
+  Globe,
+  Lock,
+  LogOut,
+  Menu,
+  Mic,
+  Moon,
+  Shield,
+  Sun,
+  User,
+  Users,
 } from 'lucide-react-native';
 import {
-    Alert,
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import React from 'react';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
@@ -65,7 +66,7 @@ export default function SettingsScreen() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Please grant camera access to take a photo.');
+      showAlert('Permission Required', 'Please grant camera access to take a photo.');
       return;
     }
 
@@ -79,7 +80,7 @@ export default function SettingsScreen() {
       const asset = result.assets[0];
       console.log('[Settings] Photo taken:', asset.uri);
       await updateProfile({ avatar: asset.uri });
-      Alert.alert(t('common.success'), t('settings.avatarUpdated'));
+      showAlert(t('common.success'), t('settings.avatarUpdated'));
     }
   };
 
@@ -88,7 +89,7 @@ export default function SettingsScreen() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Please grant photo library access to upload an avatar.');
+      showAlert('Permission Required', 'Please grant photo library access to upload an avatar.');
       return;
     }
 
@@ -103,12 +104,18 @@ export default function SettingsScreen() {
       const asset = result.assets[0];
       console.log('[Settings] Avatar selected:', asset.uri);
       await updateProfile({ avatar: asset.uri });
-      Alert.alert(t('common.success'), t('settings.avatarUpdated'));
+      showAlert(t('common.success'), t('settings.avatarUpdated'));
     }
   };
 
   const handleAvatarPress = () => {
-    Alert.alert(
+    // Web has no camera flow; window.confirm can't offer three choices either,
+    // so go straight to the file picker.
+    if (Platform.OS === 'web') {
+      handleSelectAvatar();
+      return;
+    }
+    showAlert(
       t('settings.changeAvatar'),
       t('settings.chooseAvatarSource'),
       [
@@ -131,7 +138,7 @@ export default function SettingsScreen() {
     const trimmed = usernameInput.trim();
 
     if (trimmed.length < config.profileConfig.usernameMinLength) {
-      Alert.alert(
+      showAlert(
         t('common.error'),
         t('settings.usernameTooShort').replace('{min}', config.profileConfig.usernameMinLength.toString())
       );
@@ -139,7 +146,7 @@ export default function SettingsScreen() {
     }
 
     if (trimmed.length > config.profileConfig.usernameMaxLength) {
-      Alert.alert(
+      showAlert(
         t('common.error'),
         t('settings.usernameTooLong').replace('{max}', config.profileConfig.usernameMaxLength.toString())
       );
@@ -149,13 +156,13 @@ export default function SettingsScreen() {
     console.log('[Settings] Updating username to:', trimmed);
     updateProfile({ username: trimmed });
     setUsernameModalVisible(false);
-    Alert.alert(t('common.success'), t('settings.usernameUpdated'));
+    showAlert(t('common.success'), t('settings.usernameUpdated'));
   };
 
 
 
   const handleLogout = () => {
-    Alert.alert(t('auth.logout'), t('auth.logoutConfirm'), [
+    showAlert(t('auth.logout'), t('auth.logoutConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('auth.logout'),

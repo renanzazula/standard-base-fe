@@ -1,13 +1,14 @@
 import {usePosts} from '@core/contexts/PostsContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
-import type {PodcastEpisodeJson} from '@core/services/feedImport';
-import {convertEpisodesToPosts, parsePodcastJson} from '@core/services/feedImport';
+import type {ImportablePost} from '@core/services/feedImport';
+import {parseImportJson} from '@core/services/feedImport';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {showAlert} from '@shared/utils/alert';
 import * as DocumentPicker from 'expo-document-picker';
 import {readAsStringAsync} from 'expo-file-system/legacy';
 import {FileJson, Upload} from 'lucide-react-native';
 import {useRef, useState} from 'react';
-import {Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Platform, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
 export default function PodcastImportScreen() {
@@ -15,7 +16,7 @@ export default function PodcastImportScreen() {
   const {t} = useTranslation();
   const {importPosts} = usePosts();
 
-  const [episodes, setEpisodes] = useState<PodcastEpisodeJson[]>([]);
+  const [episodes, setEpisodes] = useState<ImportablePost[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -33,11 +34,11 @@ export default function PodcastImportScreen() {
     const asset = result.assets[0];
     try {
       const raw = await readAsStringAsync(asset.uri);
-      const parsed = parsePodcastJson(raw);
+      const parsed = parseImportJson(raw);
       setEpisodes(parsed);
       setFileName(asset.name);
     } catch {
-      Alert.alert(t('common.error'), t('podcast.importInvalidJson'));
+      showAlert(t('common.error'), t('podcast.importInvalidJson'));
       setEpisodes([]);
       setFileName(null);
     }
@@ -50,11 +51,11 @@ export default function PodcastImportScreen() {
     reader.onload = (ev) => {
       try {
         const raw = ev.target?.result as string;
-        const parsed = parsePodcastJson(raw);
+        const parsed = parseImportJson(raw);
         setEpisodes(parsed);
         setFileName(file.name);
       } catch {
-        Alert.alert(t('common.error'), t('podcast.importInvalidJson'));
+        showAlert(t('common.error'), t('podcast.importInvalidJson'));
         setEpisodes([]);
         setFileName(null);
       }
@@ -67,15 +68,14 @@ export default function PodcastImportScreen() {
     if (episodes.length === 0) return;
     setImporting(true);
     try {
-      const posts = convertEpisodesToPosts(episodes);
-      const result = await importPosts(posts, 'podcast');
+      const result = await importPosts(episodes, 'podcast');
       if (result.imported === episodes.length) {
-        Alert.alert(
+        showAlert(
           t('common.success'),
           t('podcast.importSuccess').replace('{imported}', String(result.imported)),
         );
       } else {
-        Alert.alert(
+        showAlert(
           t('common.success'),
           t('podcast.importPartial')
             .replace('{imported}', String(result.imported))
@@ -85,7 +85,7 @@ export default function PodcastImportScreen() {
       setEpisodes([]);
       setFileName(null);
     } catch {
-      Alert.alert(t('common.error'), t('podcast.importFailed'));
+      showAlert(t('common.error'), t('podcast.importFailed'));
     } finally {
       setImporting(false);
     }
@@ -146,9 +146,9 @@ export default function PodcastImportScreen() {
                 <Text style={[styles.previewItemText, {color: colors.text}]} numberOfLines={1}>
                   {ep.title}
                 </Text>
-                {ep.date || ep.duration ? (
+                {ep.publishAt ? (
                   <Text style={[styles.previewItemMeta, {color: colors.textSecondary}]}>
-                    {[ep.date, ep.duration].filter(Boolean).join(' · ')}
+                    {ep.publishAt.slice(0, 10)}
                   </Text>
                 ) : null}
               </View>

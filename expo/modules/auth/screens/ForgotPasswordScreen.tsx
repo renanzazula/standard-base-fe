@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useRouter} from 'expo-router';
@@ -6,16 +7,15 @@ import {useState} from 'react';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -30,7 +30,7 @@ export default function ForgotPasswordScreen() {
 
   const handleResetPassword = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
+      showAlert('Error', 'Please enter your email address');
       return;
     }
 
@@ -39,7 +39,7 @@ export default function ForgotPasswordScreen() {
       const success = await resetPassword(email);
       if (success) {
         setEmailSent(true);
-        Alert.alert(
+        showAlert(
           'Success',
           'Password reset instructions have been sent to your email',
           [
@@ -50,10 +50,10 @@ export default function ForgotPasswordScreen() {
           ]
         );
       } else {
-        Alert.alert('Error', 'Failed to send reset email');
+        showAlert('Error', 'Failed to send reset email');
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while resetting password');
+      showAlert('Error', 'An error occurred while resetting password');
     } finally {
       setIsLoading(false);
     }

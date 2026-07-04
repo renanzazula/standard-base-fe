@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {usePosts} from '@core/contexts/PostsContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
@@ -6,7 +7,7 @@ import {useTranslation} from '@shared/hooks/useTranslation';
 import {useRouter} from 'expo-router';
 import {ChevronRight, FileJson, Minus, Plus} from 'lucide-react-native';
 import {useState} from 'react';
-import {Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 
 export default function PostFeedConfigScreen() {
@@ -23,9 +24,9 @@ export default function PostFeedConfigScreen() {
     setSaving(true);
     try {
       await updatePostsPerPage(localPerPage);
-      Alert.alert(t('common.success'), t('feed.configSaved'));
+      showAlert(t('common.success'), t('feed.configSaved'));
     } catch {
-      Alert.alert(t('common.error'), t('feed.configSaveFailed'));
+      showAlert(t('common.error'), t('feed.configSaveFailed'));
     } finally {
       setSaving(false);
     }

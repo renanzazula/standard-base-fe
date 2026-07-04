@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import * as authApi from '@core/services/auth';
 import {useLocalSearchParams, useRouter} from 'expo-router';
@@ -6,16 +7,15 @@ import {useState} from 'react';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -32,26 +32,26 @@ export default function ResetPasswordScreen() {
 
   const handleSubmit = async () => {
     if (!token) {
-      Alert.alert('Error', 'Reset token is missing. Please use the link from your email.');
+      showAlert('Error', 'Reset token is missing. Please use the link from your email.');
       return;
     }
     if (!newPassword || newPassword.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters.');
+      showAlert('Error', 'Password must be at least 8 characters.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.');
+      showAlert('Error', 'Passwords do not match.');
       return;
     }
 
     setIsLoading(true);
     try {
       await authApi.confirmPasswordReset(token, newPassword);
-      Alert.alert('Success', 'Your password has been reset. You can now sign in with your new password.', [
+      showAlert('Success', 'Your password has been reset. You can now sign in with your new password.', [
         { text: 'Sign In', onPress: () => router.replace('/login') },
       ]);
     } catch {
-      Alert.alert('Error', 'The reset link is invalid or has expired. Please request a new one.');
+      showAlert('Error', 'The reset link is invalid or has expired. Please request a new one.');
     } finally {
       setIsLoading(false);
     }

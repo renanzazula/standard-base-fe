@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {usePosts} from '@core/contexts/PostsContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
@@ -6,12 +7,13 @@ import {useTranslation} from '@shared/hooks/useTranslation';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import BlockRenderer from '../components/BlockRenderer';
 import PodcastEpisodeDetail from '@modules/podcast/components/PodcastEpisodeDetail';
+import {getEpisodeNumber} from '@modules/podcast/services/episodeMeta';
 import {ENV} from '@core/config/env';
 import type {PostResource} from '@core/services/posts';
 import type {Post} from '@shared/types/posts';
 import {ExternalLink, Facebook, Instagram, Linkedin, Pencil, Trash2, Twitter, Youtube} from 'lucide-react-native';
 import {useEffect, useState} from 'react';
-import {ActivityIndicator, Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useLocalSearchParams, useRouter} from 'expo-router';
 import Svg, {Path} from 'react-native-svg';
 
@@ -116,7 +118,7 @@ export default function PostDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(t('feed.deletePost'), t('feed.deletePostConfirm'), [
+    showAlert(t('feed.deletePost'), t('feed.deletePostConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),
@@ -133,7 +135,7 @@ export default function PostDetailScreen() {
     return (
       <PodcastEpisodeDetail
         post={post}
-        episodeNumber={ep ? Number(ep) || null : null}
+        episodeNumber={getEpisodeNumber(post) ?? (ep ? Number(ep) || null : null)}
         canEdit={canEdit}
         canDelete={canDelete}
         onEdit={handleEdit}

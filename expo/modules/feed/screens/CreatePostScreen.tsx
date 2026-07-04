@@ -1,20 +1,11 @@
+import {showAlert} from '@shared/utils/alert';
 import {extractSpotifyInfo, usePosts} from '@core/contexts/PostsContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useAuth} from '@core/contexts/AuthContext';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import type {Block, PostStatus, SocialMediaLink} from '@shared/types/posts';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import {KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,} from 'react-native';
 import {useLocalSearchParams, useRouter} from 'expo-router';
 import {useState} from 'react';
 import {Plus, X} from 'lucide-react-native';
@@ -312,22 +303,22 @@ export default function CreatePostScreen() {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      Alert.alert(t('common.error'), t('feed.validationTitleRequired'));
+      showAlert(t('common.error'), t('feed.validationTitleRequired'));
       return;
     }
     if (!coverUrl.trim()) {
-      Alert.alert(t('common.error'), t('feed.validationCoverRequired'));
+      showAlert(t('common.error'), t('feed.validationCoverRequired'));
       return;
     }
     const blocks: Block[] = blockEditors.map(toBlock).filter((b): b is Block => b !== null);
     if (blocks.length === 0) {
-      Alert.alert(t('common.error'), t('feed.validationBlockRequired'));
+      showAlert(t('common.error'), t('feed.validationBlockRequired'));
       return;
     }
 
     for (const link of socialLinks) {
       if (!isValidUrl(link.url)) {
-        Alert.alert(t('common.error'), t('feed.validationInvalidUrl'));
+        showAlert(t('common.error'), t('feed.validationInvalidUrl'));
         return;
       }
     }
@@ -349,7 +340,7 @@ export default function CreatePostScreen() {
       }, postResource);
       router.back();
     } catch (error) {
-      Alert.alert(t('common.error'), String(error));
+      showAlert(t('common.error'), String(error));
     } finally {
       setSaving(false);
     }

@@ -1,3 +1,4 @@
+import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
 import {useUserManagement} from '@core/contexts/UserManagementContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
@@ -7,7 +8,7 @@ import {PERMISSION_LABELS, PERMISSIONS} from '@shared/constants/permissions';
 import type {PermissionOverride} from '@core/services/adminUsers';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useLocalSearchParams, useRouter} from 'expo-router';
-import {ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
+import {ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Shield, User as UserIcon} from 'lucide-react-native';
@@ -83,7 +84,7 @@ export default function UserPermissionsScreen() {
 
   const handleRoleChange = (role: 'admin' | 'standard') => {
     if (role === editRole) return;
-    Alert.alert(
+    showAlert(
       t('userPermissions.roleSection'),
       t('userPermissions.roleChangeWarning'),
       [
@@ -108,9 +109,9 @@ export default function UserPermissionsScreen() {
         ([permission, granted]) => ({ permission, granted }),
       );
       await saveUserPermissions(userId, overrides);
-      Alert.alert(t('common.success'), t('userPermissions.saveSuccess'));
+      showAlert(t('common.success'), t('userPermissions.saveSuccess'));
     } catch {
-      Alert.alert(t('common.error'), t('userPermissions.saveFailed'));
+      showAlert(t('common.error'), t('userPermissions.saveFailed'));
     } finally {
       setSaving(false);
     }
