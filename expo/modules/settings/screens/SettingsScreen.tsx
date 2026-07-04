@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   Mic,
+  Monitor,
   Moon,
   Shield,
   Sun,
@@ -1057,7 +1058,7 @@ export default function SettingsScreen() {
               )}
               {hasPermission(PERMISSIONS.FUNC_PODCAST_CONFIGURE) && (
                 <TouchableOpacity
-                  style={[styles.settingItem, styles.settingItemLast]}
+                  style={styles.settingItem}
                   onPress={() => router.push('/podcast-config' as any)}
                   testID="podcast-config-link"
                   activeOpacity={0.7}
@@ -1069,6 +1070,27 @@ export default function SettingsScreen() {
                     <Text style={styles.settingTitle}>{t('settings.podcastConfiguration')}</Text>
                     <Text style={styles.settingDescription}>
                       {t('settings.podcastConfigurationDescription')}
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_SPLASH_MANAGE) && (
+                <TouchableOpacity
+                  style={[styles.settingItem, styles.settingItemLast]}
+                  onPress={() => router.push('/splash-management' as any)}
+                  testID="splash-management-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Monitor size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>{t('splash.managementTitle')}</Text>
+                    <Text style={styles.settingDescription}>
+                      {t('splash.managementDescription')}
                     </Text>
                   </View>
                   <View style={styles.settingAction}>

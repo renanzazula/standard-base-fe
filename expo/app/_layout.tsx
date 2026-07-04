@@ -36,6 +36,8 @@ const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PER
   'feed-import-json': PERMISSIONS.FUNC_FEED_IMPORT_JSON,
   'podcast-config': PERMISSIONS.FUNC_PODCAST_CONFIGURE,
   'podcast-import-json': PERMISSIONS.FUNC_PODCAST_IMPORT_JSON,
+  'splash-management': PERMISSIONS.FUNC_SPLASH_MANAGE,
+  'splash-edit': PERMISSIONS.FUNC_SPLASH_MANAGE,
 };
 
 // Routes accessible to any authenticated user (no special permission required)
@@ -155,6 +157,8 @@ function RootLayoutNav() {
       <Stack.Screen name="feed-import-json" options={{ headerShown: true, title: 'Import Posts from JSON' }} />
       <Stack.Screen name="podcast-config" options={{ headerShown: true, title: 'Podcast Configuration' }} />
       <Stack.Screen name="podcast-import-json" options={{ headerShown: true, title: 'Import Episodes from JSON' }} />
+      <Stack.Screen name="splash-management" options={{ headerShown: true, title: 'Splash Screens' }} />
+      <Stack.Screen name="splash-edit" options={{ headerShown: true, title: 'Splash Screen', presentation: 'modal' }} />
     </Stack>
     {!isLoading ? <SplashGate /> : null}
     </ThemeProvider>
