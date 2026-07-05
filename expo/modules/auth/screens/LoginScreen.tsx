@@ -12,7 +12,6 @@ import {ApiError} from '@core/services/api';
 import {
   ActivityIndicator,
   Image,
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -23,6 +22,7 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import BrandedBackground from '@shared/components/BrandedBackground';
 
 export default function LoginScreen() {
   const { colors } = usePreferences();
@@ -127,10 +127,6 @@ export default function LoginScreen() {
   };
 
   const styles = StyleSheet.create({
-    background: {
-      flex: 1,
-      backgroundColor: '#000000',
-    },
     container: {
       flex: 1,
     },
@@ -276,11 +272,7 @@ export default function LoginScreen() {
     config.enabledAuthMethods.google || config.enabledAuthMethods.apple;
 
   return (
-    <ImageBackground
-      source={require('@/assets/images/login-background.png')}
-      style={styles.background}
-      resizeMode="cover"
-    >
+    <BrandedBackground>
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -427,6 +419,6 @@ export default function LoginScreen() {
         </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ImageBackground>
+    </BrandedBackground>
   );
 }
