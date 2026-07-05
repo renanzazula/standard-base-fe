@@ -11,6 +11,8 @@ import {MAX_FORM_WIDTH} from '@shared/constants/layout';
 import {ApiError} from '@core/services/api';
 import {
   ActivityIndicator,
+  Image,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -125,9 +127,12 @@ export default function LoginScreen() {
   };
 
   const styles = StyleSheet.create({
+    background: {
+      flex: 1,
+      backgroundColor: '#000000',
+    },
     container: {
       flex: 1,
-      backgroundColor: colors.background,
     },
     scrollContent: {
       flexGrow: 1,
@@ -141,24 +146,20 @@ export default function LoginScreen() {
       alignItems: 'center',
       marginBottom: 48,
     },
-    iconContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 16,
+    logo: {
+      width: 240,
+      height: 160,
+      marginBottom: 8,
     },
     title: {
       fontSize: 32,
       fontFamily: FONTS.display,
-      color: colors.text,
+      color: '#FFFFFF',
       marginBottom: 8,
     },
     subtitle: {
       fontSize: 16,
-      color: colors.textSecondary,
+      color: 'rgba(255, 255, 255, 0.75)',
       textAlign: 'center',
     },
     form: {
@@ -170,7 +171,7 @@ export default function LoginScreen() {
     label: {
       fontSize: 14,
       fontWeight: '600' as const,
-      color: colors.text,
+      color: '#FFFFFF',
       marginBottom: 8,
     },
     inputWrapper: {
@@ -226,12 +227,12 @@ export default function LoginScreen() {
     dividerLine: {
       flex: 1,
       height: 1,
-      backgroundColor: colors.border,
+      backgroundColor: 'rgba(255, 255, 255, 0.3)',
     },
     dividerText: {
       marginHorizontal: 16,
       fontSize: 14,
-      color: colors.textSecondary,
+      color: 'rgba(255, 255, 255, 0.75)',
       fontWeight: '500' as const,
     },
     socialButtons: {
@@ -260,7 +261,7 @@ export default function LoginScreen() {
     },
     footerText: {
       fontSize: 14,
-      color: colors.textSecondary,
+      color: 'rgba(255, 255, 255, 0.75)',
     },
     footerLink: {
       fontSize: 14,
@@ -274,19 +275,26 @@ export default function LoginScreen() {
     config.enabledAuthMethods.google || config.enabledAuthMethods.apple;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
+    <ImageBackground
+      source={require('@/assets/images/login-background.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <LogIn size={40} color="#FFFFFF" />
-            </View>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>{t('auth.welcomeBack')}</Text>
             <Text style={styles.subtitle}>{t('auth.signInToContinue')}</Text>
           </View>
@@ -416,7 +424,8 @@ export default function LoginScreen() {
           </View>
 
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
