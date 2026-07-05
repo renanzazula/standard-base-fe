@@ -153,7 +153,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isLoading: false,
           lastActivity: Date.now(),
         });
-        reloadTabConfig();
+        // /api/admin/config is ADMIN-only — skip the call for other roles.
+        if (user.role === 'admin') reloadTabConfig();
         return;
       }
     } catch (error) {
@@ -206,7 +207,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isLoading: false,
       lastActivity: Date.now(),
     });
-    reloadTabConfig();
+    if (user.role === 'admin') reloadTabConfig();
     return true;
   };
 
@@ -254,7 +255,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isLoading: false,
       lastActivity: Date.now(),
     });
-    reloadTabConfig();
+    if (user.role === 'admin') reloadTabConfig();
     return true;
   };
 

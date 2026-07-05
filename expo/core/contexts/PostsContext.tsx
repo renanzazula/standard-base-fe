@@ -5,6 +5,7 @@ import type {Block, Post, PostStatus, SocialMediaLink} from '@shared/types/posts
 import {ENV} from '@core/config/env';
 import {useAuth} from '@core/contexts/AuthContext';
 import {getModuleConfig, getUserModuleConfig, updateModuleConfig} from '@core/services/moduleConfig';
+import {PERMISSIONS} from '@shared/constants/permissions';
 import * as postsApi from '@core/services/posts';
 
 export type PagedPosts = {
@@ -157,9 +158,13 @@ export const [PostsProvider, usePosts] = createContextHook((): PostsContextValue
 
   const localPublished = useMemo(() => posts.filter((p) => p.status === 'published'), [posts]);
   const userId = user?.id ?? null;
+  // The backend rejects feed reads without the matching tab permission
+  // (e.g. guest sessions), so don't request them at all.
+  const feedUserId = user?.permissions.includes(PERMISSIONS.FUNC_TAB_FEED) ? userId : null;
+  const podcastUserId = user?.permissions.includes(PERMISSIONS.FUNC_TAB_PODCAST) ? userId : null;
 
-  const feed = usePagedResource('posts', postsPerPage, localPublished, isLoading, userId);
-  const podcast = usePagedResource('podcast', podcastPostsPerPage, localPublished, isLoading, userId);
+  const feed = usePagedResource('posts', postsPerPage, localPublished, isLoading, feedUserId);
+  const podcast = usePagedResource('podcast', podcastPostsPerPage, localPublished, isLoading, podcastUserId);
 
   const fetchPostBySlug = useCallback(async (slug: string): Promise<{ post: Post; resource: postsApi.PostResource } | null> => {
     if (!ENV.HAS_BACKEND || !slug) return null;
