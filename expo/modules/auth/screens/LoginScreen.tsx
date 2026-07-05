@@ -2,7 +2,7 @@ import {useAuth} from '@core/contexts/AuthContext';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useRouter} from 'expo-router';
-import {Apple as AppleIcon, Chrome, Lock, LogIn, Mail} from 'lucide-react-native';
+import {Apple as AppleIcon, Chrome, Lock, LogIn, Mail, UserRound} from 'lucide-react-native';
 import {useState} from 'react';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {ApiError} from '@core/services/api';
@@ -23,7 +23,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 export default function LoginScreen() {
   const { colors } = usePreferences();
   const { config } = useAdminConfig();
-  const { loginWithCredentials, loginWithGoogle, loginWithApple } = useAuth();
+  const { loginWithCredentials, loginAsGuest, loginWithGoogle, loginWithApple } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -52,6 +52,26 @@ export default function LoginScreen() {
         Alert.alert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
         Alert.alert(t('common.error'), t('auth.loginError'));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setIsLoading(true);
+    try {
+      const success = await loginAsGuest();
+      if (success) {
+        router.replace('/(tabs)/home');
+      } else {
+        Alert.alert(t('auth.loginFailed'), t('auth.guestLoginError'));
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        Alert.alert(t('auth.loginFailed'), error.message);
+      } else {
+        Alert.alert(t('common.error'), t('auth.guestLoginError'));
       }
     } finally {
       setIsLoading(false);
@@ -333,7 +353,7 @@ export default function LoginScreen() {
             </View>
           )}
 
-          {showSocialButtons && config.enabledAuthMethods.manual && (
+          {config.enabledAuthMethods.manual && (
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>{t('common.or')}</Text>
@@ -368,6 +388,18 @@ export default function LoginScreen() {
               )}
             </View>
           )}
+
+          <View style={[styles.socialButtons, showSocialButtons && { marginTop: 12 }]}>
+            <TouchableOpacity
+              testID="login-guest-button"
+              style={styles.socialButton}
+              onPress={handleGuestLogin}
+              disabled={isLoading}
+            >
+              <UserRound size={20} color={colors.text} />
+              <Text style={styles.socialButtonText}>{t('auth.enterAsGuest')}</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>{t('auth.dontHaveAccount')}</Text>

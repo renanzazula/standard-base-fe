@@ -23,6 +23,17 @@ export async function saveTokens(accessToken: string, refreshToken: string): Pro
   }
 }
 
+export async function saveAccessToken(accessToken: string): Promise<void> {
+  const store = getStore();
+  if (store) {
+    await store.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
+    await store.deleteItemAsync(REFRESH_TOKEN_KEY);
+  } else {
+    await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+}
+
 export async function getAccessToken(): Promise<string | null> {
   const store = getStore();
   if (store) {

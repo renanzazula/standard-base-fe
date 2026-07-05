@@ -43,6 +43,10 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
 };
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  guest: [
+    PERMISSIONS.FUNC_TAB_HOME,
+    PERMISSIONS.FUNC_TAB_SETTINGS,
+  ],
   standard: STANDARD_PERMISSIONS,
   admin: [
     ...STANDARD_PERMISSIONS,
