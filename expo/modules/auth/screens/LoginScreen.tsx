@@ -389,17 +389,19 @@ export default function LoginScreen() {
             </View>
           )}
 
-          <View style={[styles.socialButtons, showSocialButtons && { marginTop: 12 }]}>
-            <TouchableOpacity
-              testID="login-guest-button"
-              style={styles.socialButton}
-              onPress={handleGuestLogin}
-              disabled={isLoading}
-            >
-              <UserRound size={20} color={colors.text} />
-              <Text style={styles.socialButtonText}>{t('auth.enterAsGuest')}</Text>
-            </TouchableOpacity>
-          </View>
+          {config.enabledAuthMethods.guest && (
+            <View style={[styles.socialButtons, showSocialButtons && { marginTop: 12 }]}>
+              <TouchableOpacity
+                testID="login-guest-button"
+                style={styles.socialButton}
+                onPress={handleGuestLogin}
+                disabled={isLoading}
+              >
+                <UserRound size={20} color={colors.text} />
+                <Text style={styles.socialButtonText}>{t('auth.enterAsGuest')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>{t('auth.dontHaveAccount')}</Text>
