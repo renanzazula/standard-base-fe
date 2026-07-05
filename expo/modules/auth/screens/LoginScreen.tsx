@@ -147,8 +147,9 @@ export default function LoginScreen() {
       marginBottom: 48,
     },
     logo: {
-      width: 240,
-      height: 160,
+      width: 340,
+      maxWidth: '100%',
+      height: 227,
       marginBottom: 8,
     },
     title: {
