@@ -1,7 +1,7 @@
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {Stack} from 'expo-router';
-import {Apple, Chrome, Mail} from 'lucide-react-native';
+import {Apple, Chrome, Mail, UserRound} from 'lucide-react-native';
 import {ScrollView, StyleSheet, Switch, Text, View} from 'react-native';
 
 export default function ConfigureAuthScreen() {
@@ -170,10 +170,35 @@ export default function ConfigureAuthScreen() {
               </View>
             </View>
 
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIcon}>
+                  <UserRound size={20} color={colors.text} />
+                </View>
+                <Text style={styles.cardTitle}>Guest Access</Text>
+              </View>
+
+              <View style={styles.settingRow}>
+                <View>
+                  <Text style={styles.settingLabel}>Enable Guest Access</Text>
+                  <Text style={styles.settingDescription}>
+                    Allow users to enter without an account
+                  </Text>
+                </View>
+                <Switch
+                  value={config.enabledAuthMethods.guest}
+                  onValueChange={() => toggleAuthMethod('guest')}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                  testID="guest-auth-toggle"
+                />
+              </View>
+            </View>
+
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
                 <Text style={{ fontWeight: '700' as const }}>Authentication Methods:</Text>{' '}
-                Enable or disable different authentication methods for your app. At least one authentication method must remain enabled.
+                Enable or disable different authentication methods for your app. At least one authentication method must remain enabled. Guest access is anonymous and does not count as a sign-in method.
               </Text>
             </View>
           </View>

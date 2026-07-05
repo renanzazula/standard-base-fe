@@ -16,6 +16,7 @@ export interface AppConfigResponse {
   emailAuthEnabled: boolean;
   googleAuthEnabled: boolean;
   appleAuthEnabled: boolean;
+  guestAuthEnabled?: boolean;
   sessionDurationSeconds: number;
   refreshTokenDurationSeconds: number;
   sessionAutoRefresh: boolean;
@@ -42,6 +43,7 @@ export function updateAuthMethods(body: {
   emailAuthEnabled?: boolean;
   googleAuthEnabled?: boolean;
   appleAuthEnabled?: boolean;
+  guestAuthEnabled?: boolean;
 }): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config/auth-methods', { method: 'PATCH', body: JSON.stringify(body) });
 }

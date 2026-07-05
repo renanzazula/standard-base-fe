@@ -6,7 +6,7 @@ import * as adminConfigApi from '@core/services/adminConfig';
 import {type Permission, PERMISSIONS} from '@shared/constants/permissions';
 import {ENV} from '@core/config/env';
 
-export type AuthMethod = 'google' | 'apple' | 'manual';
+export type AuthMethod = 'google' | 'apple' | 'manual' | 'guest';
 
 export type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 
@@ -25,6 +25,7 @@ export interface AdminConfig {
     google: boolean;
     apple: boolean;
     manual: boolean;
+    guest: boolean;
   };
   sessionConfig: {
     maxTime: number;
@@ -55,6 +56,7 @@ const DEFAULT_CONFIG: AdminConfig = {
     google: false,
     apple: false,
     manual: true,
+    guest: true,
   },
   sessionConfig: {
     maxTime: 30 * 60 * 1000,
@@ -92,6 +94,7 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
       google: response.googleAuthEnabled,
       apple: response.appleAuthEnabled,
       manual: response.emailAuthEnabled,
+      guest: response.guestAuthEnabled ?? true,
     },
     sessionConfig: {
       maxTime: response.sessionDurationSeconds * 1000,
@@ -166,6 +169,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
         emailAuthEnabled: method === 'manual' ? !config.enabledAuthMethods.manual : config.enabledAuthMethods.manual,
         googleAuthEnabled: method === 'google' ? !config.enabledAuthMethods.google : config.enabledAuthMethods.google,
         appleAuthEnabled: method === 'apple' ? !config.enabledAuthMethods.apple : config.enabledAuthMethods.apple,
+        guestAuthEnabled: method === 'guest' ? !config.enabledAuthMethods.guest : config.enabledAuthMethods.guest,
       });
       setConfig(mapConfigResponse(response));
     } catch (error) {
