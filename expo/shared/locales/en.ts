@@ -36,6 +36,10 @@ export const en = {
     testCredentials: 'Test Credentials (Mock Mode)',
     standardUser: 'Standard User',
     adminUser: 'Admin User',
+    enterAsGuest: 'Enter as Guest',
+    guestLoginError: 'Could not start a guest session',
+    guestUser: 'Guest',
+    signInOrCreateAccount: 'Sign in or create an account',
   },
   home: {
     welcomeBack: 'Welcome back',

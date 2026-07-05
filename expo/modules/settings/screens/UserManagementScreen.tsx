@@ -366,7 +366,7 @@ export default function UserManagementScreen() {
   };
 
   const handleDeleteUser = (user: ManagedUser) => {
-    if (user.id === currentUser.id) {
+    if (user.id === currentUser?.id) {
       showAlert(t('common.error'), 'You cannot delete your own account');
       return;
     }
@@ -388,7 +388,8 @@ export default function UserManagementScreen() {
     setSelectedUser(user);
     setEditName(user.name);
     setEditUsername(user.username || '');
-    setEditRole(user.role);
+    // Guests are transient sessions, never rows in the user list — narrow the type.
+    setEditRole(user.role === 'guest' ? 'standard' : user.role);
     setEditModalVisible(true);
   };
 
@@ -658,7 +659,7 @@ export default function UserManagementScreen() {
                     </TouchableOpacity>
                   )}
                   {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) &&
-                    user.id !== currentUser.id && (
+                    user.id !== currentUser?.id && (
                       <TouchableOpacity
                         style={styles.actionButton}
                         onPress={() => router.push(`/user-permissions?userId=${user.id}`)}
@@ -671,7 +672,7 @@ export default function UserManagementScreen() {
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => handleToggleStatus(user)}
-                      disabled={user.id === currentUser.id}
+                      disabled={user.id === currentUser?.id}
                     >
                       {user.status === 'active' ? (
                         <>
@@ -690,7 +691,7 @@ export default function UserManagementScreen() {
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
                       onPress={() => handleDeleteUser(user)}
-                      disabled={user.id === currentUser.id}
+                      disabled={user.id === currentUser?.id}
                     >
                       <Trash2 size={16} color={colors.error} />
                       <Text style={[styles.actionButtonText, styles.deleteButtonText]}>{t('common.delete')}</Text>

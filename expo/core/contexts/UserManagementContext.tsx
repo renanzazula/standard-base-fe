@@ -24,7 +24,10 @@ function mapToManagedUser(s: UserSummary): ManagedUser {
     name: s.displayName,
     username: s.username,
     role: s.role.toLowerCase() as 'admin' | 'standard',
-    provider: s.providers?.[0]?.toLowerCase() ?? 'manual',
+    provider: (s.providers?.[0]?.toLowerCase() ?? 'manual') as User['provider'],
+    // The admin list summary carries no permission/tab detail — loaded separately per user.
+    permissions: [],
+    navigationTabs: [],
     status: s.status.toLowerCase() as UserStatus,
     createdAt: s.createdAt ?? new Date().toISOString(),
     lastLogin: s.lastLoginAt,

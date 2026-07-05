@@ -34,7 +34,9 @@ export default function UserPermissionsScreen() {
   const targetUser = getUserById(userId);
   const [pendingOverrides, setPendingOverrides] = useState<Map<Permission, boolean>>(new Map());
   const [saving, setSaving] = useState(false);
-  const [editRole, setEditRole] = useState<'admin' | 'standard'>(targetUser?.role ?? 'standard');
+  const [editRole, setEditRole] = useState<'admin' | 'standard'>(
+    targetUser && targetUser.role !== 'guest' ? targetUser.role : 'standard',
+  );
 
   useEffect(() => {
     if (userId) loadUserPermissions(userId);
@@ -51,7 +53,7 @@ export default function UserPermissionsScreen() {
   }, [selectedUserPermissions]);
 
   useEffect(() => {
-    if (targetUser) setEditRole(targetUser.role);
+    if (targetUser && targetUser.role !== 'guest') setEditRole(targetUser.role);
   }, [targetUser]);
 
   const roleDefaults = useMemo(

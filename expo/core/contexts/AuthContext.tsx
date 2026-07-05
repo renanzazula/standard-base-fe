@@ -10,14 +10,14 @@ import * as tokenStorage from '@core/services/tokenStorage';
 import {setOnAuthExpired} from '@core/services/api';
 import {DEFAULT_ROLE_PERMISSIONS, type Permission} from '@shared/constants/permissions';
 
-export type UserRole = 'standard' | 'admin';
+export type UserRole = 'standard' | 'admin' | 'guest';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-  provider: 'google' | 'apple' | 'manual';
+  provider: 'google' | 'apple' | 'manual' | 'guest';
   username?: string;
   avatar?: string;
   permissions: Permission[];
@@ -63,7 +63,7 @@ function resolvePermissions(role: UserRole, apiPermissions?: string[]): Permissi
 
 function mapAuthResponseToUser(
   response: authApi.AuthResponse,
-  provider: 'google' | 'apple' | 'manual',
+  provider: 'google' | 'apple' | 'manual' | 'guest',
 ): User {
   const role = response.role.toLowerCase() as UserRole;
   return {
@@ -99,7 +99,7 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     email: profile.email,
     name: profile.displayName,
     role,
-    provider: providerMap[firstProvider] ?? 'manual',
+    provider: role === 'guest' ? 'guest' : providerMap[firstProvider] ?? 'manual',
     permissions: resolvePermissions(role, profile.permissions),
     navigationTabs: profile.navigationTabs?.map(mapNavigationTab) ?? [],
     preferences: profile.preferences
@@ -210,6 +210,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return true;
   };
 
+  const loginAsGuest = async (): Promise<boolean> => {
+    const response = await authApi.guestLogin();
+    const user = mapAuthResponseToUser(response, 'guest');
+    await saveUserCache(user);
+    setAuthState({
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+      lastActivity: Date.now(),
+    });
+    return true;
+  };
+
   const loginWithGoogle = async (): Promise<boolean> => {
     // TODO: Real Google OAuth flow — requires expo-auth-session integration
     // 1. Use Google.useAuthRequest() to get authorization code
@@ -293,6 +306,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated: authState.isAuthenticated,
     isLoading: authState.isLoading,
     loginWithCredentials,
+    loginAsGuest,
     loginWithGoogle,
     loginWithApple,
     signUp,

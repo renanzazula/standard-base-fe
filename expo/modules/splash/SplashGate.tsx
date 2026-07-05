@@ -31,7 +31,9 @@ export default function SplashGate() {
         const active = await getActiveSplash();
         if (!active || cancelled) return;
 
-        if (user) {
+        // Guest sessions get a fresh transient user id each login, so per-user
+        // view counting is meaningless for them — they follow the guest rule.
+        if (user && user.role !== 'guest') {
           const key = `@splash_views:${active.id}:${user.id}:${dayKey()}`;
           const seen = parseInt((await AsyncStorage.getItem(key)) ?? '0', 10) || 0;
           const limit = active.displayLimitPerDay ?? 1;

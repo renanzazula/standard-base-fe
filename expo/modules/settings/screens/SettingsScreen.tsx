@@ -55,6 +55,7 @@ export default function SettingsScreen() {
   const [usernameModalVisible, setUsernameModalVisible] = React.useState(false);
   const [usernameInput, setUsernameInput] = React.useState('');
   const { t } = useTranslation();
+  const isGuest = user?.role === 'guest';
 
   if (!config || !config.languageConfig) {
     return null;
@@ -163,6 +164,11 @@ export default function SettingsScreen() {
 
 
   const handleLogout = () => {
+    if (isGuest) {
+      // Guest sessions have nothing to lose — go straight back to the login screen.
+      logout().then(() => router.replace('/login'));
+      return;
+    }
     showAlert(t('auth.logout'), t('auth.logoutConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -807,6 +813,7 @@ export default function SettingsScreen() {
               onPress={handleAvatarPress}
               activeOpacity={0.7}
               testID="profile-avatar-button"
+              disabled={isGuest}
             >
               {user?.avatar && user.avatar.trim() !== '' && user.avatar.startsWith('file://') ? (
                 <Image
@@ -821,9 +828,11 @@ export default function SettingsScreen() {
               )}
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>{t('settings.profileInformation')}</Text>
-                <Text style={styles.cardSubtitle}>{t('settings.tapToChangeAvatar')}</Text>
+                {!isGuest && (
+                  <Text style={styles.cardSubtitle}>{t('settings.tapToChangeAvatar')}</Text>
+                )}
               </View>
-              <Camera size={20} color={colors.textSecondary} />
+              {!isGuest && <Camera size={20} color={colors.textSecondary} />}
             </TouchableOpacity>
             <View style={styles.cardContent}>
               <View style={[styles.profileFieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
@@ -833,16 +842,18 @@ export default function SettingsScreen() {
                     {user?.username || user?.name}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => {
-                    setUsernameInput(user?.username || user?.name || '');
-                    setUsernameModalVisible(true);
-                  }}
-                  testID="edit-username-button"
-                >
-                  <Edit3 size={16} color={colors.primary} />
-                </TouchableOpacity>
+                {!isGuest && (
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                      setUsernameInput(user?.username || user?.name || '');
+                      setUsernameModalVisible(true);
+                    }}
+                    testID="edit-username-button"
+                  >
+                    <Edit3 size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View style={styles.divider} />
@@ -1106,7 +1117,9 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} testID="logout-button">
             <LogOut size={20} color="#FFFFFF" />
-            <Text style={styles.logoutButtonText}>{t('auth.logout')}</Text>
+            <Text style={styles.logoutButtonText}>
+              {isGuest ? t('auth.signInOrCreateAccount') : t('auth.logout')}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

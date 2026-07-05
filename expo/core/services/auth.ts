@@ -14,7 +14,7 @@ export interface UserPreferencesDto {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken: string | null;
   expiresIn: number;
   email: string;
   displayName: string;
@@ -52,6 +52,13 @@ export async function register(email: string, password: string, displayName: str
     body: JSON.stringify({ email, password, displayName }),
   });
   await tokenStorage.saveTokens(response.accessToken, response.refreshToken);
+  return response;
+}
+
+export async function guestLogin(): Promise<AuthResponse> {
+  const response = await apiFetch<AuthResponse>('/api/auth/guest', { method: 'POST' });
+  // Guest sessions have no refresh token — the session ends when the access token expires.
+  await tokenStorage.saveAccessToken(response.accessToken);
   return response;
 }
 

@@ -38,6 +38,10 @@ export const es: TranslationKeys = {
     testCredentials: 'Credenciales de Prueba (Modo Mock)',
     standardUser: 'Usuario Estándar',
     adminUser: 'Usuario Administrador',
+    enterAsGuest: 'Entrar como Invitado',
+    guestLoginError: 'No se pudo iniciar una sesión de invitado',
+    guestUser: 'Invitado',
+    signInOrCreateAccount: 'Inicia sesión o crea una cuenta',
   },
   home: {
     welcomeBack: 'Bienvenido de nuevo',

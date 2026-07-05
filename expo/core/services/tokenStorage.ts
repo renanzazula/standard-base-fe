@@ -10,7 +10,12 @@ function getStore() {
   return SecureStoreModule;
 }
 
-export async function saveTokens(accessToken: string, refreshToken: string): Promise<void> {
+export async function saveTokens(accessToken: string, refreshToken: string | null): Promise<void> {
+  if (refreshToken == null) {
+    // No refresh token in the response (e.g. guest sessions) — never keep a stale one.
+    await saveAccessToken(accessToken);
+    return;
+  }
   const store = getStore();
   if (store) {
     await store.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
@@ -20,6 +25,17 @@ export async function saveTokens(accessToken: string, refreshToken: string): Pro
       [ACCESS_TOKEN_KEY, accessToken],
       [REFRESH_TOKEN_KEY, refreshToken],
     ]);
+  }
+}
+
+export async function saveAccessToken(accessToken: string): Promise<void> {
+  const store = getStore();
+  if (store) {
+    await store.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
+    await store.deleteItemAsync(REFRESH_TOKEN_KEY);
+  } else {
+    await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
   }
 }
 
