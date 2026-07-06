@@ -6,16 +6,17 @@ import {ArrowLeft, KeyRound, Mail} from 'lucide-react-native';
 import {useState} from 'react';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
+import {useIsMobileWeb} from '@shared/hooks/useIsMobileWeb';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -23,6 +24,7 @@ export default function ForgotPasswordScreen() {
   const { colors } = usePreferences();
   const { resetPassword } = useAuth();
   const router = useRouter();
+  const isMobileWeb = useIsMobileWeb();
 
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +72,11 @@ export default function ForgotPasswordScreen() {
       width: '100%',
       maxWidth: MAX_FORM_WIDTH,
       alignSelf: 'center',
+    },
+    // Phone-sized browsers: full-width card with tighter padding.
+    scrollContentMobileWeb: {
+      maxWidth: '100%',
+      paddingHorizontal: 16,
     },
     backButton: {
       flexDirection: 'row',
@@ -164,7 +171,7 @@ export default function ForgotPasswordScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isMobileWeb && styles.scrollContentMobileWeb]}
           keyboardShouldPersistTaps="handled"
         >
           <TouchableOpacity

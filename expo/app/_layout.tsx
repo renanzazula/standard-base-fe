@@ -10,6 +10,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {Fraunces_700Bold, useFonts} from '@expo-google-fonts/fraunces';
 import {DarkTheme, DefaultTheme, ThemeProvider} from '@react-navigation/native';
 import {Stack, useRouter, useSegments} from 'expo-router';
+import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import {StatusBar} from 'expo-status-bar';
 import React, {useEffect, useMemo} from 'react';
@@ -168,6 +169,10 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Default web document title; static export renders an empty <title> without it. */}
+      <Head>
+        <title>Standard App</title>
+      </Head>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AdminConfigProvider>
           <PreferencesProvider>

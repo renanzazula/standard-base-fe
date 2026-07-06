@@ -6,16 +6,17 @@ import {ArrowLeft, Eye, EyeOff, KeyRound} from 'lucide-react-native';
 import {useState} from 'react';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
+import {useIsMobileWeb} from '@shared/hooks/useIsMobileWeb';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
@@ -23,6 +24,7 @@ export default function ResetPasswordScreen() {
   const { colors } = usePreferences();
   const router = useRouter();
   const { token } = useLocalSearchParams<{ token: string }>();
+  const isMobileWeb = useIsMobileWeb();
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -60,6 +62,8 @@ export default function ResetPasswordScreen() {
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     scrollContent: { flexGrow: 1, padding: 24, width: '100%', maxWidth: MAX_FORM_WIDTH, alignSelf: 'center' },
+    // Phone-sized browsers: full-width card with tighter padding.
+    scrollContentMobileWeb: { maxWidth: '100%', paddingHorizontal: 16 },
     backButton: { flexDirection: 'row', alignItems: 'center', marginBottom: 32 },
     backButtonText: { fontSize: 16, color: colors.primary, fontWeight: '600' as const, marginLeft: 8 },
     header: { alignItems: 'center', marginBottom: 48 },
@@ -91,7 +95,7 @@ export default function ResetPasswordScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.scrollContent, isMobileWeb && styles.scrollContentMobileWeb]} keyboardShouldPersistTaps="handled">
           <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/login')} disabled={isLoading}>
             <ArrowLeft size={20} color={colors.primary} />
             <Text style={styles.backButtonText}>Back to Login</Text>

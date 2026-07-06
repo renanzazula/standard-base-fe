@@ -8,6 +8,7 @@ import {useState} from 'react';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
+import {useIsMobileWeb} from '@shared/hooks/useIsMobileWeb';
 import {ApiError} from '@core/services/api';
 import {
   ActivityIndicator,
@@ -30,6 +31,7 @@ export default function LoginScreen() {
   const { loginWithCredentials, loginAsGuest, loginWithGoogle, loginWithApple } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
+  const isMobileWeb = useIsMobileWeb();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -138,15 +140,30 @@ export default function LoginScreen() {
       maxWidth: MAX_FORM_WIDTH,
       alignSelf: 'center',
     },
+    // Phone-sized browsers: full-width card, top-aligned so the form stays
+    // visible when the on-screen keyboard shrinks the viewport.
+    scrollContentMobileWeb: {
+      justifyContent: 'flex-start',
+      maxWidth: '100%',
+      paddingHorizontal: 16,
+      paddingTop: 48,
+    },
     header: {
       alignItems: 'center',
       marginBottom: 48,
+    },
+    headerMobileWeb: {
+      marginBottom: 32,
     },
     logo: {
       width: 340,
       maxWidth: '100%',
       height: 227,
       marginBottom: 8,
+    },
+    logoMobileWeb: {
+      width: 240,
+      height: 160,
     },
     title: {
       fontSize: 32,
@@ -279,13 +296,13 @@ export default function LoginScreen() {
           style={{ flex: 1 }}
         >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isMobileWeb && styles.scrollContentMobileWeb]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
+          <View style={[styles.header, isMobileWeb && styles.headerMobileWeb]}>
             <Image
               source={require('@/assets/images/logo.png')}
-              style={styles.logo}
+              style={[styles.logo, isMobileWeb && styles.logoMobileWeb]}
               resizeMode="contain"
             />
             <Text style={styles.title}>{t('auth.welcomeBack')}</Text>

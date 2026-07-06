@@ -1,5 +1,6 @@
 import type {ImageSourcePropType} from 'react-native';
 import {useWindowDimensions} from 'react-native';
+import {MOBILE_WEB_MAX_WIDTH} from '@shared/constants/layout';
 
 export type BackgroundVariant = 'skyline' | 'brick';
 
@@ -14,10 +15,10 @@ export function useLoginBackground(variant: BackgroundVariant = 'skyline'): Imag
   const { width } = useWindowDimensions();
 
   if (variant === 'brick') {
-    return width <= 768 ? BRICK_MOBILE_1080 : BRICK_DESKTOP_1920;
+    return width <= MOBILE_WEB_MAX_WIDTH ? BRICK_MOBILE_1080 : BRICK_DESKTOP_1920;
   }
 
-  if (width <= 768) return SKYLINE_MOBILE_1080;
+  if (width <= MOBILE_WEB_MAX_WIDTH) return SKYLINE_MOBILE_1080;
   if (width <= 1280) return SKYLINE_TABLET_1536;
   if (width <= 1800) return SKYLINE_DESKTOP_1920;
   return SKYLINE_DESKTOP_2560;

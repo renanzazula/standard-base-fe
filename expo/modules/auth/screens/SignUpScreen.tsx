@@ -7,6 +7,7 @@ import {Apple as AppleIcon, Chrome, Lock, Mail, User, UserPlus} from 'lucide-rea
 import {useState} from 'react';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_FORM_WIDTH} from '@shared/constants/layout';
+import {useIsMobileWeb} from '@shared/hooks/useIsMobileWeb';
 import {ApiError} from '@core/services/api';
 import {
   ActivityIndicator,
@@ -26,6 +27,7 @@ export default function SignUpScreen() {
   const { config } = useAdminConfig();
   const { signUp, loginWithGoogle, loginWithApple } = useAuth();
   const router = useRouter();
+  const isMobileWeb = useIsMobileWeb();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -120,6 +122,14 @@ export default function SignUpScreen() {
       width: '100%',
       maxWidth: MAX_FORM_WIDTH,
       alignSelf: 'center',
+    },
+    // Phone-sized browsers: full-width card, top-aligned so the form stays
+    // visible when the on-screen keyboard shrinks the viewport.
+    scrollContentMobileWeb: {
+      justifyContent: 'flex-start',
+      maxWidth: '100%',
+      paddingHorizontal: 16,
+      paddingTop: 48,
     },
     header: {
       alignItems: 'center',
@@ -255,7 +265,7 @@ export default function SignUpScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isMobileWeb && styles.scrollContentMobileWeb]}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
