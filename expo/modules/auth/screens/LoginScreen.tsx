@@ -150,20 +150,17 @@ export default function LoginScreen() {
     },
     header: {
       alignItems: 'center',
-      marginBottom: 48,
-    },
-    headerMobileWeb: {
-      marginBottom: 32,
+      marginBottom: 24,
     },
     logo: {
-      width: 340,
+      width: 260,
       maxWidth: '100%',
-      height: 227,
-      marginBottom: 8,
+      height: 164,
+      marginBottom: 0,
     },
     logoMobileWeb: {
-      width: 240,
-      height: 160,
+      width: 184,
+      height: 116,
     },
     title: {
       fontSize: 32,
@@ -177,7 +174,7 @@ export default function LoginScreen() {
       textAlign: 'center',
     },
     form: {
-      marginBottom: 24,
+      marginBottom: 0,
     },
     inputContainer: {
       marginBottom: 16,
@@ -236,7 +233,7 @@ export default function LoginScreen() {
     divider: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginVertical: 32,
+      marginVertical: 16,
     },
     dividerLine: {
       flex: 1,
@@ -271,7 +268,7 @@ export default function LoginScreen() {
     footer: {
       flexDirection: 'row',
       justifyContent: 'center',
-      marginTop: 32,
+      marginTop: 24,
     },
     footerText: {
       fontSize: 14,
@@ -299,7 +296,7 @@ export default function LoginScreen() {
           contentContainerStyle={[styles.scrollContent, isMobileWeb && styles.scrollContentMobileWeb]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.header, isMobileWeb && styles.headerMobileWeb]}>
+          <View style={styles.header}>
             <Image
               source={require('@/assets/images/logo.png')}
               style={[styles.logo, isMobileWeb && styles.logoMobileWeb]}

@@ -161,7 +161,10 @@ function RootLayoutNav() {
       <Stack.Screen name="splash-management" options={{ headerShown: true, title: 'Splash Screens' }} />
       <Stack.Screen name="splash-edit" options={{ headerShown: true, title: 'Splash Screen', presentation: 'modal' }} />
     </Stack>
-    {!isLoading ? <SplashGate /> : null}
+    {/* Mounted while auth is still resolving so its splash prefetch runs in
+        parallel with session restore; it renders nothing until the
+        post-authentication rules decide to show a splash. */}
+    <SplashGate />
     </ThemeProvider>
   );
 }
