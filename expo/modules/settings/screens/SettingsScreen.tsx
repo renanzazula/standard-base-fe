@@ -95,11 +95,21 @@ export default function SettingsScreen() {
 
   const handleSelectAvatar = async () => {
     console.log('[Settings] Requesting avatar selection');
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (status !== 'granted') {
-      showAlert('Permission Required', 'Please grant photo library access to upload an avatar.');
-      return;
+    // Web has no OS-level "photo library" permission — expo-image-picker no-ops
+    // requestMediaLibraryPermissionsAsync() there. More importantly, browsers
+    // (Safari on iOS especially) only allow the hidden <input type="file"> that
+    // launchImageLibraryAsync clicks under the hood to open if that click
+    // happens synchronously within the tap's call stack; any preceding await —
+    // even one that resolves instantly — breaks that chain and the picker
+    // silently never opens. So skip the permission await on web entirely and
+    // launch the picker as the very first async step.
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert('Permission Required', 'Please grant photo library access to upload an avatar.');
+        return;
+      }
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
