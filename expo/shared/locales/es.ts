@@ -154,6 +154,7 @@ export const es: TranslationKeys = {
     usernameTooShort: 'El nombre de usuario debe tener al menos {min} caracteres',
     usernameTooLong: 'El nombre de usuario no debe exceder {max} caracteres',
     usernameUpdated: 'Nombre de usuario actualizado con éxito',
+    usernameUpdateFailed: 'No se pudo actualizar el nombre de usuario. Inténtalo de nuevo.',
     avatarTooLarge: 'El tamaño del archivo del avatar excede el tamaño máximo permitido de {max}MB',
     avatarInvalidFormat: 'Formato de imagen inválido. Formatos permitidos: {formats}',
     avatarUpdated: 'Avatar actualizado con éxito',

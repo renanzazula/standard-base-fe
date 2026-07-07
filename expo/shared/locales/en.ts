@@ -152,6 +152,7 @@ export const en = {
     usernameTooShort: 'Username must be at least {min} characters',
     usernameTooLong: 'Username must not exceed {max} characters',
     usernameUpdated: 'Username updated successfully',
+    usernameUpdateFailed: 'Failed to update username. Please try again.',
     avatarTooLarge: 'Avatar file size exceeds the maximum allowed size of {max}MB',
     avatarInvalidFormat: 'Invalid image format. Allowed formats: {formats}',
     avatarUpdated: 'Avatar updated successfully',

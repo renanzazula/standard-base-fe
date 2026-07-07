@@ -70,6 +70,8 @@ function mapAuthResponseToUser(
     id: response.userId,
     email: response.email,
     name: response.displayName,
+    username: response.username,
+    avatar: response.avatarUrl,
     role,
     provider,
     permissions: resolvePermissions(role, response.permissions),
@@ -98,6 +100,8 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     id: profile.userId,
     email: profile.email,
     name: profile.displayName,
+    username: profile.username,
+    avatar: profile.avatarUrl,
     role,
     provider: role === 'guest' ? 'guest' : providerMap[firstProvider] ?? 'manual',
     permissions: resolvePermissions(role, profile.permissions),
@@ -287,12 +291,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
-  const updateProfile = async (updates: Partial<Pick<User, 'username' | 'avatar'>>) => {
+  const applyProfilePatch = async (response: { username?: string; avatarUrl?: string }) => {
     if (!authState.user) return;
-    const response = await userProfileApi.updateProfile({
-      username: updates.username,
-      avatarUrl: updates.avatar,
-    });
     const updatedUser: User = {
       ...authState.user,
       username: response.username ?? authState.user.username,
@@ -300,6 +300,21 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     };
     await saveUserCache(updatedUser);
     setAuthState((prev) => ({ ...prev, user: updatedUser }));
+  };
+
+  const updateProfile = async (updates: Partial<Pick<User, 'username' | 'avatar'>>) => {
+    if (!authState.user) return;
+    const response = await userProfileApi.updateProfile({
+      username: updates.username,
+      avatarUrl: updates.avatar,
+    });
+    await applyProfilePatch(response);
+  };
+
+  const updateAvatar = async (uri: string, mimeType?: string) => {
+    if (!authState.user) return;
+    const response = await userProfileApi.uploadAvatar(uri, mimeType);
+    await applyProfilePatch(response);
   };
 
   return {
@@ -315,6 +330,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     resetPassword,
     updateActivity,
     updateProfile,
+    updateAvatar,
     refreshProfile,
   };
 });

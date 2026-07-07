@@ -46,7 +46,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 export default function SettingsScreen() {
   const { colors, theme, toggleTheme, language, setLanguage } = usePreferences();
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile, updateAvatar } = useAuth();
   const { config } = useAdminConfig();
   const { hasPermission, hasAnyPermission } = usePermissions();
   const router = useRouter();
@@ -81,7 +81,7 @@ export default function SettingsScreen() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       console.log('[Settings] Photo taken:', asset.uri);
-      await updateProfile({ avatar: asset.uri });
+      await updateAvatar(asset.uri, asset.mimeType);
       showAlert(t('common.success'), t('settings.avatarUpdated'));
     }
   };
@@ -105,7 +105,7 @@ export default function SettingsScreen() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       console.log('[Settings] Avatar selected:', asset.uri);
-      await updateProfile({ avatar: asset.uri });
+      await updateAvatar(asset.uri, asset.mimeType);
       showAlert(t('common.success'), t('settings.avatarUpdated'));
     }
   };
@@ -136,7 +136,7 @@ export default function SettingsScreen() {
 
 
 
-  const handleUpdateUsername = () => {
+  const handleUpdateUsername = async () => {
     const trimmed = usernameInput.trim();
 
     if (trimmed.length < config.profileConfig.usernameMinLength) {
@@ -156,9 +156,14 @@ export default function SettingsScreen() {
     }
 
     console.log('[Settings] Updating username to:', trimmed);
-    updateProfile({ username: trimmed });
-    setUsernameModalVisible(false);
-    showAlert(t('common.success'), t('settings.usernameUpdated'));
+    try {
+      await updateProfile({ username: trimmed });
+      setUsernameModalVisible(false);
+      showAlert(t('common.success'), t('settings.usernameUpdated'));
+    } catch (error) {
+      console.error('[Settings] Failed to update username:', error);
+      showAlert(t('common.error'), t('settings.usernameUpdateFailed'));
+    }
   };
 
 
@@ -815,7 +820,7 @@ export default function SettingsScreen() {
               testID="profile-avatar-button"
               disabled={isGuest}
             >
-              {user?.avatar && user.avatar.trim() !== '' && user.avatar.startsWith('file://') ? (
+              {user?.avatar && user.avatar.trim() !== '' ? (
                 <Image
                   source={{ uri: user.avatar }}
                   style={styles.cardHeaderAvatar}
