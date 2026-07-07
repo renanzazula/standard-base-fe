@@ -1,4 +1,5 @@
 import {showAlert} from '@shared/utils/alert';
+import {ApiError} from '@core/services/api';
 import {useAuth} from '@core/contexts/AuthContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
@@ -81,8 +82,14 @@ export default function SettingsScreen() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       console.log('[Settings] Photo taken:', asset.uri);
-      await updateAvatar(asset.uri, asset.mimeType);
-      showAlert(t('common.success'), t('settings.avatarUpdated'));
+      try {
+        await updateAvatar(asset.uri, asset.mimeType);
+        showAlert(t('common.success'), t('settings.avatarUpdated'));
+      } catch (error) {
+        console.error('[Settings] Failed to upload avatar:', error);
+        const message = error instanceof ApiError ? error.message : t('settings.avatarUpdateFailed');
+        showAlert(t('common.error'), message);
+      }
     }
   };
 
@@ -105,8 +112,14 @@ export default function SettingsScreen() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       console.log('[Settings] Avatar selected:', asset.uri);
-      await updateAvatar(asset.uri, asset.mimeType);
-      showAlert(t('common.success'), t('settings.avatarUpdated'));
+      try {
+        await updateAvatar(asset.uri, asset.mimeType);
+        showAlert(t('common.success'), t('settings.avatarUpdated'));
+      } catch (error) {
+        console.error('[Settings] Failed to upload avatar:', error);
+        const message = error instanceof ApiError ? error.message : t('settings.avatarUpdateFailed');
+        showAlert(t('common.error'), message);
+      }
     }
   };
 

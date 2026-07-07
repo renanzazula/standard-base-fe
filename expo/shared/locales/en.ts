@@ -156,6 +156,7 @@ export const en = {
     avatarTooLarge: 'Avatar file size exceeds the maximum allowed size of {max}MB',
     avatarInvalidFormat: 'Invalid image format. Allowed formats: {formats}',
     avatarUpdated: 'Avatar updated successfully',
+    avatarUpdateFailed: 'Failed to update avatar. Please try again.',
     avatarRemoved: 'Avatar removed successfully',
     selectImage: 'Select Image',
     fromLibrary: 'From Photo Library',

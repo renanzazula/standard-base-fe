@@ -158,6 +158,7 @@ export const es: TranslationKeys = {
     avatarTooLarge: 'El tamaño del archivo del avatar excede el tamaño máximo permitido de {max}MB',
     avatarInvalidFormat: 'Formato de imagen inválido. Formatos permitidos: {formats}',
     avatarUpdated: 'Avatar actualizado con éxito',
+    avatarUpdateFailed: 'No se pudo actualizar el avatar. Inténtalo de nuevo.',
     avatarRemoved: 'Avatar eliminado con éxito',
     selectImage: 'Seleccionar Imagen',
     fromLibrary: 'De la Biblioteca de Fotos',
