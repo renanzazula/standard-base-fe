@@ -311,9 +311,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     await applyProfilePatch(response);
   };
 
-  const updateAvatar = async (uri: string, mimeType?: string) => {
+  const updateAvatar = async (uri: string, mimeType?: string, webFile?: File) => {
     if (!authState.user) return;
-    const response = await userProfileApi.uploadAvatar(uri, mimeType);
+    const response = await userProfileApi.uploadAvatar(uri, mimeType, webFile);
     await applyProfilePatch(response);
   };
 

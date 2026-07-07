@@ -83,7 +83,7 @@ export default function SettingsScreen() {
       const asset = result.assets[0];
       console.log('[Settings] Photo taken:', asset.uri);
       try {
-        await updateAvatar(asset.uri, asset.mimeType);
+        await updateAvatar(asset.uri, asset.mimeType, asset.file);
         showAlert(t('common.success'), t('settings.avatarUpdated'));
       } catch (error) {
         console.error('[Settings] Failed to upload avatar:', error);
@@ -123,7 +123,7 @@ export default function SettingsScreen() {
       const asset = result.assets[0];
       console.log('[Settings] Avatar selected:', asset.uri);
       try {
-        await updateAvatar(asset.uri, asset.mimeType);
+        await updateAvatar(asset.uri, asset.mimeType, asset.file);
         showAlert(t('common.success'), t('settings.avatarUpdated'));
       } catch (error) {
         console.error('[Settings] Failed to upload avatar:', error);
