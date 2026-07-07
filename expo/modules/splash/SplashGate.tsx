@@ -1,5 +1,6 @@
 import {ENV} from '@core/config/env';
 import {useAuth} from '@core/contexts/AuthContext';
+import {ensureCachedImage, pruneImageCache, tenantScope} from '@core/services/imageCache';
 import type {SplashScreenConfig} from '@core/services/splash';
 import {getActiveSplash} from '@core/services/splash';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -106,6 +107,22 @@ export default function SplashGate() {
             }
           }
         }
+
+        if (splash?.imageUrl) {
+          // Serve the splash image from the local cache, re-downloading only
+          // when the splash changed. Bounded by the decision timeout above;
+          // on failure the remote URL is used (previous behavior).
+          const imageUri = await ensureCachedImage({
+            scope: tenantScope(),
+            key: `splash:${splash.id}`,
+            version: splash.updatedAt ?? String(splash.id),
+            remoteUrl: splash.imageUrl,
+          });
+          splash = {...splash, imageUrl: imageUri};
+        }
+
+        // Drop cached images for splashes that are no longer active.
+        pruneImageCache(tenantScope(), 'splash:', active ? [`splash:${active.id}`] : []).catch(() => {});
       } catch {
         splash = null; // splash must never block the app — skip on any error
       }

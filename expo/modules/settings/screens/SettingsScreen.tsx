@@ -7,41 +7,43 @@ import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useRouter} from 'expo-router';
 import {
-  Camera,
-  Check,
-  ChevronRight,
-  Clock,
-  Edit3,
-  Globe,
-  Lock,
-  LogOut,
-  Menu,
-  Mic,
-  Monitor,
-  Moon,
-  Shield,
-  Sun,
-  User,
-  Users,
+    Camera,
+    Check,
+    ChevronRight,
+    Clock,
+    Edit3,
+    Globe,
+    Lock,
+    LogOut,
+    Menu,
+    Mic,
+    Monitor,
+    Moon,
+    Palette,
+    Shield,
+    Sun,
+    User,
+    Users,
 } from 'lucide-react-native';
 import {
-  Image,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import React from 'react';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {CachedImage} from '@shared/components/CachedImage';
+import {userScope} from '@core/services/imageCache';
 
 import * as ImagePicker from 'expo-image-picker';
 
@@ -844,10 +846,13 @@ export default function SettingsScreen() {
               disabled={isGuest}
             >
               {user?.avatar && user.avatar.trim() !== '' ? (
-                <Image
-                  source={{ uri: user.avatar }}
+                <CachedImage
+                  scope={userScope(user.id)}
+                  cacheKey="avatar"
+                  version={String(user.avatarVersion ?? 0)}
+                  uri={user.avatar}
                   style={styles.cardHeaderAvatar}
-                  defaultSource={require('../../../assets/images/icon.png')}
+                  fallbackSource={require('../../../assets/images/icon.png')}
                 />
               ) : (
                 <View style={styles.cardIconContainer}>
@@ -1067,6 +1072,27 @@ export default function SettingsScreen() {
                     <Text style={styles.settingTitle}>Profile Restrictions</Text>
                     <Text style={styles.settingDescription}>
                       Configure username and avatar policies
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_BRANDING) && (
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => router.push('/branding')}
+                  testID="branding-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Palette size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>Branding</Text>
+                    <Text style={styles.settingDescription}>
+                      Configure the login background image
                     </Text>
                   </View>
                   <View style={styles.settingAction}>
