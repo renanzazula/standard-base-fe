@@ -13,6 +13,21 @@ export interface NavigationTabResponse {
   configs?: Record<string, Record<string, unknown>>;
 }
 
+export type BackendRole = 'ADMIN' | 'STANDARD' | 'GUEST';
+
+export type BackendProfileField =
+  | 'PROFILE_PICTURE'
+  | 'USERNAME'
+  | 'EMAIL'
+  | 'ROLE'
+  | 'PROVIDER'
+  | 'LANGUAGE';
+
+/** Role -> profile field -> visible, as returned by /api/config. */
+export type ProfileFieldVisibilityMap = Partial<
+  Record<BackendRole, Partial<Record<BackendProfileField, boolean>>>
+>;
+
 export interface AppConfigResponse {
   tenantId: string;
   emailAuthEnabled: boolean;
@@ -34,6 +49,7 @@ export interface AppConfigResponse {
   loginBackgroundVersion?: number;
   loginBackgroundUpdatedAt?: string;
   navigationTabs?: NavigationTabResponse[];
+  profileFieldVisibility?: ProfileFieldVisibilityMap;
 }
 
 export function getAppConfig(): Promise<AppConfigResponse> {
@@ -82,6 +98,12 @@ export function updateProfilePolicy(body: {
   allowedAvatarFormats?: string[];
 }): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config/profile-policy', { method: 'PATCH', body: JSON.stringify(body) });
+}
+
+export function updateProfileFieldVisibility(body: {
+  visibility: ProfileFieldVisibilityMap;
+}): Promise<AppConfigResponse> {
+  return apiFetch('/api/admin/config/profile-field-visibility', { method: 'PATCH', body: JSON.stringify(body) });
 }
 
 export function updateNavigationTabs(body: {

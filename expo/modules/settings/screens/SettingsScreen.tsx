@@ -7,11 +7,9 @@ import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useRouter} from 'expo-router';
 import {
-    Camera,
     Check,
     ChevronRight,
     Clock,
-    Edit3,
     Globe,
     Lock,
     LogOut,
@@ -22,7 +20,6 @@ import {
     Palette,
     Shield,
     Sun,
-    User,
     Users,
 } from 'lucide-react-native';
 import {
@@ -42,8 +39,8 @@ import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {useTranslation} from '@shared/hooks/useTranslation';
-import {CachedImage} from '@shared/components/CachedImage';
-import {userScope} from '@core/services/imageCache';
+import {ProfileInfoCard} from '../components/ProfileInfoCard';
+import {getVisibleProfileFields} from '../utils/profileFieldVisibility';
 
 import * as ImagePicker from 'expo-image-picker';
 
@@ -63,6 +60,8 @@ export default function SettingsScreen() {
   if (!config || !config.languageConfig) {
     return null;
   }
+
+  const visibleFields = getVisibleProfileFields(config.profileFieldsConfig, user?.role);
 
 
 
@@ -835,99 +834,23 @@ export default function SettingsScreen() {
           <Text style={styles.subtitle}>{t('settings.managePreferences')}</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.profileSettings')}</Text>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.cardHeader}
-              onPress={handleAvatarPress}
-              activeOpacity={0.7}
-              testID="profile-avatar-button"
-              disabled={isGuest}
-            >
-              {user?.avatar && user.avatar.trim() !== '' ? (
-                <CachedImage
-                  scope={userScope(user.id)}
-                  cacheKey="avatar"
-                  version={String(user.avatarVersion ?? 0)}
-                  uri={user.avatar}
-                  style={styles.cardHeaderAvatar}
-                  fallbackSource={require('../../../assets/images/icon.png')}
-                />
-              ) : (
-                <View style={styles.cardIconContainer}>
-                  <User size={24} color="#FFFFFF" />
-                </View>
-              )}
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{t('settings.profileInformation')}</Text>
-                {!isGuest && (
-                  <Text style={styles.cardSubtitle}>{t('settings.tapToChangeAvatar')}</Text>
-                )}
-              </View>
-              {!isGuest && <Camera size={20} color={colors.textSecondary} />}
-            </TouchableOpacity>
-            <View style={styles.cardContent}>
-              <View style={[styles.profileFieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                <View style={styles.profileFieldInfo}>
-                  <Text style={styles.profileFieldLabel}>{t('settings.username')}</Text>
-                  <Text style={styles.profileFieldDescription}>
-                    {user?.username || user?.name}
-                  </Text>
-                </View>
-                {!isGuest && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      setUsernameInput(user?.username || user?.name || '');
-                      setUsernameModalVisible(true);
-                    }}
-                    testID="edit-username-button"
-                  >
-                    <Edit3 size={16} color={colors.primary} />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{t('auth.email')}</Text>
-                <Text style={styles.infoValue}>{user?.email}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{t('home.role')}</Text>
-                <View style={styles.profileBadge}>
-                  <Text style={styles.badgeText}>{user?.role}</Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{t('home.provider')}</Text>
-                <Text style={styles.infoValue}>{user?.provider}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <TouchableOpacity
-                style={[styles.infoRow, { paddingVertical: 12 }]}
-                onPress={() => setLanguageModalVisible(true)}
-                testID="language-selector-profile"
-                activeOpacity={0.7}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={styles.settingIcon}>
-                    <Globe size={20} color={colors.text} />
-                  </View>
-                  <View>
-                    <Text style={styles.settingTitle}>{t('home.language')}</Text>
-                    <Text style={styles.settingDescription}>{AVAILABLE_LANGUAGES[language].nativeName}</Text>
-                  </View>
-                </View>
-                <Text style={{ fontSize: 20 }}>{AVAILABLE_LANGUAGES[language].flag}</Text>
-              </TouchableOpacity>
-            </View>
+        {visibleFields.size > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.profileSettings')}</Text>
+            <ProfileInfoCard
+              user={user}
+              visibleFields={visibleFields}
+              isGuest={isGuest}
+              language={language}
+              onAvatarPress={handleAvatarPress}
+              onEditUsername={() => {
+                setUsernameInput(user?.username || user?.name || '');
+                setUsernameModalVisible(true);
+              }}
+              onLanguagePress={() => setLanguageModalVisible(true)}
+            />
           </View>
-        </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>

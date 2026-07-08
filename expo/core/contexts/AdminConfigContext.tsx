@@ -5,6 +5,11 @@ import type {AppConfigResponse} from '@core/services/adminConfig';
 import * as adminConfigApi from '@core/services/adminConfig';
 import {type Permission, PERMISSIONS} from '@shared/constants/permissions';
 import {ENV} from '@core/config/env';
+import {
+  DEFAULT_PROFILE_FIELDS_CONFIG,
+  mapProfileFieldVisibility,
+  type ProfileFieldsConfig,
+} from '@modules/settings/utils/profileFieldVisibility';
 
 export type AuthMethod = 'google' | 'apple' | 'manual' | 'guest';
 
@@ -54,6 +59,7 @@ export interface AdminConfig {
   navigationConfig: {
     tabs: NavigationTab[];
   };
+  profileFieldsConfig: ProfileFieldsConfig;
 }
 
 const DEFAULT_CONFIG: AdminConfig = {
@@ -95,6 +101,7 @@ const DEFAULT_CONFIG: AdminConfig = {
       { id: 'settings', name: 'Settings', enabled: true, icon: 'settings', order: 5, isSystem: true, permissionKey: PERMISSIONS.FUNC_TAB_SETTINGS },
     ],
   },
+  profileFieldsConfig: DEFAULT_PROFILE_FIELDS_CONFIG,
 };
 
 function mapConfigResponse(response: AppConfigResponse): AdminConfig {
@@ -141,6 +148,7 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
           }))
         : DEFAULT_CONFIG.navigationConfig.tabs,
     },
+    profileFieldsConfig: mapProfileFieldVisibility(response.profileFieldVisibility),
   };
 }
 
