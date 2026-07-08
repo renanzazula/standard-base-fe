@@ -18,6 +18,10 @@ export interface AuthResponse {
   expiresIn: number;
   email: string;
   displayName: string;
+  username?: string;
+  avatarUrl?: string;
+  avatarVersion?: number;
+  avatarUpdatedAt?: string;
   userId: string;
   role: string;
   permissions?: string[];
@@ -29,6 +33,10 @@ export interface UserProfileResponse {
   userId: string;
   email: string;
   displayName: string;
+  username?: string;
+  avatarUrl?: string;
+  avatarVersion?: number;
+  avatarUpdatedAt?: string;
   role: string;
   status: string;
   providers: string[];

@@ -31,8 +31,10 @@ export function setOnAuthExpired(callback: () => void) {
 export async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${ENV.API_BASE_URL}${path}`;
 
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
   headers[TENANT_HEADER] = ENV.TENANT_ID;

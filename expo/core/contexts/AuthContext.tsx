@@ -8,6 +8,7 @@ import * as authApi from '@core/services/auth';
 import * as userProfileApi from '@core/services/userProfile';
 import * as tokenStorage from '@core/services/tokenStorage';
 import {setOnAuthExpired} from '@core/services/api';
+import {clearImageCacheScope, userScope} from '@core/services/imageCache';
 import {DEFAULT_ROLE_PERMISSIONS, type Permission} from '@shared/constants/permissions';
 
 export type UserRole = 'standard' | 'admin' | 'guest';
@@ -20,6 +21,7 @@ export interface User {
   provider: 'google' | 'apple' | 'manual' | 'guest';
   username?: string;
   avatar?: string;
+  avatarVersion?: number;
   permissions: Permission[];
   navigationTabs: NavigationTab[];
   preferences?: {
@@ -70,6 +72,9 @@ function mapAuthResponseToUser(
     id: response.userId,
     email: response.email,
     name: response.displayName,
+    username: response.username,
+    avatar: response.avatarUrl,
+    avatarVersion: response.avatarVersion,
     role,
     provider,
     permissions: resolvePermissions(role, response.permissions),
@@ -98,6 +103,9 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     id: profile.userId,
     email: profile.email,
     name: profile.displayName,
+    username: profile.username,
+    avatar: profile.avatarUrl,
+    avatarVersion: profile.avatarVersion,
     role,
     provider: role === 'guest' ? 'guest' : providerMap[firstProvider] ?? 'manual',
     permissions: resolvePermissions(role, profile.permissions),
@@ -260,8 +268,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const logout = async () => {
+    const userId = authState.user?.id;
     await tokenStorage.clearTokens();
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
+    if (userId) {
+      // Best-effort: covers account switching too, since the next user gets a different scope.
+      clearImageCacheScope(userScope(userId)).catch(() => {});
+    }
     clearSessionTimeout();
     setAuthState({
       user: null,
@@ -287,19 +300,31 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
+  const applyProfilePatch = async (response: { username?: string; avatarUrl?: string; avatarVersion?: number }) => {
+    if (!authState.user) return;
+    const updatedUser: User = {
+      ...authState.user,
+      username: response.username ?? authState.user.username,
+      avatar: response.avatarUrl ?? authState.user.avatar,
+      avatarVersion: response.avatarVersion ?? authState.user.avatarVersion,
+    };
+    await saveUserCache(updatedUser);
+    setAuthState((prev) => ({ ...prev, user: updatedUser }));
+  };
+
   const updateProfile = async (updates: Partial<Pick<User, 'username' | 'avatar'>>) => {
     if (!authState.user) return;
     const response = await userProfileApi.updateProfile({
       username: updates.username,
       avatarUrl: updates.avatar,
     });
-    const updatedUser: User = {
-      ...authState.user,
-      username: response.username ?? authState.user.username,
-      avatar: response.avatarUrl ?? authState.user.avatar,
-    };
-    await saveUserCache(updatedUser);
-    setAuthState((prev) => ({ ...prev, user: updatedUser }));
+    await applyProfilePatch(response);
+  };
+
+  const updateAvatar = async (uri: string, mimeType?: string, webFile?: File) => {
+    if (!authState.user) return;
+    const response = await userProfileApi.uploadAvatar(uri, mimeType, webFile);
+    await applyProfilePatch(response);
   };
 
   return {
@@ -315,6 +340,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     resetPassword,
     updateActivity,
     updateProfile,
+    updateAvatar,
     refreshProfile,
   };
 });

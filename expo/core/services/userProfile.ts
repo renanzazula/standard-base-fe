@@ -1,3 +1,4 @@
+import {Platform} from 'react-native';
 import {apiFetch} from './api';
 
 export interface UserProfileResponse {
@@ -6,6 +7,8 @@ export interface UserProfileResponse {
   displayName: string;
   username?: string;
   avatarUrl?: string;
+  avatarVersion?: number;
+  avatarUpdatedAt?: string;
   role: string;
   status: string;
   providers: string[];
@@ -25,6 +28,29 @@ export function updateProfile(body: {
   avatarUrl?: string;
 }): Promise<UserProfileResponse> {
   return apiFetch('/api/users/me/profile', { method: 'PATCH', body: JSON.stringify(body) });
+}
+
+export async function uploadAvatar(uri: string, mimeType?: string, webFile?: File): Promise<UserProfileResponse> {
+  const resolvedType = mimeType ?? 'image/jpeg';
+  const formData = new FormData();
+
+  if (Platform.OS === 'web') {
+    // expo-image-picker hands us the original File directly on web (asset.file) —
+    // use it as-is rather than re-fetching the blob: URI it was created from.
+    // Re-fetching that URI (fetch(uri).then(r => r.blob())) is unreliable on
+    // mobile Safari, which has long-standing bugs fetching blob: URLs, and was
+    // causing avatar uploads to silently fail on mobile web.
+    const file = webFile ?? await (await fetch(uri)).blob();
+    formData.append('file', file, `avatar.${resolvedType.split('/')[1] ?? 'jpg'}`);
+  } else {
+    formData.append('file', {
+      uri,
+      name: `avatar.${resolvedType.split('/')[1] ?? 'jpg'}`,
+      type: resolvedType,
+    } as unknown as Blob);
+  }
+
+  return apiFetch('/api/users/me/avatar', { method: 'POST', body: formData });
 }
 
 export function getPreferences(): Promise<UserPreferencesResponse> {

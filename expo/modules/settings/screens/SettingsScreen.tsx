@@ -1,4 +1,5 @@
 import {showAlert} from '@shared/utils/alert';
+import {ApiError} from '@core/services/api';
 import {useAuth} from '@core/contexts/AuthContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
@@ -6,47 +7,49 @@ import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
 import {useRouter} from 'expo-router';
 import {
-  Camera,
-  Check,
-  ChevronRight,
-  Clock,
-  Edit3,
-  Globe,
-  Lock,
-  LogOut,
-  Menu,
-  Mic,
-  Monitor,
-  Moon,
-  Shield,
-  Sun,
-  User,
-  Users,
+    Camera,
+    Check,
+    ChevronRight,
+    Clock,
+    Edit3,
+    Globe,
+    Lock,
+    LogOut,
+    Menu,
+    Mic,
+    Monitor,
+    Moon,
+    Palette,
+    Shield,
+    Sun,
+    User,
+    Users,
 } from 'lucide-react-native';
 import {
-  Image,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import React from 'react';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
 import {FONTS} from '@shared/constants/typography';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {useTranslation} from '@shared/hooks/useTranslation';
+import {CachedImage} from '@shared/components/CachedImage';
+import {userScope} from '@core/services/imageCache';
 
 import * as ImagePicker from 'expo-image-picker';
 
 export default function SettingsScreen() {
   const { colors, theme, toggleTheme, language, setLanguage } = usePreferences();
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile, updateAvatar } = useAuth();
   const { config } = useAdminConfig();
   const { hasPermission, hasAnyPermission } = usePermissions();
   const router = useRouter();
@@ -81,18 +84,34 @@ export default function SettingsScreen() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       console.log('[Settings] Photo taken:', asset.uri);
-      await updateProfile({ avatar: asset.uri });
-      showAlert(t('common.success'), t('settings.avatarUpdated'));
+      try {
+        await updateAvatar(asset.uri, asset.mimeType, asset.file);
+        showAlert(t('common.success'), t('settings.avatarUpdated'));
+      } catch (error) {
+        console.error('[Settings] Failed to upload avatar:', error);
+        const message = error instanceof ApiError ? error.message : t('settings.avatarUpdateFailed');
+        showAlert(t('common.error'), message);
+      }
     }
   };
 
   const handleSelectAvatar = async () => {
     console.log('[Settings] Requesting avatar selection');
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (status !== 'granted') {
-      showAlert('Permission Required', 'Please grant photo library access to upload an avatar.');
-      return;
+    // Web has no OS-level "photo library" permission — expo-image-picker no-ops
+    // requestMediaLibraryPermissionsAsync() there. More importantly, browsers
+    // (Safari on iOS especially) only allow the hidden <input type="file"> that
+    // launchImageLibraryAsync clicks under the hood to open if that click
+    // happens synchronously within the tap's call stack; any preceding await —
+    // even one that resolves instantly — breaks that chain and the picker
+    // silently never opens. So skip the permission await on web entirely and
+    // launch the picker as the very first async step.
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert('Permission Required', 'Please grant photo library access to upload an avatar.');
+        return;
+      }
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -105,8 +124,14 @@ export default function SettingsScreen() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       console.log('[Settings] Avatar selected:', asset.uri);
-      await updateProfile({ avatar: asset.uri });
-      showAlert(t('common.success'), t('settings.avatarUpdated'));
+      try {
+        await updateAvatar(asset.uri, asset.mimeType, asset.file);
+        showAlert(t('common.success'), t('settings.avatarUpdated'));
+      } catch (error) {
+        console.error('[Settings] Failed to upload avatar:', error);
+        const message = error instanceof ApiError ? error.message : t('settings.avatarUpdateFailed');
+        showAlert(t('common.error'), message);
+      }
     }
   };
 
@@ -136,7 +161,7 @@ export default function SettingsScreen() {
 
 
 
-  const handleUpdateUsername = () => {
+  const handleUpdateUsername = async () => {
     const trimmed = usernameInput.trim();
 
     if (trimmed.length < config.profileConfig.usernameMinLength) {
@@ -156,9 +181,14 @@ export default function SettingsScreen() {
     }
 
     console.log('[Settings] Updating username to:', trimmed);
-    updateProfile({ username: trimmed });
-    setUsernameModalVisible(false);
-    showAlert(t('common.success'), t('settings.usernameUpdated'));
+    try {
+      await updateProfile({ username: trimmed });
+      setUsernameModalVisible(false);
+      showAlert(t('common.success'), t('settings.usernameUpdated'));
+    } catch (error) {
+      console.error('[Settings] Failed to update username:', error);
+      showAlert(t('common.error'), t('settings.usernameUpdateFailed'));
+    }
   };
 
 
@@ -815,11 +845,14 @@ export default function SettingsScreen() {
               testID="profile-avatar-button"
               disabled={isGuest}
             >
-              {user?.avatar && user.avatar.trim() !== '' && user.avatar.startsWith('file://') ? (
-                <Image
-                  source={{ uri: user.avatar }}
+              {user?.avatar && user.avatar.trim() !== '' ? (
+                <CachedImage
+                  scope={userScope(user.id)}
+                  cacheKey="avatar"
+                  version={String(user.avatarVersion ?? 0)}
+                  uri={user.avatar}
                   style={styles.cardHeaderAvatar}
-                  defaultSource={require('../../../assets/images/icon.png')}
+                  fallbackSource={require('../../../assets/images/icon.png')}
                 />
               ) : (
                 <View style={styles.cardIconContainer}>
@@ -1039,6 +1072,27 @@ export default function SettingsScreen() {
                     <Text style={styles.settingTitle}>Profile Restrictions</Text>
                     <Text style={styles.settingDescription}>
                       Configure username and avatar policies
+                    </Text>
+                  </View>
+                  <View style={styles.settingAction}>
+                    <ChevronRight size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_BRANDING) && (
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => router.push('/branding')}
+                  testID="branding-link"
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingIcon}>
+                    <Palette size={20} color={colors.text} />
+                  </View>
+                  <View style={styles.settingContent}>
+                    <Text style={styles.settingTitle}>Branding</Text>
+                    <Text style={styles.settingDescription}>
+                      Configure the login background image
                     </Text>
                   </View>
                   <View style={styles.settingAction}>

@@ -47,6 +47,10 @@ export interface AdminConfig {
     avatarMaxSizeMB: number;
     allowedAvatarFormats: string[];
   };
+  brandingConfig: {
+    loginBackgroundUrl: string | null;
+    loginBackgroundVersion: number;
+  };
   navigationConfig: {
     tabs: NavigationTab[];
   };
@@ -77,6 +81,10 @@ const DEFAULT_CONFIG: AdminConfig = {
     usernameMaxLength: 30,
     avatarMaxSizeMB: 5,
     allowedAvatarFormats: ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
+  },
+  brandingConfig: {
+    loginBackgroundUrl: null,
+    loginBackgroundVersion: 0,
   },
   navigationConfig: {
     tabs: [
@@ -116,6 +124,10 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
       avatarMaxSizeMB: response.avatarMaxSizeMb ?? 5,
       allowedAvatarFormats: response.allowedAvatarFormats ?? ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'],
     },
+    brandingConfig: {
+      loginBackgroundUrl: response.loginBackgroundUrl ?? null,
+      loginBackgroundVersion: response.loginBackgroundVersion ?? 0,
+    },
     navigationConfig: {
       tabs: (response.navigationTabs ?? []).length > 0
         ? (response.navigationTabs ?? []).map((t) => ({
@@ -135,6 +147,9 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
 export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
   const [config, setConfig] = useState<AdminConfig>(DEFAULT_CONFIG);
   const [isLoading, setIsLoading] = useState(true);
+  // True only once the backend actually answered — distinguishes "backend says
+  // there is no login background" from "config fetch failed / still loading".
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
     loadConfig();
@@ -148,6 +163,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     try {
       const response = await adminConfigApi.getAppConfig();
       setConfig(mapConfigResponse(response));
+      setConfigLoaded(true);
     } catch (error) {
       console.error('[AdminConfig] Failed to load config from backend, using defaults:', error);
       setConfig(DEFAULT_CONFIG);
@@ -257,6 +273,16 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     }
   };
 
+  const uploadLoginBackground = async (uri: string, mimeType?: string, webFile?: File) => {
+    const response = await adminConfigApi.uploadLoginBackground(uri, mimeType, webFile);
+    setConfig(mapConfigResponse(response));
+  };
+
+  const removeLoginBackground = async () => {
+    const response = await adminConfigApi.removeLoginBackground();
+    setConfig(mapConfigResponse(response));
+  };
+
   const toggleTabEnabled = async (tabId: string) => {
     const tab = config.navigationConfig.tabs.find((t) => t.id === tabId);
     if (!tab) return;
@@ -331,6 +357,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
   return {
     config,
     isLoading,
+    configLoaded,
     reloadTabConfig,
     toggleAuthMethod,
     updateSessionConfig,
@@ -338,6 +365,8 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     setDefaultLanguage,
     updateRegionalConfig,
     updateProfileConfig,
+    uploadLoginBackground,
+    removeLoginBackground,
     toggleTabEnabled,
     updateTabName,
     addCustomTab,
