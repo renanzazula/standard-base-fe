@@ -1,6 +1,7 @@
 import type {ReactNode} from 'react';
 import {ImageBackground, StyleSheet, View} from 'react-native';
 import {type BackgroundVariant, useLoginBackground} from '@shared/utils/getLoginBackground';
+import {useRemoteLoginBackground} from '@shared/hooks/useRemoteLoginBackground';
 
 type Props = {
   children: ReactNode;
@@ -13,7 +14,11 @@ export default function BrandedBackground({
   variant = 'skyline',
   overlayOpacity = 0.45,
 }: Props) {
-  const source = useLoginBackground(variant);
+  const bundled = useLoginBackground(variant);
+  // Admin-configured background wins; the bundled asset is the synchronous
+  // fallback so the screen never renders blank.
+  const remote = useRemoteLoginBackground();
+  const source = remote ? {uri: remote} : bundled;
 
   return (
     <ImageBackground source={source} style={styles.background} resizeMode="cover">

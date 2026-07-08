@@ -1,3 +1,4 @@
+import {Platform} from 'react-native';
 import {apiFetch} from './api';
 
 export interface NavigationTabResponse {
@@ -29,6 +30,9 @@ export interface AppConfigResponse {
   usernameMaxLength: number;
   avatarMaxSizeMb: number;
   allowedAvatarFormats: string[];
+  loginBackgroundUrl?: string | null;
+  loginBackgroundVersion?: number;
+  loginBackgroundUpdatedAt?: string;
   navigationTabs?: NavigationTabResponse[];
 }
 
@@ -96,4 +100,28 @@ export function addNavigationTab(body: {
 
 export function removeNavigationTab(tabId: string): Promise<AppConfigResponse> {
   return apiFetch(`/api/admin/config/navigation-tabs/${tabId}`, { method: 'DELETE' });
+}
+
+export async function uploadLoginBackground(uri: string, mimeType?: string, webFile?: File): Promise<AppConfigResponse> {
+  const resolvedType = mimeType ?? 'image/jpeg';
+  const formData = new FormData();
+
+  if (Platform.OS === 'web') {
+    // Same mobile-Safari-safe pattern as avatar upload: prefer the original
+    // File from expo-image-picker over re-fetching its blob: URI.
+    const file = webFile ?? await (await fetch(uri)).blob();
+    formData.append('file', file, `background.${resolvedType.split('/')[1] ?? 'jpg'}`);
+  } else {
+    formData.append('file', {
+      uri,
+      name: `background.${resolvedType.split('/')[1] ?? 'jpg'}`,
+      type: resolvedType,
+    } as unknown as Blob);
+  }
+
+  return apiFetch('/api/admin/config/login-background', { method: 'POST', body: formData });
+}
+
+export function removeLoginBackground(): Promise<AppConfigResponse> {
+  return apiFetch('/api/admin/config/login-background', { method: 'DELETE' });
 }

@@ -30,6 +30,7 @@ const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PER
   'language-settings': PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
   'profile-restrictions': PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
   'navigation-management': PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
+  'branding': PERMISSIONS.FUNC_TAB_SETTINGS_BRANDING,
   'admin-config': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
   'create-post': PERMISSIONS.FUNC_FEED_CREATE_POST,
   'edit-post': PERMISSIONS.FUNC_FEED_EDIT_POST,
@@ -144,6 +145,7 @@ function RootLayoutNav() {
       <Stack.Screen name="reset-password" options={{ headerShown: false }} />
       <Stack.Screen name="admin-config" options={{ headerShown: true }} />
       <Stack.Screen name="navigation-management" options={{ headerShown: true }} />
+      <Stack.Screen name="branding" options={{ headerShown: true }} />
       <Stack.Screen name="user-management" options={{ headerShown: true, title: 'User Management' }} />
       <Stack.Screen name="user-permissions" options={{ headerShown: true, title: 'User Permissions' }} />
       <Stack.Screen name="profile-permissions" options={{ headerShown: true, title: 'Profile Permissions' }} />
