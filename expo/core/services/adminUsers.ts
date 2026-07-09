@@ -12,13 +12,15 @@ export interface UserPermissionsResponse {
   overrides: PermissionOverride[];
 }
 
+export type AdminRole = 'STANDARD' | 'ADMIN' | 'GUEST';
+
 export interface UserSummary {
   userId: string;
   email: string;
   displayName: string;
   username?: string;
   providers?: string[];
-  role: 'STANDARD' | 'ADMIN';
+  role: AdminRole;
   status: 'ACTIVE' | 'DISABLED';
   createdAt?: string;
   lastLoginAt?: string;
@@ -46,14 +48,14 @@ export function createUser(body: {
   email: string;
   displayName: string;
   temporaryPassword: string;
-  role?: 'STANDARD' | 'ADMIN';
+  role?: AdminRole;
 }): Promise<UserSummary> {
   return apiFetch('/api/admin/users', { method: 'POST', body: JSON.stringify(body) });
 }
 
 export function updateUser(
   userId: string,
-  body: { role?: 'STANDARD' | 'ADMIN'; status?: 'ACTIVE' | 'DISABLED' },
+  body: { role?: AdminRole; status?: 'ACTIVE' | 'DISABLED' },
 ): Promise<UserSummary> {
   return apiFetch(`/api/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) });
 }
