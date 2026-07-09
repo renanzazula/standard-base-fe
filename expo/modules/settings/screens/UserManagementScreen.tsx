@@ -454,6 +454,13 @@ export default function UserManagementScreen() {
         ? t('userManagement.guest')
         : t('userManagement.standard');
 
+  const statusLabel = (status: string) =>
+    status === 'active'
+      ? t('userManagement.active')
+      : status === 'deactivated'
+        ? t('userManagement.deactivated')
+        : t('userManagement.disabled');
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return t('userManagement.never');
     const date = new Date(dateString);
@@ -575,9 +582,7 @@ export default function UserManagementScreen() {
               )}
               {statusFilter !== 'all' && (
                 <View style={styles.activeFilterChip}>
-                  <Text style={styles.activeFilterText}>
-                    {statusFilter === 'active' ? t('userManagement.active') : t('userManagement.disabled')}
-                  </Text>
+                  <Text style={styles.activeFilterText}>{statusLabel(statusFilter)}</Text>
                 </View>
               )}
             </View>
@@ -636,7 +641,7 @@ export default function UserManagementScreen() {
                         user.status === 'active' ? styles.statusTextActive : styles.statusTextDisabled,
                       ]}
                     >
-                      {user.status === 'active' ? t('userManagement.active') : t('userManagement.disabled')}
+                      {statusLabel(user.status)}
                     </Text>
                   </View>
                 </View>
@@ -775,6 +780,12 @@ export default function UserManagementScreen() {
                     onPress={() => setStatusFilter('disabled')}
                   >
                     <Text style={styles.filterOptionText}>{t('userManagement.disabled')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterOption, statusFilter === 'deactivated' && styles.filterOptionActive]}
+                    onPress={() => setStatusFilter('deactivated')}
+                  >
+                    <Text style={styles.filterOptionText}>{t('userManagement.deactivated')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>

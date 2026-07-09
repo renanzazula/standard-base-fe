@@ -289,6 +289,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return true;
   };
 
+  const deactivateAccount = async (password: string) => {
+    // The backend invalidates every token the moment this succeeds, so the
+    // local session must be torn down immediately as well. Failures rethrow
+    // (wrong password → ApiError 400) and leave the session untouched.
+    await userProfileApi.deactivateAccount(password);
+    await logout();
+  };
+
   const refreshProfile = async () => {
     try {
       const profile = await authApi.getCurrentUser();
@@ -338,6 +346,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     signUp,
     logout,
     resetPassword,
+    deactivateAccount,
     updateActivity,
     updateProfile,
     updateAvatar,

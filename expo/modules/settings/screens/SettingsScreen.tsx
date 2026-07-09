@@ -10,6 +10,8 @@ import {
     Check,
     ChevronRight,
     Clock,
+    Eye,
+    EyeOff,
     Globe,
     Lock,
     LogOut,
@@ -21,6 +23,7 @@ import {
     Shield,
     Sun,
     Users,
+    UserX,
 } from 'lucide-react-native';
 import {
     Modal,
@@ -46,7 +49,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 export default function SettingsScreen() {
   const { colors, theme, toggleTheme, language, setLanguage } = usePreferences();
-  const { user, logout, updateProfile, updateAvatar } = useAuth();
+  const { user, logout, updateProfile, updateAvatar, deactivateAccount } = useAuth();
   const { config } = useAdminConfig();
   const { hasPermission, hasAnyPermission } = usePermissions();
   const router = useRouter();
@@ -54,8 +57,16 @@ export default function SettingsScreen() {
 
   const [usernameModalVisible, setUsernameModalVisible] = React.useState(false);
   const [usernameInput, setUsernameInput] = React.useState('');
+  const [deactivateModalVisible, setDeactivateModalVisible] = React.useState(false);
+  const [deactivatePassword, setDeactivatePassword] = React.useState('');
+  const [showDeactivatePassword, setShowDeactivatePassword] = React.useState(false);
+  const [deactivateError, setDeactivateError] = React.useState<string | null>(null);
+  const [deactivateBusy, setDeactivateBusy] = React.useState(false);
   const { t } = useTranslation();
   const isGuest = user?.role === 'guest';
+  // Self-deactivation is standard-only: guests have no persisted account and
+  // admins must not lock themselves out of the tenant.
+  const isStandard = user?.role === 'standard';
 
   if (!config || !config.languageConfig) {
     return null;
@@ -192,6 +203,42 @@ export default function SettingsScreen() {
 
 
 
+  const openDeactivateModal = () => {
+    setDeactivatePassword('');
+    setDeactivateError(null);
+    setShowDeactivatePassword(false);
+    setDeactivateModalVisible(true);
+  };
+
+  const handleDeactivateNext = async () => {
+    if (!deactivatePassword) {
+      setDeactivateError(t('settings.deactivateInvalidPassword'));
+      return;
+    }
+    setDeactivateBusy(true);
+    setDeactivateError(null);
+    try {
+      await deactivateAccount(deactivatePassword);
+      setDeactivateModalVisible(false);
+      setDeactivatePassword('');
+      showAlert(t('common.success'), t('settings.deactivateSuccess'), [
+        { text: t('common.ok'), onPress: () => router.replace('/login') },
+      ]);
+    } catch (error) {
+      console.error('[Settings] Failed to deactivate account:', error);
+      // CR: on validation failure the user stays on the same screen.
+      if (error instanceof ApiError && error.status === 400) {
+        setDeactivateError(t('settings.deactivateInvalidPassword'));
+      } else if (error instanceof ApiError) {
+        setDeactivateError(error.message);
+      } else {
+        setDeactivateError(t('settings.deactivateFailed'));
+      }
+    } finally {
+      setDeactivateBusy(false);
+    }
+  };
+
   const handleLogout = () => {
     if (isGuest) {
       // Guest sessions have nothing to lose — go straight back to the login screen.
@@ -302,6 +349,42 @@ export default function SettingsScreen() {
       fontWeight: '700' as const,
       color: '#FFFFFF',
       marginLeft: 8,
+    },
+    deactivateButton: {
+      backgroundColor: colors.error + '10',
+      borderWidth: 1,
+      borderColor: colors.error + '40',
+      borderRadius: 12,
+      padding: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 12,
+    },
+    deactivateButtonText: {
+      fontSize: 16,
+      fontWeight: '700' as const,
+      color: colors.error,
+      marginLeft: 8,
+    },
+    passwordInputRow: {
+      position: 'relative',
+      justifyContent: 'center',
+    },
+    passwordToggle: {
+      position: 'absolute',
+      right: 16,
+    },
+    deactivateWarning: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: 16,
+      lineHeight: 20,
+    },
+    deactivateErrorText: {
+      fontSize: 13,
+      color: colors.error,
+      marginTop: 8,
     },
     cardHeader: {
       flexDirection: 'row',
@@ -1098,6 +1181,16 @@ export default function SettingsScreen() {
               {isGuest ? t('auth.signInOrCreateAccount') : t('auth.logout')}
             </Text>
           </TouchableOpacity>
+          {isStandard && (
+            <TouchableOpacity
+              style={styles.deactivateButton}
+              onPress={openDeactivateModal}
+              testID="deactivate-account-button"
+            >
+              <UserX size={20} color={colors.error} />
+              <Text style={styles.deactivateButtonText}>{t('settings.deactivateAccount')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 
@@ -1196,6 +1289,82 @@ export default function SettingsScreen() {
                   testID="save-username"
                 >
                   <Text style={styles.modalActionButtonText}>{t('common.save')}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={deactivateModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !deactivateBusy && setDeactivateModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => !deactivateBusy && setDeactivateModalVisible(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('settings.deactivateAccount')}</Text>
+            </View>
+            <View style={styles.usernameModalBody}>
+              <Text style={styles.deactivateWarning}>{t('settings.deactivateWarning')}</Text>
+              <View style={styles.passwordInputRow}>
+                <TextInput
+                  style={styles.usernameInput}
+                  value={deactivatePassword}
+                  onChangeText={(text) => {
+                    setDeactivatePassword(text);
+                    setDeactivateError(null);
+                  }}
+                  placeholder={t('settings.deactivatePasswordPrompt')}
+                  placeholderTextColor={colors.textSecondary}
+                  secureTextEntry={!showDeactivatePassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!deactivateBusy}
+                  testID="deactivate-password-input"
+                />
+                <TouchableOpacity
+                  style={styles.passwordToggle}
+                  onPress={() => setShowDeactivatePassword((prev) => !prev)}
+                  hitSlop={8}
+                >
+                  {showDeactivatePassword ? (
+                    <EyeOff size={20} color={colors.textSecondary} />
+                  ) : (
+                    <Eye size={20} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              </View>
+              {deactivateError ? (
+                <Text style={styles.deactivateErrorText} testID="deactivate-error">
+                  {deactivateError}
+                </Text>
+              ) : null}
+            </View>
+            <View style={styles.modalFooter}>
+              <View style={styles.modalActionButtons}>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setDeactivateModalVisible(false)}
+                  disabled={deactivateBusy}
+                  testID="cancel-deactivate"
+                >
+                  <Text style={styles.modalCloseButtonText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalActionButton, {backgroundColor: colors.error}, deactivateBusy && {opacity: 0.6}]}
+                  onPress={handleDeactivateNext}
+                  disabled={deactivateBusy}
+                  testID="confirm-deactivate"
+                >
+                  <Text style={styles.modalActionButtonText}>
+                    {deactivateBusy ? t('common.loading') : t('common.next')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

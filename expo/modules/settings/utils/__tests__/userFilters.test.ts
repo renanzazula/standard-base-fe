@@ -20,17 +20,23 @@ const admin = makeUser({ id: '1', name: 'Alice Admin', email: 'alice@example.com
 const standard = makeUser({ id: '2', name: 'Bob Standard', email: 'bob@example.com', username: 'bobby' });
 const guest = makeUser({ id: '3', name: 'Gina Guest', email: 'gina@example.com', role: 'guest' });
 const disabled = makeUser({ id: '4', name: 'Dan Disabled', email: 'dan@example.com', status: 'disabled' });
+const deactivated = makeUser({ id: '5', name: 'Deb Deactivated', email: 'deb@example.com', status: 'deactivated' });
 
-const users = [admin, standard, guest, disabled];
+const users = [admin, standard, guest, disabled, deactivated];
 
 describe('userFilters', () => {
   it('defaults the status filter to active', () => {
     expect(DEFAULT_STATUS_FILTER).toBe('active');
   });
 
-  it('filters out disabled users with the default status filter', () => {
+  it('filters out disabled and deactivated users with the default status filter', () => {
     const result = filterUsers(users, { search: '', role: 'all', status: DEFAULT_STATUS_FILTER });
     expect(result).toEqual([admin, standard, guest]);
+  });
+
+  it('deactivated status filter matches only deactivated users', () => {
+    const result = filterUsers(users, { search: '', role: 'all', status: 'deactivated' });
+    expect(result).toEqual([deactivated]);
   });
 
   it('guest role filter matches only guests', () => {

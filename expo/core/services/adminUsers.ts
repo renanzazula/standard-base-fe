@@ -21,7 +21,7 @@ export interface UserSummary {
   username?: string;
   providers?: string[];
   role: AdminRole;
-  status: 'ACTIVE' | 'DISABLED';
+  status: 'ACTIVE' | 'DISABLED' | 'DEACTIVATED';
   createdAt?: string;
   lastLoginAt?: string;
 }

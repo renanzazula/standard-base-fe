@@ -53,6 +53,10 @@ export async function uploadAvatar(uri: string, mimeType?: string, webFile?: Fil
   return apiFetch('/api/users/me/avatar', { method: 'POST', body: formData });
 }
 
+export function deactivateAccount(password: string): Promise<{success: boolean; message: string}> {
+  return apiFetch('/api/users/deactivate', { method: 'POST', body: JSON.stringify({ password }) });
+}
+
 export function getPreferences(): Promise<UserPreferencesResponse> {
   return apiFetch('/api/users/me/preferences');
 }
