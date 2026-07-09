@@ -10,7 +10,7 @@ import type {
 } from '@core/services/adminUsers';
 import * as adminUsersApi from '@core/services/adminUsers';
 
-export type UserStatus = 'active' | 'disabled';
+export type UserStatus = 'active' | 'disabled' | 'deactivated';
 
 export interface ManagedUser extends User {
   status: UserStatus;

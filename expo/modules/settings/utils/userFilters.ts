@@ -1,7 +1,7 @@
 import type {ManagedUser} from '@core/contexts/UserManagementContext';
 
 export type RoleFilter = 'all' | 'admin' | 'standard' | 'guest';
-export type StatusFilter = 'all' | 'active' | 'disabled';
+export type StatusFilter = 'all' | 'active' | 'disabled' | 'deactivated';
 
 export const DEFAULT_STATUS_FILTER: StatusFilter = 'active';
 
