@@ -1,7 +1,8 @@
 import createContextHook from '@nkzw/create-context-hook';
 import {useState} from 'react';
-import {User} from './AuthContext';
+import {User, UserRole} from './AuthContext';
 import type {
+    AdminRole,
     PermissionOverride,
     RolePermissionsResponse,
     UserPermissionsResponse,
@@ -23,7 +24,7 @@ function mapToManagedUser(s: UserSummary): ManagedUser {
     email: s.email,
     name: s.displayName,
     username: s.username,
-    role: s.role.toLowerCase() as 'admin' | 'standard',
+    role: s.role.toLowerCase() as UserRole,
     provider: (s.providers?.[0]?.toLowerCase() ?? 'manual') as User['provider'],
     // The admin list summary carries no permission/tab detail — loaded separately per user.
     permissions: [],
@@ -67,6 +68,7 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
       setUsers((prev) => prev.map((u) => (u.id === userId ? mapToManagedUser(updated) : u)));
     } catch (error) {
       console.error('[UserManagement] Failed to toggle user status:', error);
+      throw error;
     }
   };
 
@@ -76,18 +78,20 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
       setUsers((prev) => prev.filter((u) => u.id !== userId));
     } catch (error) {
       console.error('[UserManagement] Failed to delete user:', error);
+      throw error;
     }
   };
 
   const updateUser = async (userId: string, updates: Partial<ManagedUser>) => {
-    const body: { role?: 'STANDARD' | 'ADMIN'; status?: 'ACTIVE' | 'DISABLED' } = {};
-    if (updates.role) body.role = updates.role.toUpperCase() as 'STANDARD' | 'ADMIN';
+    const body: { role?: AdminRole; status?: 'ACTIVE' | 'DISABLED' } = {};
+    if (updates.role) body.role = updates.role.toUpperCase() as AdminRole;
     if (updates.status) body.status = updates.status.toUpperCase() as 'ACTIVE' | 'DISABLED';
     try {
       const updated = await adminUsersApi.updateUser(userId, body);
       setUsers((prev) => prev.map((u) => (u.id === userId ? mapToManagedUser(updated) : u)));
     } catch (error) {
       console.error('[UserManagement] Failed to update user:', error);
+      throw error;
     }
   };
 
@@ -139,7 +143,7 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     }
   };
 
-  const addUser = async (userData: { email: string; displayName: string; temporaryPassword: string; role?: 'STANDARD' | 'ADMIN' }) => {
+  const addUser = async (userData: { email: string; displayName: string; temporaryPassword: string; role?: AdminRole }) => {
     const created = await adminUsersApi.createUser({
       email: userData.email,
       displayName: userData.displayName,
@@ -153,7 +157,7 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     return users.find((user) => user.id === userId);
   };
 
-  const getUsersByRole = (role: 'standard' | 'admin'): ManagedUser[] => {
+  const getUsersByRole = (role: UserRole): ManagedUser[] => {
     return users.filter((user) => user.role === role);
   };
 

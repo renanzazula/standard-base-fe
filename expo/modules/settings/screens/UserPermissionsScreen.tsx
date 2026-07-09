@@ -11,7 +11,7 @@ import {Stack, useLocalSearchParams, useRouter} from 'expo-router';
 import {ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
 import React, {useEffect, useMemo, useState} from 'react';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Shield, User as UserIcon} from 'lucide-react-native';
+import {Shield, User as UserIcon, UserCheck} from 'lucide-react-native';
 
 const ALL_PERMISSIONS = Object.values(PERMISSIONS) as Permission[];
 
@@ -34,8 +34,8 @@ export default function UserPermissionsScreen() {
   const targetUser = getUserById(userId);
   const [pendingOverrides, setPendingOverrides] = useState<Map<Permission, boolean>>(new Map());
   const [saving, setSaving] = useState(false);
-  const [editRole, setEditRole] = useState<'admin' | 'standard'>(
-    targetUser && targetUser.role !== 'guest' ? targetUser.role : 'standard',
+  const [editRole, setEditRole] = useState<'admin' | 'standard' | 'guest'>(
+    targetUser?.role ?? 'standard',
   );
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function UserPermissionsScreen() {
   }, [selectedUserPermissions]);
 
   useEffect(() => {
-    if (targetUser && targetUser.role !== 'guest') setEditRole(targetUser.role);
+    if (targetUser) setEditRole(targetUser.role);
   }, [targetUser]);
 
   const roleDefaults = useMemo(
@@ -84,7 +84,7 @@ export default function UserPermissionsScreen() {
     });
   };
 
-  const handleRoleChange = (role: 'admin' | 'standard') => {
+  const handleRoleChange = (role: 'admin' | 'standard' | 'guest') => {
     if (role === editRole) return;
     showAlert(
       t('userPermissions.roleSection'),
@@ -94,7 +94,12 @@ export default function UserPermissionsScreen() {
         {
           text: t('common.confirm'),
           onPress: async () => {
-            await updateUser(userId, { role });
+            try {
+              await updateUser(userId, { role });
+            } catch {
+              showAlert(t('common.error'), t('userManagement.userUpdateFailed'));
+              return;
+            }
             setEditRole(role);
             setPendingOverrides(new Map());
             await loadUserPermissions(userId);
@@ -237,6 +242,13 @@ export default function UserPermissionsScreen() {
             >
               <Shield size={18} color={editRole === 'admin' ? colors.primary : colors.text} />
               <Text style={styles.roleOptionText}>Admin</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.roleOption, editRole === 'guest' && styles.roleOptionActive]}
+              onPress={() => handleRoleChange('guest')}
+            >
+              <UserCheck size={18} color={editRole === 'guest' ? colors.primary : colors.text} />
+              <Text style={styles.roleOptionText}>Guest</Text>
             </TouchableOpacity>
           </View>
 

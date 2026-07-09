@@ -1,6 +1,13 @@
 import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
 import {ManagedUser, useUserManagement} from '@core/contexts/UserManagementContext';
+import {
+    DEFAULT_STATUS_FILTER,
+    filterUsers,
+    RoleFilter,
+    StatusFilter,
+} from '@modules/settings/utils/userFilters';
+import type {AdminRole} from '@core/services/adminUsers';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
@@ -53,44 +60,25 @@ export default function UserManagementScreen() {
   const insets = useSafeAreaInsets();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'standard'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled'>('all');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(DEFAULT_STATUS_FILTER);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [editName, setEditName] = useState('');
   const [editUsername, setEditUsername] = useState('');
-  const [editRole, setEditRole] = useState<'admin' | 'standard'>('standard');
+  const [editRole, setEditRole] = useState<'admin' | 'standard' | 'guest'>('standard');
   const [createEmail, setCreateEmail] = useState('');
   const [createDisplayName, setCreateDisplayName] = useState('');
   const [createPassword, setCreatePassword] = useState('');
-  const [createRole, setCreateRole] = useState<'STANDARD' | 'ADMIN'>('STANDARD');
+  const [createRole, setCreateRole] = useState<AdminRole>('STANDARD');
   const [createLoading, setCreateLoading] = useState(false);
 
-  const filteredUsers = useMemo(() => {
-    let filtered = users;
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (user) =>
-          user.name.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query) ||
-          user.username?.toLowerCase().includes(query),
-      );
-    }
-
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter((user) => user.role === roleFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((user) => user.status === statusFilter);
-    }
-
-    return filtered;
-  }, [users, searchQuery, roleFilter, statusFilter]);
+  const filteredUsers = useMemo(
+    () => filterUsers(users, { search: searchQuery, role: roleFilter, status: statusFilter }),
+    [users, searchQuery, roleFilter, statusFilter],
+  );
 
   const stats = useMemo(() => {
     const activeUsers = users.filter((u) => u.status === 'active').length;
@@ -357,8 +345,12 @@ export default function UserManagementScreen() {
         {
           text: t('common.confirm'),
           onPress: async () => {
-            await toggleUserStatus(user.id);
-            showAlert(t('common.success'), isDisabling ? t('userManagement.userDisabled') : t('userManagement.userEnabled'));
+            try {
+              await toggleUserStatus(user.id);
+              showAlert(t('common.success'), isDisabling ? t('userManagement.userDisabled') : t('userManagement.userEnabled'));
+            } catch {
+              showAlert(t('common.error'), t('userManagement.userUpdateFailed'));
+            }
           },
         },
       ],
@@ -377,8 +369,12 @@ export default function UserManagementScreen() {
         text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
-          await deleteUser(user.id);
-          showAlert(t('common.success'), t('userManagement.userDeleted'));
+          try {
+            await deleteUser(user.id);
+            showAlert(t('common.success'), t('userManagement.userDeleted'));
+          } catch {
+            showAlert(t('common.error'), t('userManagement.userDeleteFailed'));
+          }
         },
       },
     ]);
@@ -388,8 +384,7 @@ export default function UserManagementScreen() {
     setSelectedUser(user);
     setEditName(user.name);
     setEditUsername(user.username || '');
-    // Guests are transient sessions, never rows in the user list — narrow the type.
-    setEditRole(user.role === 'guest' ? 'standard' : user.role);
+    setEditRole(user.role);
     setEditModalVisible(true);
   };
 
@@ -401,14 +396,17 @@ export default function UserManagementScreen() {
       return;
     }
 
-    await updateUser(selectedUser.id, {
-      name: editName.trim(),
-      username: editUsername.trim() || undefined,
-      role: editRole,
-    });
-
-    setEditModalVisible(false);
-    showAlert(t('common.success'), t('userManagement.userUpdated'));
+    try {
+      await updateUser(selectedUser.id, {
+        name: editName.trim(),
+        username: editUsername.trim() || undefined,
+        role: editRole,
+      });
+      setEditModalVisible(false);
+      showAlert(t('common.success'), t('userManagement.userUpdated'));
+    } catch {
+      showAlert(t('common.error'), t('userManagement.userUpdateFailed'));
+    }
   };
 
   const handleCreateUser = async () => {
@@ -448,6 +446,13 @@ export default function UserManagementScreen() {
         return null;
     }
   };
+
+  const roleLabel = (role: string) =>
+    role === 'admin'
+      ? t('userManagement.admin')
+      : role === 'guest'
+        ? t('userManagement.guest')
+        : t('userManagement.standard');
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return t('userManagement.never');
@@ -506,7 +511,7 @@ export default function UserManagementScreen() {
                   <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.profileRow, { borderBottomWidth: 0 }]}
+                  style={styles.profileRow}
                   onPress={() => router.push('/profile-permissions?role=ADMIN')}
                 >
                   <View style={styles.profileIconWrap}>
@@ -514,6 +519,19 @@ export default function UserManagementScreen() {
                   </View>
                   <View style={styles.profileRowInfo}>
                     <Text style={styles.profileRowTitle}>{t('userManagement.admin')}</Text>
+                    <Text style={styles.profileRowSubtitle}>{t('userManagement.profileDefaultsSubtitle')}</Text>
+                  </View>
+                  <ChevronRight size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.profileRow, { borderBottomWidth: 0 }]}
+                  onPress={() => router.push('/profile-permissions?role=GUEST')}
+                >
+                  <View style={styles.profileIconWrap}>
+                    <UserCheck size={18} color={colors.primary} />
+                  </View>
+                  <View style={styles.profileRowInfo}>
+                    <Text style={styles.profileRowTitle}>{t('userManagement.guest')}</Text>
                     <Text style={styles.profileRowSubtitle}>{t('userManagement.profileDefaultsSubtitle')}</Text>
                   </View>
                   <ChevronRight size={16} color={colors.textSecondary} />
@@ -552,9 +570,7 @@ export default function UserManagementScreen() {
             <View style={styles.activeFiltersContainer}>
               {roleFilter !== 'all' && (
                 <View style={styles.activeFilterChip}>
-                  <Text style={styles.activeFilterText}>
-                    {roleFilter === 'admin' ? t('userManagement.admin') : t('userManagement.standard')}
-                  </Text>
+                  <Text style={styles.activeFilterText}>{roleLabel(roleFilter)}</Text>
                 </View>
               )}
               {statusFilter !== 'all' && (
@@ -629,9 +645,7 @@ export default function UserManagementScreen() {
                   <View style={styles.userDetailRow}>
                     <Text style={styles.userDetailLabel}>{t('home.role')}</Text>
                     <View style={styles.roleBadge}>
-                      <Text style={styles.roleBadgeText}>
-                        {user.role === 'admin' ? t('userManagement.admin') : t('userManagement.standard')}
-                      </Text>
+                      <Text style={styles.roleBadgeText}>{roleLabel(user.role)}</Text>
                     </View>
                   </View>
                   <View style={styles.userDetailRow}>
@@ -732,6 +746,12 @@ export default function UserManagementScreen() {
                   >
                     <Text style={styles.filterOptionText}>{t('userManagement.standard')}</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterOption, roleFilter === 'guest' && styles.filterOptionActive]}
+                    onPress={() => setRoleFilter('guest')}
+                  >
+                    <Text style={styles.filterOptionText}>{t('userManagement.guest')}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -823,6 +843,12 @@ export default function UserManagementScreen() {
                   >
                     <Text style={styles.filterOptionText}>{t('userManagement.admin')}</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterOption, createRole === 'GUEST' && styles.filterOptionActive]}
+                    onPress={() => setCreateRole('GUEST')}
+                  >
+                    <Text style={styles.filterOptionText}>{t('userManagement.guest')}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -881,6 +907,12 @@ export default function UserManagementScreen() {
                     onPress={() => setEditRole('admin')}
                   >
                     <Text style={styles.filterOptionText}>{t('userManagement.admin')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterOption, editRole === 'guest' && styles.filterOptionActive]}
+                    onPress={() => setEditRole('guest')}
+                  >
+                    <Text style={styles.filterOptionText}>{t('userManagement.guest')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
