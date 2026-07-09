@@ -1,12 +1,26 @@
 import {usePreferences} from '@core/contexts/PreferencesContext';
+import {ApiError} from '@core/services/api';
 import type {SplashPlatforms, SplashWriteInput} from '@core/services/splash';
-import {createSplashScreen, listSplashScreens, suggestSplashPeriod, updateSplashScreen,} from '@core/services/splash';
+import {
+    createSplashScreen,
+    deleteSplashImage,
+    listSplashScreens,
+    splashImageIdFromKey,
+    suggestSplashPeriod,
+    updateSplashScreen,
+    uploadSplashImage,
+} from '@core/services/splash';
+import ColorField from '@shared/components/ColorField';
+import DateTimeField from '@shared/components/DateTimeField';
+import ImageUploadField from '@shared/components/ImageUploadField';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {showAlert} from '@shared/utils/alert';
+import {isValidHexColor} from '@shared/utils/color';
+import type * as ImagePicker from 'expo-image-picker';
 import {Stack, useLocalSearchParams, useRouter} from 'expo-router';
 import {Eye} from 'lucide-react-native';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -21,7 +35,7 @@ import {
     View,
 } from 'react-native';
 import SplashOverlay from '../components/SplashOverlay';
-import {formatLocalDateTime, parseLocalDateTime} from '../splashForm';
+import {validatePublishWindow} from '../splashForm';
 
 const PLATFORM_OPTIONS: SplashPlatforms[] = ['ALL', 'WEB', 'MOBILE'];
 
@@ -38,13 +52,22 @@ export default function SplashEditScreen() {
 
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageKey, setImageKey] = useState<string | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  // Manually entered URL of a splash created before uploads existed; cleared
+  // as soon as an image is uploaded or removed.
+  const [legacyImageUrl, setLegacyImageUrl] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState('');
   const [textColor, setTextColor] = useState('');
   const [buttonLabel, setButtonLabel] = useState('');
   const [externalUrl, setExternalUrl] = useState('');
-  const [publishStart, setPublishStart] = useState('');
-  const [publishEnd, setPublishEnd] = useState('');
+  const [publishStart, setPublishStart] = useState<string | null>(null);
+  const [publishEnd, setPublishEnd] = useState<string | null>(null);
+  // Keys uploaded in this editing session but not yet saved — these are ours
+  // to clean up when replaced/removed; keys on the saved splash are cleaned
+  // up server-side on update/delete.
+  const sessionKeysRef = useRef<string[]>([]);
   const [displayLimit, setDisplayLimit] = useState('1');
   const [alwaysShowForGuest, setAlwaysShowForGuest] = useState(true);
   const [platforms, setPlatforms] = useState<SplashPlatforms>('ALL');
@@ -62,13 +85,15 @@ export default function SplashEditScreen() {
           if (existing && !cancelled) {
             setTitle(existing.title);
             setSubtitle(existing.subtitle ?? '');
-            setImageUrl(existing.imageUrl ?? '');
+            setImageKey(existing.imageKey ?? null);
+            setImagePreviewUrl(existing.imageUrl ?? null);
+            setLegacyImageUrl(existing.imageKey ? null : existing.imageUrl ?? null);
             setBackgroundColor(existing.backgroundColor ?? '');
             setTextColor(existing.textColor ?? '');
             setButtonLabel(existing.buttonLabel ?? '');
             setExternalUrl(existing.externalUrl ?? '');
-            setPublishStart(formatLocalDateTime(existing.publishStart));
-            setPublishEnd(formatLocalDateTime(existing.publishEnd));
+            setPublishStart(existing.publishStart ?? null);
+            setPublishEnd(existing.publishEnd ?? null);
             setDisplayLimit(String(existing.displayLimitPerDay));
             setAlwaysShowForGuest(existing.alwaysShowForGuest);
             setPlatforms(existing.platforms);
@@ -80,8 +105,8 @@ export default function SplashEditScreen() {
           // BR14/AC14: pre-fill the next available publish period
           const suggestion = await suggestSplashPeriod().catch(() => null);
           if (suggestion && !cancelled) {
-            setPublishStart(formatLocalDateTime(suggestion.publishStart));
-            setPublishEnd(formatLocalDateTime(suggestion.publishEnd));
+            setPublishStart(suggestion.publishStart ?? null);
+            setPublishEnd(suggestion.publishEnd ?? null);
           }
         }
       } finally {
@@ -98,22 +123,30 @@ export default function SplashEditScreen() {
       showAlert(t('common.error'), t('splash.validationTitleRequired'));
       return null;
     }
-    const start = parseLocalDateTime(publishStart);
-    const end = parseLocalDateTime(publishEnd);
-    if (start === undefined || end === undefined) {
-      showAlert(t('common.error'), t('splash.validationInvalidDate'));
+    const windowError = validatePublishWindow(publishStart, publishEnd, isDefault);
+    if (windowError === 'required') {
+      showAlert(t('common.error'), t('splash.validationDatesRequired'));
+      return null;
+    }
+    if (windowError === 'endBeforeStart') {
+      showAlert(t('common.error'), t('splash.validationEndBeforeStart'));
+      return null;
+    }
+    if (!isValidHexColor(backgroundColor) || !isValidHexColor(textColor)) {
+      showAlert(t('common.error'), t('splash.validationInvalidColor'));
       return null;
     }
     return {
       title: title.trim(),
       subtitle: subtitle.trim() || undefined,
-      imageUrl: imageUrl.trim() || undefined,
+      imageUrl: imageKey ? undefined : legacyImageUrl ?? undefined,
+      imageKey: imageKey ?? undefined,
       backgroundColor: backgroundColor.trim() || undefined,
       textColor: textColor.trim() || undefined,
       buttonLabel: buttonLabel.trim() || undefined,
       externalUrl: externalUrl.trim() || undefined,
-      publishStart: start ?? undefined,
-      publishEnd: end ?? undefined,
+      publishStart: publishStart ?? undefined,
+      publishEnd: publishEnd ?? undefined,
       displayLimitPerDay: Math.max(0, parseInt(displayLimit, 10) || 0),
       alwaysShowForGuest,
       platforms,
@@ -133,6 +166,8 @@ export default function SplashEditScreen() {
       } else {
         await createSplashScreen(input);
       }
+      // The saved splash owns its image now; server-side cleanup takes over.
+      sessionKeysRef.current = [];
       showAlert(t('common.success'), t('splash.saved'));
       router.back();
     } catch (error) {
@@ -144,6 +179,46 @@ export default function SplashEditScreen() {
       setSaving(false);
     }
   };
+
+  const discardSessionKey = (key: string) => {
+    if (!sessionKeysRef.current.includes(key)) return;
+    sessionKeysRef.current = sessionKeysRef.current.filter((k) => k !== key);
+    const imageId = splashImageIdFromKey(key);
+    if (imageId) deleteSplashImage(imageId).catch(() => {});
+  };
+
+  const handlePickImage = async (asset: ImagePicker.ImagePickerAsset) => {
+    setImageBusy(true);
+    try {
+      const previousKey = imageKey;
+      const uploaded = await uploadSplashImage(asset.uri, asset.mimeType ?? undefined, asset.file);
+      if (previousKey) discardSessionKey(previousKey);
+      sessionKeysRef.current.push(uploaded.imageKey);
+      setImageKey(uploaded.imageKey);
+      setImagePreviewUrl(uploaded.imageUrl);
+      setLegacyImageUrl(null);
+    } catch (error) {
+      console.error('[Splash] Failed to upload image:', error);
+      showAlert(
+        t('common.error'),
+        error instanceof ApiError ? error.message : t('imageUpload.uploadFailed'),
+      );
+    } finally {
+      setImageBusy(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (imageKey) discardSessionKey(imageKey);
+    setImageKey(null);
+    setImagePreviewUrl(null);
+    setLegacyImageUrl(null);
+  };
+
+  const endDateError =
+    validatePublishWindow(publishStart, publishEnd, isDefault) === 'endBeforeStart'
+      ? t('splash.validationEndBeforeStart')
+      : undefined;
 
   const inputStyle = [
     styles.input,
@@ -174,17 +249,34 @@ export default function SplashEditScreen() {
         <Text style={labelStyle}>{t('splash.fieldSubtitle')}</Text>
         <TextInput style={inputStyle} value={subtitle} onChangeText={setSubtitle} />
 
-        <Text style={labelStyle}>{t('splash.fieldImageUrl')}</Text>
-        <TextInput style={inputStyle} value={imageUrl} onChangeText={setImageUrl} autoCapitalize="none" />
+        <ImageUploadField
+          label={t('splash.fieldImage')}
+          imageUrl={imagePreviewUrl}
+          busy={imageBusy}
+          onPick={handlePickImage}
+          onRemove={handleRemoveImage}
+          testID="splash-image-upload"
+        />
+        <Text style={[styles.hint, {color: colors.textSecondary}]}>{t('splash.imageHint')}</Text>
 
         <View style={styles.rowPair}>
           <View style={styles.rowPairItem}>
-            <Text style={labelStyle}>{t('splash.fieldBackgroundColor')}</Text>
-            <TextInput style={inputStyle} value={backgroundColor} onChangeText={setBackgroundColor} autoCapitalize="none" placeholder="#1A1A1C" placeholderTextColor={colors.textSecondary} />
+            <ColorField
+              label={t('splash.fieldBackgroundColor')}
+              value={backgroundColor}
+              onChange={setBackgroundColor}
+              placeholder="#1A1A1C"
+              testID="splash-background-color"
+            />
           </View>
           <View style={styles.rowPairItem}>
-            <Text style={labelStyle}>{t('splash.fieldTextColor')}</Text>
-            <TextInput style={inputStyle} value={textColor} onChangeText={setTextColor} autoCapitalize="none" placeholder="#FFFFFF" placeholderTextColor={colors.textSecondary} />
+            <ColorField
+              label={t('splash.fieldTextColor')}
+              value={textColor}
+              onChange={setTextColor}
+              placeholder="#FFFFFF"
+              testID="splash-text-color"
+            />
           </View>
         </View>
 
@@ -196,12 +288,20 @@ export default function SplashEditScreen() {
 
         <Text style={[styles.sectionTitle, {color: colors.textSecondary, marginTop: 16}]}>{t('splash.sectionSchedule')}</Text>
 
-        <Text style={labelStyle}>{t('splash.fieldPublishStart')}</Text>
-        <TextInput style={inputStyle} value={publishStart} onChangeText={setPublishStart} autoCapitalize="none" placeholder="2026-07-04 08:00" placeholderTextColor={colors.textSecondary} />
-        <Text style={[styles.hint, {color: colors.textSecondary}]}>{t('splash.dateFormatHint')}</Text>
+        <DateTimeField
+          label={t('splash.fieldPublishStart')}
+          value={publishStart}
+          onChange={setPublishStart}
+          testID="splash-publish-start"
+        />
 
-        <Text style={labelStyle}>{t('splash.fieldPublishEnd')}</Text>
-        <TextInput style={inputStyle} value={publishEnd} onChangeText={setPublishEnd} autoCapitalize="none" placeholder="2026-07-04 23:59" placeholderTextColor={colors.textSecondary} />
+        <DateTimeField
+          label={t('splash.fieldPublishEnd')}
+          value={publishEnd}
+          onChange={setPublishEnd}
+          error={endDateError}
+          testID="splash-publish-end"
+        />
 
         <Text style={[styles.sectionTitle, {color: colors.textSecondary, marginTop: 16}]}>{t('splash.sectionBehavior')}</Text>
 
@@ -277,7 +377,7 @@ export default function SplashEditScreen() {
           splash={{
             title: title || 'Title',
             subtitle: subtitle || undefined,
-            imageUrl: imageUrl || undefined,
+            imageUrl: imagePreviewUrl || undefined,
             backgroundColor: backgroundColor || undefined,
             textColor: textColor || undefined,
             buttonLabel: buttonLabel || undefined,

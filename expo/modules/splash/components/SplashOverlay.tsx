@@ -31,10 +31,17 @@ export default function SplashOverlay({splash, onDismiss}: Props) {
 
   return (
     <View style={[StyleSheet.absoluteFillObject, styles.container, {backgroundColor}]}>
+      {splash.imageUrl ? (
+        // Full-bleed background: fills every screen size without distortion
+        // (cover keeps the aspect ratio, centered by default). The background
+        // color remains visible while the image loads and when none is set.
+        <Image
+          source={{uri: splash.imageUrl}}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode="cover"
+        />
+      ) : null}
       <View style={styles.content}>
-        {splash.imageUrl ? (
-          <Image source={{uri: splash.imageUrl}} style={styles.image} resizeMode="contain" />
-        ) : null}
         <Text style={[styles.title, {color: textColor}]}>{splash.title}</Text>
         {splash.subtitle ? (
           <Text style={[styles.subtitle, {color: textColor}]}>{splash.subtitle}</Text>
@@ -71,11 +78,6 @@ const styles = StyleSheet.create({
     gap: 16,
     width: '100%',
     maxWidth: 560,
-  },
-  image: {
-    width: 180,
-    height: 180,
-    marginBottom: 8,
   },
   title: {
     fontSize: 28,

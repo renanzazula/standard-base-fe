@@ -4,7 +4,10 @@ export function toWriteInput(splash: SplashScreenConfig): SplashWriteInput {
   return {
     title: splash.title,
     subtitle: splash.subtitle ?? undefined,
-    imageUrl: splash.imageUrl ?? undefined,
+    // When an uploaded image exists, responses carry a short-lived presigned
+    // imageUrl — never write that back; the key is the source of truth.
+    imageUrl: splash.imageKey ? undefined : splash.imageUrl ?? undefined,
+    imageKey: splash.imageKey ?? undefined,
     backgroundColor: splash.backgroundColor ?? undefined,
     textColor: splash.textColor ?? undefined,
     buttonLabel: splash.buttonLabel ?? undefined,
@@ -20,21 +23,24 @@ export function toWriteInput(splash: SplashScreenConfig): SplashWriteInput {
   };
 }
 
-/** "YYYY-MM-DD HH:mm" (local) → ISO string; empty → null; invalid → undefined. */
-export function parseLocalDateTime(text: string): string | null | undefined {
-  const trimmed = text.trim();
-  if (!trimmed) return null;
-  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/);
-  if (!match) return undefined;
-  const date = new Date(+match[1], +match[2] - 1, +match[3], +match[4], +match[5]);
-  return isNaN(date.getTime()) ? undefined : date.toISOString();
-}
+export {isValidHexColor} from '@shared/utils/color';
 
-/** ISO string → "YYYY-MM-DD HH:mm" in local time for form display. */
-export function formatLocalDateTime(iso?: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+export type PublishWindowError = 'required' | 'endBeforeStart' | null;
+
+/**
+ * Mirrors the backend SplashValidator rules: a non-default splash needs both
+ * dates, and start must be strictly before end.
+ */
+export function validatePublishWindow(
+  start: string | null,
+  end: string | null,
+  isDefault: boolean,
+): PublishWindowError {
+  if (isDefault) {
+    if (start && end && !(new Date(start) < new Date(end))) return 'endBeforeStart';
+    return null;
+  }
+  if (!start || !end) return 'required';
+  if (!(new Date(start) < new Date(end))) return 'endBeforeStart';
+  return null;
 }

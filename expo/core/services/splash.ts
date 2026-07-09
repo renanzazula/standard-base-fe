@@ -9,6 +9,7 @@ export type SplashScreenConfig = {
   title: string;
   subtitle?: string | null;
   imageUrl?: string | null;
+  imageKey?: string | null;
   backgroundColor?: string | null;
   textColor?: string | null;
   buttonLabel?: string | null;
@@ -80,4 +81,42 @@ export async function duplicateSplashScreen(id: string): Promise<SplashScreenCon
 
 export async function suggestSplashPeriod(): Promise<{publishStart?: string; publishEnd?: string}> {
   return apiFetch<{publishStart?: string; publishEnd?: string}>('/api/admin/splash/suggest-period');
+}
+
+export type SplashImageUpload = {imageKey: string; imageUrl: string};
+
+export async function uploadSplashImage(
+  uri: string,
+  mimeType?: string,
+  webFile?: File,
+): Promise<SplashImageUpload> {
+  const resolvedType = mimeType ?? 'image/jpeg';
+  const formData = new FormData();
+
+  if (Platform.OS === 'web') {
+    // Same mobile-Safari-safe pattern as avatar/login-background uploads:
+    // prefer the original File from expo-image-picker over re-fetching its
+    // blob: URI.
+    const file = webFile ?? (await (await fetch(uri)).blob());
+    formData.append('file', file, `splash.${resolvedType.split('/')[1] ?? 'jpg'}`);
+  } else {
+    formData.append('file', {
+      uri,
+      name: `splash.${resolvedType.split('/')[1] ?? 'jpg'}`,
+      type: resolvedType,
+    } as unknown as Blob);
+  }
+
+  return apiFetch<SplashImageUpload>('/api/admin/splash/images', {method: 'POST', body: formData});
+}
+
+/** `imageId` is the file-name segment of the storage key (`{uuid}.{ext}`). */
+export async function deleteSplashImage(imageId: string): Promise<void> {
+  await apiFetch<void>(`/api/admin/splash/images/${encodeURIComponent(imageId)}`, {method: 'DELETE'});
+}
+
+/** Storage key → the imageId accepted by deleteSplashImage, or null if not an uploaded key. */
+export function splashImageIdFromKey(imageKey?: string | null): string | null {
+  if (!imageKey?.startsWith('splash/')) return null;
+  return imageKey.slice('splash/'.length) || null;
 }
