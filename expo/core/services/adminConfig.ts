@@ -60,10 +60,13 @@ export function getAdminConfig(): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config');
 }
 
+/**
+ * Guest access is the only backend-managed auth toggle — email/password and
+ * social sign-in are enabled/disabled in Keycloak (realm settings and
+ * identity providers). The /api/config response keeps the other flags for
+ * informational purposes only.
+ */
 export function updateAuthMethods(body: {
-  emailAuthEnabled?: boolean;
-  googleAuthEnabled?: boolean;
-  appleAuthEnabled?: boolean;
   guestAuthEnabled?: boolean;
 }): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config/auth-methods', { method: 'PATCH', body: JSON.stringify(body) });

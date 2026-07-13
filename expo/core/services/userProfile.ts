@@ -53,8 +53,10 @@ export async function uploadAvatar(uri: string, mimeType?: string, webFile?: Fil
   return apiFetch('/api/users/me/avatar', { method: 'POST', body: formData });
 }
 
-export function deactivateAccount(password: string): Promise<{success: boolean; message: string}> {
-  return apiFetch('/api/users/deactivate', { method: 'POST', body: JSON.stringify({ password }) });
+// No password re-check: credentials live in Keycloak, so the client-side
+// confirmation dialog plus the short-lived access token are the guard.
+export function deactivateAccount(): Promise<{success: boolean; message: string}> {
+  return apiFetch('/api/users/deactivate', { method: 'POST' });
 }
 
 export function getPreferences(): Promise<UserPreferencesResponse> {

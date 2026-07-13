@@ -1,5 +1,6 @@
 import {ENV} from '@core/config/env';
 import * as tokenStorage from './tokenStorage';
+import * as keycloakAuth from './keycloakAuth';
 
 const TENANT_HEADER = 'X-Tenant-ID';
 
@@ -38,6 +39,14 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
     ...(options.headers as Record<string, string>),
   };
   headers[TENANT_HEADER] = ENV.TENANT_ID;
+
+  // Keycloak access tokens are short-lived (~15 min). When the stored expiry
+  // says the token is already stale, refresh proactively instead of paying a
+  // guaranteed 401 round-trip. Guests have no expiry stored, so they skip this.
+  const expiry = await tokenStorage.getTokenExpiry();
+  if (expiry && Date.now() > expiry - 10_000) {
+    await tryRefreshToken();
+  }
 
   const accessToken = await tokenStorage.getAccessToken();
   if (accessToken) {
@@ -81,27 +90,15 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
   return JSON.parse(text) as T;
 }
 
-async function tryRefreshToken(): Promise<boolean> {
-  const refreshToken = await tokenStorage.getRefreshToken();
-  if (!refreshToken) return false;
+// One refresh at a time: concurrent 401s all await the same Keycloak call, so
+// the refresh token is never presented twice in parallel.
+let refreshInFlight: Promise<boolean> | null = null;
 
-  try {
-    const url = `${ENV.API_BASE_URL}/api/auth/refresh`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [TENANT_HEADER]: ENV.TENANT_ID,
-      },
-      body: JSON.stringify({ refreshToken }),
+function tryRefreshToken(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = keycloakAuth.refresh().finally(() => {
+      refreshInFlight = null;
     });
-
-    if (!response.ok) return false;
-
-    const data = await response.json();
-    await tokenStorage.saveTokens(data.accessToken, data.refreshToken);
-    return true;
-  } catch {
-    return false;
   }
+  return refreshInFlight;
 }

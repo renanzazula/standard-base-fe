@@ -2,12 +2,12 @@ import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack} from 'expo-router';
-import {Apple, Chrome, Mail, UserRound} from 'lucide-react-native';
+import {UserRound} from 'lucide-react-native';
 import {ScrollView, StyleSheet, Switch, Text, View} from 'react-native';
 
 export default function ConfigureAuthScreen() {
   const { colors } = usePreferences();
-  const { config, toggleAuthMethod } = useAdminConfig();
+  const { config, toggleGuestAccess } = useAdminConfig();
 
   const styles = StyleSheet.create({
     container: {
@@ -104,79 +104,6 @@ export default function ConfigureAuthScreen() {
             <View style={styles.card}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
-                  <Chrome size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>Google Authentication</Text>
-              </View>
-
-              <View style={styles.settingRow}>
-                <View>
-                  <Text style={styles.settingLabel}>Enable Google Login</Text>
-                  <Text style={styles.settingDescription}>
-                    Allow users to sign in with Google
-                  </Text>
-                </View>
-                <Switch
-                  value={config.enabledAuthMethods.google}
-                  onValueChange={() => toggleAuthMethod('google')}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                  testID="google-auth-toggle"
-                />
-              </View>
-            </View>
-
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Apple size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>Apple Authentication</Text>
-              </View>
-
-              <View style={styles.settingRow}>
-                <View>
-                  <Text style={styles.settingLabel}>Enable Apple Login</Text>
-                  <Text style={styles.settingDescription}>Allow users to sign in with Apple</Text>
-                </View>
-                <Switch
-                  value={config.enabledAuthMethods.apple}
-                  onValueChange={() => toggleAuthMethod('apple')}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                  testID="apple-auth-toggle"
-                />
-              </View>
-            </View>
-
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Mail size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>Manual Registration</Text>
-              </View>
-
-              <View style={styles.settingRow}>
-                <View>
-                  <Text style={styles.settingLabel}>Enable Email/Password</Text>
-                  <Text style={styles.settingDescription}>
-                    Allow manual registration with email
-                  </Text>
-                </View>
-                <Switch
-                  value={config.enabledAuthMethods.manual}
-                  onValueChange={() => toggleAuthMethod('manual')}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                  testID="manual-auth-toggle"
-                />
-              </View>
-            </View>
-
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
                   <UserRound size={20} color={colors.text} />
                 </View>
                 <Text style={styles.cardTitle}>Guest Access</Text>
@@ -191,7 +118,7 @@ export default function ConfigureAuthScreen() {
                 </View>
                 <Switch
                   value={config.enabledAuthMethods.guest}
-                  onValueChange={() => toggleAuthMethod('guest')}
+                  onValueChange={toggleGuestAccess}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="#FFFFFF"
                   testID="guest-auth-toggle"
@@ -201,8 +128,11 @@ export default function ConfigureAuthScreen() {
 
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
-                <Text style={{ fontWeight: '700' as const }}>Authentication Methods:</Text>{' '}
-                Enable or disable different authentication methods for your app. At least one authentication method must remain enabled. Guest access is anonymous and does not count as a sign-in method.
+                <Text style={{ fontWeight: '700' as const }}>Sign-in methods are managed in Keycloak:</Text>{' '}
+                email/password login, self-registration, password reset and social
+                providers (Google, Apple) are configured in the Keycloak admin
+                console for this realm. Guest access is anonymous, never touches
+                Keycloak, and is the only method toggled here.
               </Text>
             </View>
           </View>

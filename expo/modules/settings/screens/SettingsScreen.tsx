@@ -10,8 +10,6 @@ import {
     Check,
     ChevronRight,
     Clock,
-    Eye,
-    EyeOff,
     Globe,
     Lock,
     LogOut,
@@ -58,8 +56,6 @@ export default function SettingsScreen() {
   const [usernameModalVisible, setUsernameModalVisible] = React.useState(false);
   const [usernameInput, setUsernameInput] = React.useState('');
   const [deactivateModalVisible, setDeactivateModalVisible] = React.useState(false);
-  const [deactivatePassword, setDeactivatePassword] = React.useState('');
-  const [showDeactivatePassword, setShowDeactivatePassword] = React.useState(false);
   const [deactivateError, setDeactivateError] = React.useState<string | null>(null);
   const [deactivateBusy, setDeactivateBusy] = React.useState(false);
   const { t } = useTranslation();
@@ -204,32 +200,25 @@ export default function SettingsScreen() {
 
 
   const openDeactivateModal = () => {
-    setDeactivatePassword('');
     setDeactivateError(null);
-    setShowDeactivatePassword(false);
     setDeactivateModalVisible(true);
   };
 
-  const handleDeactivateNext = async () => {
-    if (!deactivatePassword) {
-      setDeactivateError(t('settings.deactivateInvalidPassword'));
-      return;
-    }
+  // Credentials live in Keycloak, so there is no password re-check — this
+  // confirmation dialog is the guard before the irreversible request.
+  const handleDeactivateConfirm = async () => {
     setDeactivateBusy(true);
     setDeactivateError(null);
     try {
-      await deactivateAccount(deactivatePassword);
+      await deactivateAccount();
       setDeactivateModalVisible(false);
-      setDeactivatePassword('');
       showAlert(t('common.success'), t('settings.deactivateSuccess'), [
         { text: t('common.ok'), onPress: () => router.replace('/login') },
       ]);
     } catch (error) {
       console.error('[Settings] Failed to deactivate account:', error);
-      // CR: on validation failure the user stays on the same screen.
-      if (error instanceof ApiError && error.status === 400) {
-        setDeactivateError(t('settings.deactivateInvalidPassword'));
-      } else if (error instanceof ApiError) {
+      // CR: on failure the user stays on the same screen.
+      if (error instanceof ApiError) {
         setDeactivateError(error.message);
       } else {
         setDeactivateError(t('settings.deactivateFailed'));
@@ -366,14 +355,6 @@ export default function SettingsScreen() {
       fontWeight: '700' as const,
       color: colors.error,
       marginLeft: 8,
-    },
-    passwordInputRow: {
-      position: 'relative',
-      justifyContent: 'center',
-    },
-    passwordToggle: {
-      position: 'absolute',
-      right: 16,
     },
     deactivateWarning: {
       fontSize: 14,
@@ -1312,34 +1293,6 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.usernameModalBody}>
               <Text style={styles.deactivateWarning}>{t('settings.deactivateWarning')}</Text>
-              <View style={styles.passwordInputRow}>
-                <TextInput
-                  style={styles.usernameInput}
-                  value={deactivatePassword}
-                  onChangeText={(text) => {
-                    setDeactivatePassword(text);
-                    setDeactivateError(null);
-                  }}
-                  placeholder={t('settings.deactivatePasswordPrompt')}
-                  placeholderTextColor={colors.textSecondary}
-                  secureTextEntry={!showDeactivatePassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!deactivateBusy}
-                  testID="deactivate-password-input"
-                />
-                <TouchableOpacity
-                  style={styles.passwordToggle}
-                  onPress={() => setShowDeactivatePassword((prev) => !prev)}
-                  hitSlop={8}
-                >
-                  {showDeactivatePassword ? (
-                    <EyeOff size={20} color={colors.textSecondary} />
-                  ) : (
-                    <Eye size={20} color={colors.textSecondary} />
-                  )}
-                </TouchableOpacity>
-              </View>
               {deactivateError ? (
                 <Text style={styles.deactivateErrorText} testID="deactivate-error">
                   {deactivateError}
@@ -1358,12 +1311,12 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalActionButton, {backgroundColor: colors.error}, deactivateBusy && {opacity: 0.6}]}
-                  onPress={handleDeactivateNext}
+                  onPress={handleDeactivateConfirm}
                   disabled={deactivateBusy}
                   testID="confirm-deactivate"
                 >
                   <Text style={styles.modalActionButtonText}>
-                    {deactivateBusy ? t('common.loading') : t('common.next')}
+                    {deactivateBusy ? t('common.loading') : t('settings.deactivateAccount')}
                   </Text>
                 </TouchableOpacity>
               </View>

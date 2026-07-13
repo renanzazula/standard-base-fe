@@ -4,6 +4,10 @@ import type {NavigationTabResponse} from './adminConfig';
 
 export type { NavigationTabResponse };
 
+// Login, registration, token refresh and password reset are hosted by
+// Keycloak — see core/services/keycloakAuth.ts. The backend keeps only guest
+// login (self-issued tokens) and the profile endpoint below.
+
 export interface UserPreferencesDto {
   language?: string;
   theme?: string;
@@ -45,24 +49,6 @@ export interface UserProfileResponse {
   preferences?: UserPreferencesDto;
 }
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  const response = await apiFetch<AuthResponse>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-  await tokenStorage.saveTokens(response.accessToken, response.refreshToken);
-  return response;
-}
-
-export async function register(email: string, password: string, displayName: string): Promise<AuthResponse> {
-  const response = await apiFetch<AuthResponse>('/api/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ email, password, displayName }),
-  });
-  await tokenStorage.saveTokens(response.accessToken, response.refreshToken);
-  return response;
-}
-
 export async function guestLogin(): Promise<AuthResponse> {
   const response = await apiFetch<AuthResponse>('/api/auth/guest', { method: 'POST' });
   // Guest sessions have no refresh token — the session ends when the access token expires.
@@ -70,35 +56,6 @@ export async function guestLogin(): Promise<AuthResponse> {
   return response;
 }
 
-export async function oauthLogin(provider: 'GOOGLE' | 'APPLE', authorizationCode: string): Promise<AuthResponse> {
-  const response = await apiFetch<AuthResponse>('/api/auth/oauth', {
-    method: 'POST',
-    body: JSON.stringify({ provider, authorizationCode }),
-  });
-  await tokenStorage.saveTokens(response.accessToken, response.refreshToken);
-  return response;
-}
-
 export async function getCurrentUser(): Promise<UserProfileResponse> {
   return apiFetch<UserProfileResponse>('/api/auth/me');
-}
-
-export async function forgotPassword(email: string): Promise<void> {
-  return apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
-}
-
-export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
-  return apiFetch('/api/auth/reset-password', {
-    method: 'POST',
-    body: JSON.stringify({ token, newPassword }),
-  });
-}
-
-export async function refreshToken(token: string): Promise<AuthResponse> {
-  const response = await apiFetch<AuthResponse>('/api/auth/refresh', {
-    method: 'POST',
-    body: JSON.stringify({ refreshToken: token }),
-  });
-  await tokenStorage.saveTokens(response.accessToken, response.refreshToken);
-  return response;
 }

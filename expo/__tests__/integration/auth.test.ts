@@ -1,6 +1,12 @@
 /**
- * Integration Tests for Authentication Flows
- * Tests MODULE M1 (User Onboarding) and MODULE M2 (Login & Authentication)
+ * Integration Tests for Authentication Flows (placeholders)
+ *
+ * Authentication is hosted by Keycloak: the app runs an OIDC Authorization
+ * Code + PKCE flow in a browser sheet (core/services/keycloakAuth.ts), and
+ * Keycloak owns credentials, registration, password reset and social
+ * brokering. The backend keeps guest login and /api/auth/me (profile +
+ * DB-driven permissions). These placeholders document the intended coverage;
+ * the directory is excluded from the Jest run (see package.json).
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,170 +16,71 @@ describe('Authentication Integration Tests', () => {
     await AsyncStorage.clear();
   });
 
-  describe('IT-001: Complete User Registration Flow', () => {
-    it('should complete full registration and login cycle', async () => {
+  describe('IT-001: Keycloak hosted sign-in', () => {
+    it('should complete the Authorization Code + PKCE flow and load the profile', async () => {
       // Test Steps:
-      // 1. User navigates to signup
-      // 2. Fills registration form
-      // 3. Submits and gets redirected to home
-      // 4. Logs out
-      // 5. Logs back in
-      // 6. Session persists
-
-      // This test requires React Native Testing Library
-      // Implementation example:
-      
-      // const { getByTestId, getByText } = render(<App />);
-      // 
-      // // Navigate to signup
-      // fireEvent.press(getByText('Sign Up'));
-      // 
-      // // Fill form
-      // fireEvent.changeText(getByTestId('signup-name-input'), 'Test User');
-      // fireEvent.changeText(getByTestId('signup-email-input'), 'test@example.com');
-      // fireEvent.changeText(getByTestId('signup-password-input'), 'password123');
-      // fireEvent.changeText(getByTestId('signup-confirm-password-input'), 'password123');
-      // 
-      // // Submit
-      // fireEvent.press(getByTestId('signup-submit-button'));
-      // 
-      // // Verify redirect to home
-      // await waitFor(() => {
-      //   expect(getByText(/Welcome back/i)).toBeTruthy();
-      // });
-      
+      // 1. User presses "Log In" (login-submit-button) — promptAsync opens the
+      //    Keycloak hosted page (login + registration + forgot-password links).
+      // 2. Keycloak redirects to myapp://auth/callback?code=… (allowed by
+      //    +native-intent.tsx) and the code is exchanged for tokens.
+      // 3. Tokens (access/refresh/id + expiry) are persisted via tokenStorage.
+      // 4. /api/auth/me returns the JIT-provisioned local profile with
+      //    permissions and navigation tabs; the app redirects to /(tabs)/home.
       expect(true).toBe(true); // Placeholder
     });
 
-    it('should validate registration form fields', async () => {
-      // Test TC-M1-UC04-002: Registration Validation
-      // - Empty fields validation
-      // - Password length validation
-      // - Password match validation
-      
+    it('should stay on the login screen when the browser sheet is dismissed', async () => {
+      // promptAsync resolving with type 'cancel'/'dismiss' must not error or
+      // navigate — AuthContext.signIn() returns false.
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it('should silently refresh an expired access token against Keycloak', async () => {
+      // apiFetch: stored expiry passed → proactive refresh; 401 → single
+      // in-flight refresh, request replay; refresh failure → AuthExpiredError
+      // → logout without an end-session redirect.
       expect(true).toBe(true); // Placeholder
     });
   });
 
-  describe('IT-002: Admin Configuration Flow', () => {
-    it('should allow admin to toggle authentication methods', async () => {
-      // Test Steps:
-      // 1. Login as admin
-      // 2. Navigate to Admin Configuration
-      // 3. Disable Google and Apple auth
-      // 4. Logout
-      // 5. Verify login page only shows manual login
-      // 6. Re-enable all methods
-      // 7. Verify all buttons return
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should persist admin configuration changes', async () => {
-      // Test that admin config changes are saved to AsyncStorage
-      // and persist across app restarts
-      
+  describe('IT-002: Guest access', () => {
+    it('should start a guest session without touching Keycloak', async () => {
+      // POST /api/auth/guest issues a backend-signed token (no refresh token);
+      // the session ends when it expires. Button gated by
+      // config.enabledAuthMethods.guest.
       expect(true).toBe(true); // Placeholder
     });
   });
 
-  describe('IT-005: Multi-Provider Authentication', () => {
-    it('should support Google authentication (mock)', async () => {
-      // Test TC-M1-UC02-001 and TC-M2-UC13-001
-      // - Click Google sign-up/login button
-      // - Verify mock authentication succeeds
-      // - Verify user created with provider='google'
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should support Apple authentication (mock)', async () => {
-      // Test TC-M1-UC03-001 and TC-M2-UC14-001
-      // - Click Apple sign-up/login button
-      // - Verify mock authentication succeeds
-      // - Verify user created with provider='apple'
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should support manual authentication', async () => {
-      // Test TC-M1-UC04-001 and TC-M2-UC12-001
-      // - Fill email and password
-      // - Submit form
-      // - Verify user created with provider='manual'
-      
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('Login Flow Tests', () => {
-    it('should login with valid credentials', async () => {
-      // Test TC-M2-UC12-001
-      // Email: user@example.com
-      // Password: password123
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should login as admin and show admin features', async () => {
-      // Test TC-M2-UC12-002
-      // Email: admin@example.com
-      // Password: admin123
-      // Verify admin-specific UI elements
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should reject invalid credentials', async () => {
-      // Test invalid email/password combinations
-      // Verify error alert displayed
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should handle empty form submission', async () => {
-      // Test validation for empty email/password
-      // Verify alert: "Please enter email and password"
-      
+  describe('IT-003: Admin configuration', () => {
+    it('should allow admins to toggle guest access only', async () => {
+      // PATCH /api/admin/config/auth-methods accepts guestAuthEnabled only —
+      // sign-in methods (email/password, Google, Apple) are managed in the
+      // Keycloak admin console.
       expect(true).toBe(true); // Placeholder
     });
   });
 
   describe('Logout Flow Tests', () => {
-    it('should logout user and clear session', async () => {
-      // Test TC-M2-UC17-001
-      // 1. Login
-      // 2. Navigate to Settings
-      // 3. Click Logout
-      // 4. Confirm in alert
-      // 5. Verify redirect to login
-      // 6. Verify AsyncStorage cleared
-      
+    it('should end the Keycloak SSO session and clear local state', async () => {
+      // 1. Login → Settings → Logout → confirm.
+      // 2. keycloakAuth.signOut() hits the end_session endpoint with
+      //    id_token_hint and clears tokenStorage + cached user.
+      // 3. Redirect to /login; next sign-in prompts for credentials.
       expect(true).toBe(true); // Placeholder
     });
 
     it('should prevent access to protected routes after logout', async () => {
       // After logout, attempting to navigate to /(tabs)/home
       // should redirect to /login
-      
       expect(true).toBe(true); // Placeholder
     });
   });
 
-  describe('Password Reset Flow Tests', () => {
-    it('should handle forgot password request', async () => {
-      // Test TC-M2-UC15-001
-      // 1. Click "Forgot Password?" link
-      // 2. Enter email
-      // 3. Submit
-      // 4. Verify success message
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should validate email in forgot password form', async () => {
-      // Test empty email validation
-      
+  describe('Account Deactivation Flow Tests', () => {
+    it('should deactivate after confirmation and tear down the session', async () => {
+      // No password re-entry (credentials live in Keycloak). Confirm dialog →
+      // POST /api/users/deactivate → local session teardown → /login.
       expect(true).toBe(true); // Placeholder
     });
   });
@@ -185,41 +92,13 @@ describe('Authentication Context Unit Tests', () => {
   });
 
   describe('Session Management', () => {
-    it('should save session to AsyncStorage on login', async () => {
-      // Verify user data and session data saved
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should load session from AsyncStorage on app start', async () => {
-      // Verify session restoration
-      
+    it('should restore the session from stored tokens on app start', async () => {
+      // loadSession(): access token present → /api/auth/me → authenticated.
       expect(true).toBe(true); // Placeholder
     });
 
     it('should clear session on logout', async () => {
-      // Verify AsyncStorage cleared
-      
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('Mock Authentication', () => {
-    it('should authenticate with mock Google credentials', async () => {
-      // Test loginWithGoogle() in mock mode
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should authenticate with mock Apple credentials', async () => {
-      // Test loginWithApple() in mock mode
-      
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should authenticate with mock manual credentials', async () => {
-      // Test loginWithCredentials() with mock users
-      
+      // Verify tokenStorage and the @user_data cache are cleared.
       expect(true).toBe(true); // Placeholder
     });
   });
@@ -227,20 +106,19 @@ describe('Authentication Context Unit Tests', () => {
   describe('User Roles', () => {
     it('should assign standard role to regular users', async () => {
       // Verify user@example.com has role='standard'
-      
       expect(true).toBe(true); // Placeholder
     });
 
     it('should assign admin role to admin users', async () => {
       // Verify admin@example.com has role='admin'
-      
       expect(true).toBe(true); // Placeholder
     });
   });
 });
 
 /**
- * Test Data
+ * Test Data — matches the dev seed users in the backend's
+ * V7__seed_dev_data.sql and .docker/keycloak/realm-export.json.
  */
 export const mockUsers = {
   standard: {
@@ -261,18 +139,6 @@ export const mockUsers = {
  * Test Helpers
  */
 export const testHelpers = {
-  async loginAsStandardUser() {
-    // Helper to login as standard user
-  },
-  
-  async loginAsAdmin() {
-    // Helper to login as admin
-  },
-  
-  async logout() {
-    // Helper to logout
-  },
-  
   async clearStorage() {
     await AsyncStorage.clear();
   },

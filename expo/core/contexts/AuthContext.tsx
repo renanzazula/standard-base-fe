@@ -5,6 +5,7 @@ import type {NavigationTab} from './AdminConfigContext';
 import {useAdminConfig} from './AdminConfigContext';
 import type {NavigationTabResponse} from '@core/services/auth';
 import * as authApi from '@core/services/auth';
+import * as keycloakAuth from '@core/services/keycloakAuth';
 import * as userProfileApi from '@core/services/userProfile';
 import * as tokenStorage from '@core/services/tokenStorage';
 import {setOnAuthExpired} from '@core/services/api';
@@ -96,6 +97,8 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     EMAIL: 'manual',
     GOOGLE: 'google',
     APPLE: 'apple',
+    // Keycloak-federated accounts present as regular (manual) sign-ins.
+    KEYCLOAK: 'manual',
   };
   const firstProvider = profile.providers[0] ?? 'EMAIL';
   const role = profile.role.toLowerCase() as UserRole;
@@ -134,7 +137,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   useEffect(() => {
     setOnAuthExpired(() => {
-      logout();
+      // Tokens are already invalid — skip the Keycloak end-session redirect.
+      logout(false);
     });
     loadSession();
   }, []);
@@ -205,9 +209,20 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
-  const loginWithCredentials = async (email: string, password: string): Promise<boolean> => {
-    const response = await authApi.login(email, password);
-    const user = mapAuthResponseToUser(response, 'manual');
+  /**
+   * Keycloak hosted login (Authorization Code + PKCE in a browser sheet).
+   * Keycloak handles credentials, registration, password reset and any
+   * brokered social providers; on success the backend JIT-provisions/links
+   * the local user and /api/auth/me returns the profile + DB permissions.
+   *
+   * @returns false when the user dismissed the browser sheet.
+   */
+  const signIn = async (): Promise<boolean> => {
+    const completed = await keycloakAuth.signIn();
+    if (!completed) return false;
+
+    const profile = await authApi.getCurrentUser();
+    const user = mapProfileToUser(profile);
     await saveUserCache(user);
     setAuthState({
       user,
@@ -232,44 +247,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return true;
   };
 
-  const loginWithGoogle = async (): Promise<boolean> => {
-    // TODO: Real Google OAuth flow — requires expo-auth-session integration
-    // 1. Use Google.useAuthRequest() to get authorization code
-    // 2. Call authApi.oauthLogin('GOOGLE', authorizationCode)
-    // 3. Map response to User and save session
-    throw new Error('Google Sign In is not yet configured.');
-  };
-
-  const loginWithApple = async (): Promise<boolean> => {
-    // TODO: Real Apple Sign In flow — requires expo-apple-authentication
-    // 1. Use AppleAuthentication.signInAsync() to get authorization code
-    // 2. Call authApi.oauthLogin('APPLE', authorizationCode)
-    // 3. Map response to User and save session
-    throw new Error('Apple Sign In is not yet configured.');
-  };
-
-  const signUp = async (
-    email: string,
-    password: string,
-    name: string,
-    provider: 'google' | 'apple' | 'manual',
-  ): Promise<boolean> => {
-    const response = await authApi.register(email, password, name);
-    const user = mapAuthResponseToUser(response, provider);
-    await saveUserCache(user);
-    setAuthState({
-      user,
-      isAuthenticated: true,
-      isLoading: false,
-      lastActivity: Date.now(),
-    });
-    if (user.role === 'admin') reloadTabConfig();
-    return true;
-  };
-
-  const logout = async () => {
+  /**
+   * @param endKeycloakSession user-initiated logout also ends the Keycloak SSO
+   *        session (next sign-in prompts for credentials). Pass false when the
+   *        session already died server-side (expiry, deactivation).
+   */
+  const logout = async (endKeycloakSession: boolean = true) => {
     const userId = authState.user?.id;
-    await tokenStorage.clearTokens();
+    if (endKeycloakSession) {
+      // Also clears local tokens; guests (no id token) skip the browser step.
+      await keycloakAuth.signOut();
+    } else {
+      await tokenStorage.clearTokens();
+    }
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
     if (userId) {
       // Best-effort: covers account switching too, since the next user gets a different scope.
@@ -284,16 +274,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     });
   };
 
-  const resetPassword = async (email: string): Promise<boolean> => {
-    await authApi.forgotPassword(email);
-    return true;
-  };
-
-  const deactivateAccount = async (password: string) => {
+  const deactivateAccount = async () => {
     // The backend invalidates every token the moment this succeeds, so the
     // local session must be torn down immediately as well. Failures rethrow
-    // (wrong password → ApiError 400) and leave the session untouched.
-    await userProfileApi.deactivateAccount(password);
+    // and leave the session untouched.
+    await userProfileApi.deactivateAccount();
     await logout();
   };
 
@@ -339,13 +324,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     user: authState.user,
     isAuthenticated: authState.isAuthenticated,
     isLoading: authState.isLoading,
-    loginWithCredentials,
+    signIn,
     loginAsGuest,
-    loginWithGoogle,
-    loginWithApple,
-    signUp,
     logout,
-    resetPassword,
     deactivateAccount,
     updateActivity,
     updateProfile,

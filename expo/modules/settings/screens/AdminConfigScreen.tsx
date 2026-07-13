@@ -6,24 +6,22 @@ import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useRouter} from 'expo-router';
 import {
-  Apple,
   ChevronRight,
-  Chrome,
   Clock,
   Globe,
-  Mail,
   Minus,
   Plus,
   Shield,
   ToggleLeft,
   ToggleRight,
-  Trash2
+  Trash2,
+  UserRound
 } from 'lucide-react-native';
 import {ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View} from 'react-native';
 
 export default function AdminConfigScreen() {
   const { colors } = usePreferences();
-  const { config, toggleAuthMethod, updateSessionConfig, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
+  const { config, toggleGuestAccess, updateSessionConfig, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -364,74 +362,30 @@ export default function AdminConfigScreen() {
             <View style={styles.card}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
-                  <Chrome size={20} color={colors.text} />
+                  <UserRound size={20} color={colors.text} />
                 </View>
-                <Text style={styles.cardTitle}>Google Authentication</Text>
+                <Text style={styles.cardTitle}>Guest Access</Text>
               </View>
 
               <View style={styles.settingRow}>
                 <View>
-                  <Text style={styles.settingLabel}>Enable Google Login</Text>
+                  <Text style={styles.settingLabel}>Enable Guest Access</Text>
                   <Text style={styles.settingDescription}>
-                    Allow users to sign in with Google
+                    Allow users to enter without an account
                   </Text>
                 </View>
                 <Switch
-                  value={config.enabledAuthMethods.google}
-                  onValueChange={() => toggleAuthMethod('google')}
+                  value={config.enabledAuthMethods.guest}
+                  onValueChange={toggleGuestAccess}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="#FFFFFF"
                 />
               </View>
 
-            </View>
-
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Apple size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>Apple Authentication</Text>
-              </View>
-
-              <View style={styles.settingRow}>
-                <View>
-                  <Text style={styles.settingLabel}>Enable Apple Login</Text>
-                  <Text style={styles.settingDescription}>Allow users to sign in with Apple</Text>
-                </View>
-                <Switch
-                  value={config.enabledAuthMethods.apple}
-                  onValueChange={() => toggleAuthMethod('apple')}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                />
-              </View>
-
-            </View>
-
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Mail size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>Manual Registration</Text>
-              </View>
-
-              <View style={styles.settingRow}>
-                <View>
-                  <Text style={styles.settingLabel}>Enable Email/Password</Text>
-                  <Text style={styles.settingDescription}>
-                    Allow manual registration with email
-                  </Text>
-                </View>
-                <Switch
-                  value={config.enabledAuthMethods.manual}
-                  onValueChange={() => toggleAuthMethod('manual')}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                />
-              </View>
-
+              <Text style={styles.settingDescription}>
+                Sign-in methods (email/password, Google, Apple) are managed in
+                the Keycloak admin console.
+              </Text>
             </View>
           </View>
 

@@ -11,8 +11,6 @@ import {
   type ProfileFieldsConfig,
 } from '@modules/settings/utils/profileFieldVisibility';
 
-export type AuthMethod = 'google' | 'apple' | 'manual' | 'guest';
-
 export type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 
 export interface NavigationTab {
@@ -190,17 +188,18 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     }
   };
 
-  const toggleAuthMethod = async (method: AuthMethod) => {
+  /**
+   * Guest access is the only auth method toggled here — sign-in methods
+   * (email/password, Google, Apple) are managed in Keycloak.
+   */
+  const toggleGuestAccess = async () => {
     try {
       const response = await adminConfigApi.updateAuthMethods({
-        emailAuthEnabled: method === 'manual' ? !config.enabledAuthMethods.manual : config.enabledAuthMethods.manual,
-        googleAuthEnabled: method === 'google' ? !config.enabledAuthMethods.google : config.enabledAuthMethods.google,
-        appleAuthEnabled: method === 'apple' ? !config.enabledAuthMethods.apple : config.enabledAuthMethods.apple,
-        guestAuthEnabled: method === 'guest' ? !config.enabledAuthMethods.guest : config.enabledAuthMethods.guest,
+        guestAuthEnabled: !config.enabledAuthMethods.guest,
       });
       setConfig(mapConfigResponse(response));
     } catch (error) {
-      console.error('[AdminConfig] Failed to toggle auth method:', error);
+      console.error('[AdminConfig] Failed to toggle guest access:', error);
     }
   };
 
@@ -367,7 +366,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     isLoading,
     configLoaded,
     reloadTabConfig,
-    toggleAuthMethod,
+    toggleGuestAccess,
     updateSessionConfig,
     toggleLanguageAvailability,
     setDefaultLanguage,

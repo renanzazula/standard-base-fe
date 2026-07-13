@@ -3,7 +3,7 @@ import {useAuth} from '@core/contexts/AuthContext';
 import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useRouter} from 'expo-router';
-import {Apple as AppleIcon, Chrome, Lock, LogIn, Mail, UserRound} from 'lucide-react-native';
+import {LogIn, UserRound} from 'lucide-react-native';
 import {useState} from 'react';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {FONTS} from '@shared/constants/typography';
@@ -13,49 +13,41 @@ import {ApiError} from '@core/services/api';
 import {
   ActivityIndicator,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import BrandedBackground from '@shared/components/BrandedBackground';
 
+/**
+ * Entry point into the Keycloak hosted login: the button opens a browser
+ * sheet where Keycloak handles credentials, registration, password reset and
+ * any enabled social providers. Only guest access remains app-rendered.
+ */
 export default function LoginScreen() {
   const { colors } = usePreferences();
   const { config } = useAdminConfig();
-  const { loginWithCredentials, loginAsGuest, loginWithGoogle, loginWithApple } = useAuth();
+  const { signIn, loginAsGuest } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
   const isMobileWeb = useIsMobileWeb();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      showAlert(t('common.error'), t('auth.enterEmailAndPassword'));
-      return;
-    }
-
+  const handleSignIn = async () => {
     setIsLoading(true);
     try {
-      const success = await loginWithCredentials(email, password);
+      // Dismissing the Keycloak browser sheet returns false — stay on this screen.
+      const success = await signIn();
       if (success) {
         router.replace('/(tabs)/home');
-      } else {
-        showAlert(t('auth.loginFailed'), t('auth.invalidCredentials'));
       }
     } catch (error) {
       if (error instanceof ApiError) {
         showAlert(t('auth.loginFailed'), error.message);
-      } else if (error instanceof Error && error.message === 'User account is disabled') {
-        showAlert(t('common.error'), 'Your account has been disabled. Please contact support.');
       } else {
         showAlert(t('common.error'), t('auth.loginError'));
       }
@@ -84,50 +76,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    try {
-      const success = await loginWithGoogle();
-      if (success) {
-        router.replace('/(tabs)/home');
-      } else {
-        showAlert(t('auth.loginFailed'), 'Google login failed');
-      }
-    } catch (error) {
-      if (error instanceof ApiError) {
-        showAlert(t('auth.loginFailed'), error.message);
-      } else if (error instanceof Error && error.message === 'User account is disabled') {
-        showAlert(t('common.error'), 'Your account has been disabled. Please contact support.');
-      } else {
-        showAlert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Google login');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    setIsLoading(true);
-    try {
-      const success = await loginWithApple();
-      if (success) {
-        router.replace('/(tabs)/home');
-      } else {
-        showAlert(t('auth.loginFailed'), 'Apple login failed');
-      }
-    } catch (error) {
-      if (error instanceof ApiError) {
-        showAlert(t('auth.loginFailed'), error.message);
-      } else if (error instanceof Error && error.message === 'User account is disabled') {
-        showAlert(t('common.error'), 'Your account has been disabled. Please contact support.');
-      } else {
-        showAlert(t('common.error'), error instanceof Error ? error.message : 'An error occurred during Apple login');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -140,8 +88,7 @@ export default function LoginScreen() {
       maxWidth: MAX_FORM_WIDTH,
       alignSelf: 'center',
     },
-    // Phone-sized browsers: full-width card, top-aligned so the form stays
-    // visible when the on-screen keyboard shrinks the viewport.
+    // Phone-sized browsers: full-width card, top-aligned.
     scrollContentMobileWeb: {
       justifyContent: 'flex-start',
       maxWidth: '100%',
@@ -172,45 +119,6 @@ export default function LoginScreen() {
       fontSize: 16,
       color: 'rgba(255, 255, 255, 0.75)',
       textAlign: 'center',
-    },
-    form: {
-      marginBottom: 0,
-    },
-    inputContainer: {
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      color: '#FFFFFF',
-      marginBottom: 8,
-    },
-    inputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: 16,
-    },
-    inputIcon: {
-      marginRight: 12,
-    },
-    input: {
-      flex: 1,
-      height: 52,
-      fontSize: 16,
-      color: colors.text,
-    },
-    forgotPassword: {
-      alignSelf: 'flex-end',
-      marginTop: 8,
-    },
-    forgotPasswordText: {
-      fontSize: 14,
-      color: colors.primary,
-      fontWeight: '600' as const,
     },
     loginButton: {
       backgroundColor: colors.primary,
@@ -246,10 +154,7 @@ export default function LoginScreen() {
       color: 'rgba(255, 255, 255, 0.75)',
       fontWeight: '500' as const,
     },
-    socialButtons: {
-      gap: 12,
-    },
-    socialButton: {
+    guestButton: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -259,39 +164,17 @@ export default function LoginScreen() {
       borderColor: colors.border,
       backgroundColor: colors.surface,
     },
-    socialButtonText: {
+    guestButtonText: {
       fontSize: 16,
       fontWeight: '600' as const,
       color: colors.text,
       marginLeft: 12,
     },
-    footer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: 24,
-    },
-    footerText: {
-      fontSize: 14,
-      color: 'rgba(255, 255, 255, 0.75)',
-    },
-    footerLink: {
-      fontSize: 14,
-      color: colors.primary,
-      fontWeight: '600' as const,
-      marginLeft: 4,
-    },
   });
-
-  const showSocialButtons =
-    config.enabledAuthMethods.google || config.enabledAuthMethods.apple;
 
   return (
     <BrandedBackground>
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-        >
         <ScrollView
           contentContainerStyle={[styles.scrollContent, isMobileWeb && styles.scrollContentMobileWeb]}
           keyboardShouldPersistTaps="handled"
@@ -306,132 +189,42 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>{t('auth.signInToContinue')}</Text>
           </View>
 
-          {config.enabledAuthMethods.manual && (
-            <View style={styles.form}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('auth.email')}</Text>
-                <View style={styles.inputWrapper}>
-                  <Mail size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                  <TextInput
-                    testID="login-email-input"
-                    style={styles.input}
-                    placeholder={t('auth.enterEmail')}
-                    placeholderTextColor={colors.textSecondary}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isLoading}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('auth.password')}</Text>
-                <View style={styles.inputWrapper}>
-                  <Lock size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                  <TextInput
-                    testID="login-password-input"
-                    style={styles.input}
-                    placeholder={t('auth.enterPassword')}
-                    placeholderTextColor={colors.textSecondary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isLoading}
-                  />
-                </View>
-              </View>
-
-              <TouchableOpacity
-                testID="login-forgot-password-link"
-                style={styles.forgotPassword}
-                onPress={() => router.push('/forgot-password')}
-                disabled={isLoading}
-              >
-                <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                testID="login-submit-button"
-                style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <>
-                    <LogIn size={20} color="#FFFFFF" />
-                    <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {config.enabledAuthMethods.manual && (
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{t('common.or')}</Text>
-              <View style={styles.dividerLine} />
-            </View>
-          )}
-
-          {showSocialButtons && (
-            <View style={styles.socialButtons}>
-              {config.enabledAuthMethods.google && (
-                <TouchableOpacity
-                  testID="login-google-button"
-                  style={styles.socialButton}
-                  onPress={handleGoogleLogin}
-                  disabled={isLoading}
-                >
-                  <Chrome size={20} color={colors.text} />
-                  <Text style={styles.socialButtonText}>{t('auth.continueWithGoogle')}</Text>
-                </TouchableOpacity>
-              )}
-
-              {config.enabledAuthMethods.apple && (
-                <TouchableOpacity
-                  testID="login-apple-button"
-                  style={styles.socialButton}
-                  onPress={handleAppleLogin}
-                  disabled={isLoading}
-                >
-                  <AppleIcon size={20} color={colors.text} />
-                  <Text style={styles.socialButtonText}>{t('auth.continueWithApple')}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+          <TouchableOpacity
+            testID="login-submit-button"
+            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+            onPress={handleSignIn}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <LogIn size={20} color="#FFFFFF" />
+                <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
+              </>
+            )}
+          </TouchableOpacity>
 
           {config.enabledAuthMethods.guest && (
-            <View style={[styles.socialButtons, showSocialButtons && { marginTop: 12 }]}>
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{t('common.or')}</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
               <TouchableOpacity
                 testID="login-guest-button"
-                style={styles.socialButton}
+                style={styles.guestButton}
                 onPress={handleGuestLogin}
                 disabled={isLoading}
               >
                 <UserRound size={20} color={colors.text} />
-                <Text style={styles.socialButtonText}>{t('auth.enterAsGuest')}</Text>
+                <Text style={styles.guestButtonText}>{t('auth.enterAsGuest')}</Text>
               </TouchableOpacity>
-            </View>
+            </>
           )}
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>{t('auth.dontHaveAccount')}</Text>
-            <TouchableOpacity testID="login-signup-link" onPress={() => router.push('/signup')} disabled={isLoading}>
-              <Text style={styles.footerLink}>{t('auth.signup')}</Text>
-            </TouchableOpacity>
-          </View>
-
         </ScrollView>
-        </KeyboardAvoidingView>
       </SafeAreaView>
     </BrandedBackground>
   );

@@ -73,19 +73,24 @@ QueryClientProvider → AdminConfigProvider → PreferencesProvider
 
 `AuthContext` depends on `AdminConfigContext` (reads session config), so `AdminConfigProvider` must wrap `AuthProvider`.
 
+### Authentication (Keycloak)
+
+Authentication is hosted by Keycloak (OIDC Authorization Code + PKCE via `expo-auth-session`). `core/services/keycloakAuth.ts` implements `signIn()` (browser sheet to the hosted login page — Keycloak owns credentials, registration, password reset, and social brokering), `refresh()` (direct call to Keycloak's token endpoint), and `signOut()` (end-session + local token clearing). The OAuth redirect (`myapp://auth/callback`) is allowed through `app/+native-intent.tsx`. Guest access stays backend-issued (`POST /api/auth/guest`). After sign-in, `AuthContext` loads the profile + DB-driven permissions from `GET /api/auth/me`.
+
 ### API Layer
 
 `core/services/api.ts` → `apiFetch<T>(path, options)`:
 - Automatically attaches `Authorization: Bearer <token>` and `X-Tenant-ID` headers
-- On 401, attempts token refresh via `/api/auth/refresh` before retrying
+- Proactively refreshes against Keycloak's token endpoint when the stored expiry has passed; on 401, refreshes (single in-flight refresh shared by concurrent requests) before retrying
 - Throws `ApiError` (with `.status` and `.error`) on non-ok responses
-- Throws `AuthExpiredError` and calls the registered `onAuthExpired` callback when refresh fails (triggers logout)
+- Throws `AuthExpiredError` and calls the registered `onAuthExpired` callback when refresh fails (triggers logout without the end-session redirect)
 
 ### Environment / Backend Mode
 
 `core/config/env.ts` reads:
 - `EXPO_PUBLIC_API_URL` — backend base URL (set in `.env`)
 - `EXPO_PUBLIC_TENANT_ID` — multi-tenant identifier
+- `EXPO_PUBLIC_KEYCLOAK_URL` / `EXPO_PUBLIC_KEYCLOAK_REALM` / `EXPO_PUBLIC_KEYCLOAK_CLIENT_ID` — Keycloak (defaults: `http://localhost:8180`, `standard-base`, `standard-base-app`); the URL must match the backend's configured issuer exactly (Android emulator: `adb reverse tcp:8180 tcp:8180`)
 - `ENV.HAS_BACKEND` — `true` only when `EXPO_PUBLIC_API_URL` is set
 
 When `HAS_BACKEND` is false, `AdminConfigContext` skips the API call and uses hardcoded `DEFAULT_CONFIG`. The app runs fully offline/mock in this mode.

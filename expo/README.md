@@ -240,20 +240,37 @@ Integrate with backend services:
 - **Firebase** - Google's mobile development platform
 - **Custom API** - Connect to your own backend
 
-### **Add Authentication**
+### **Authentication (implemented — Keycloak)**
 
-Implement user authentication:
+This app authenticates against **Keycloak** using the OIDC Authorization Code +
+PKCE flow via [Expo AuthSession](https://docs.expo.dev/guides/authentication/):
 
-**Basic Authentication (works in Expo Go):**
+- The login screen's single **Log In** button opens Keycloak's hosted page in a
+  browser sheet — Keycloak owns email/password login, self-registration,
+  password reset, and any brokered social providers (Google, Apple).
+- The OAuth redirect returns to `myapp://auth/callback` (see
+  `app/+native-intent.tsx`); the code is exchanged for tokens which are stored
+  via `core/services/tokenStorage.ts` (SecureStore on native, AsyncStorage on web).
+- `core/services/api.ts` attaches the Bearer token to every backend call and
+  silently refreshes it against Keycloak's token endpoint.
+- **Guest access** stays backend-issued (`POST /api/auth/guest`) and never
+  touches Keycloak.
 
-- **Expo AuthSession** - OAuth providers (Google, Facebook, Apple) - [Guide](https://docs.expo.dev/guides/authentication/)
-- **Supabase Auth** - Email/password and social login - [Integration Guide](https://supabase.com/docs/guides/getting-started/tutorials/with-expo-react-native)
-- **Firebase Auth** - Comprehensive authentication solution - [Setup Guide](https://docs.expo.dev/guides/using-firebase/)
+Configuration (`.env`):
 
-**Native Authentication (requires Custom Development Build):**
+```
+EXPO_PUBLIC_API_URL=http://localhost:8080
+EXPO_PUBLIC_KEYCLOAK_URL=http://localhost:8180
+EXPO_PUBLIC_KEYCLOAK_REALM=standard-base
+EXPO_PUBLIC_KEYCLOAK_CLIENT_ID=standard-base-app
+```
 
-- **Apple Sign In** - Native Apple authentication - [Implementation Guide](https://docs.expo.dev/versions/latest/sdk/apple-authentication/)
-- **Google Sign In** - Native Google authentication - [Setup Guide](https://docs.expo.dev/guides/google-authentication/)
+Local Keycloak + backend setup lives in the backend repo
+(`docker compose -f .docker/docker-compose.yaml up -d` — see its README).
+Android emulator note: run `adb reverse tcp:8180 tcp:8180` and
+`adb reverse tcp:8080 tcp:8080` so the token issuer matches the backend's
+configured issuer URI. The auth code lives in `core/services/keycloakAuth.ts`
+and `core/contexts/AuthContext.tsx`.
 
 ### **Add Push Notifications**
 
