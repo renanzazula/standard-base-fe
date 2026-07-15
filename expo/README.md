@@ -242,27 +242,50 @@ Integrate with backend services:
 
 ### **Authentication (implemented — Keycloak)**
 
-This app authenticates against **Keycloak** using the OIDC Authorization Code +
-PKCE flow via [Expo AuthSession](https://docs.expo.dev/guides/authentication/):
+This app authenticates against **Keycloak**. Credentials are entered directly
+on the app's login page and exchanged via Keycloak's **Direct Access Grant**
+(resource-owner password) at the token endpoint — no browser popup. Browser
+sheets (via [Expo AuthSession](https://docs.expo.dev/guides/authentication/),
+OIDC Authorization Code + PKCE) are used only for:
 
-- The login screen's single **Log In** button opens Keycloak's hosted page in a
-  browser sheet — Keycloak owns email/password login, self-registration,
-  password reset, and any brokered social providers (Google, Apple).
-- The OAuth redirect returns to `myapp://auth/callback` (see
-  `app/+native-intent.tsx`); the code is exchanged for tokens which are stored
-  via `core/services/tokenStorage.ts` (SecureStore on native, AsyncStorage on web).
+- **Brokered identity providers** (Google, Apple, …): buttons appear when
+  enabled in the admin auth-method config and open the provider directly via
+  `kc_idp_hint` — the flow stays centralized through Keycloak.
+- **Registration**: the "Sign Up" link opens Keycloak's hosted registration
+  page (OIDC `registrations` endpoint) and signs the new user in on completion.
+- **Password reset**: "Forgot Password?" opens Keycloak's hosted
+  reset-credentials page.
+
+Other details:
+
+- The OAuth redirect returns to `skateboardpodcast://auth/callback` (see
+  `app/+native-intent.tsx`; the scheme must match `app.json`); tokens are
+  stored via `core/services/tokenStorage.ts` (SecureStore on native,
+  AsyncStorage on web).
 - `core/services/api.ts` attaches the Bearer token to every backend call and
   silently refreshes it against Keycloak's token endpoint.
 - **Guest access** stays backend-issued (`POST /api/auth/guest`) and never
   touches Keycloak.
+
+Keycloak client requirements (admin console):
+
+- Client (`EXPO_PUBLIC_KEYCLOAK_CLIENT_ID`): **Direct access grants** enabled;
+  redirect URIs cover `skateboardpodcast://auth/callback` and the web origin's
+  `/auth/callback` (plus web origins for CORS on the token endpoint).
+- Realm: **User registration** enabled (Sign Up link) and **brute force
+  detection** on (the direct grant bypasses the hosted page's UI protections,
+  not the server-side detector).
+- Note: accounts with pending required actions (verify email, forced password
+  update) or OTP cannot complete the direct grant — the app shows a message
+  pointing them to the browser sign-in to finish setup.
 
 Configuration (`.env`):
 
 ```
 EXPO_PUBLIC_API_URL=http://localhost:8080
 EXPO_PUBLIC_KEYCLOAK_URL=http://localhost:8180
-EXPO_PUBLIC_KEYCLOAK_REALM=standard-base
-EXPO_PUBLIC_KEYCLOAK_CLIENT_ID=standard-base-app
+EXPO_PUBLIC_KEYCLOAK_REALM=skateboard-podcast
+EXPO_PUBLIC_KEYCLOAK_CLIENT_ID=skateboard-podcast-fe
 ```
 
 Local Keycloak + backend setup lives in the backend repo

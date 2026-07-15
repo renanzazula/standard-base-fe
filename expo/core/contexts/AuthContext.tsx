@@ -219,17 +219,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   /**
-   * Keycloak hosted login (Authorization Code + PKCE in a browser sheet).
-   * Keycloak handles credentials, registration, password reset and any
-   * brokered social providers; on success the backend JIT-provisions/links
-   * the local user and /api/auth/me returns the profile + DB permissions.
-   *
-   * @returns false when the user dismissed the browser sheet.
+   * Keycloak tokens are stored — load the profile + DB permissions from the
+   * backend (which JIT-provisions/links the local user on first sign-in) and
+   * activate the session.
    */
-  const signIn = async (): Promise<boolean> => {
-    const completed = await keycloakAuth.signIn();
-    if (!completed) return false;
-
+  const completeKeycloakSignIn = async (): Promise<void> => {
     const profile = await authApi.getCurrentUser();
     const user = mapProfileToUser(profile);
     await saveUserCache(user);
@@ -240,6 +234,43 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       lastActivity: Date.now(),
     });
     if (canAccessAdminConfig(user.permissions)) reloadTabConfig();
+  };
+
+  /**
+   * In-app credential login via Keycloak's Direct Access Grant — no browser.
+   * Throws KeycloakAuthError (see keycloakAuth.isInvalidCredentials /
+   * isAccountNotSetUp) when Keycloak rejects the credentials.
+   */
+  const signInWithCredentials = async (usernameOrEmail: string, password: string): Promise<boolean> => {
+    await keycloakAuth.signInWithPassword(usernameOrEmail, password);
+    await completeKeycloakSignIn();
+    return true;
+  };
+
+  /**
+   * Keycloak hosted login (Authorization Code + PKCE in a browser sheet).
+   * Pass an idpHint (Keycloak IdP alias, e.g. 'google') to land directly on a
+   * brokered provider; without one it shows the full hosted login page.
+   *
+   * @returns false when the user dismissed the browser sheet.
+   */
+  const signIn = async (options?: { idpHint?: string }): Promise<boolean> => {
+    const completed = await keycloakAuth.signIn(options);
+    if (!completed) return false;
+    await completeKeycloakSignIn();
+    return true;
+  };
+
+  /**
+   * Keycloak hosted registration in a browser sheet; the new user is signed
+   * in automatically on completion.
+   *
+   * @returns false when the user dismissed the browser sheet.
+   */
+  const register = async (): Promise<boolean> => {
+    const completed = await keycloakAuth.register();
+    if (!completed) return false;
+    await completeKeycloakSignIn();
     return true;
   };
 
@@ -334,6 +365,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated: authState.isAuthenticated,
     isLoading: authState.isLoading,
     signIn,
+    signInWithCredentials,
+    register,
     loginAsGuest,
     logout,
     deactivateAccount,

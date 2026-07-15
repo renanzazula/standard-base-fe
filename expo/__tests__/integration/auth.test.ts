@@ -1,12 +1,15 @@
 /**
  * Integration Tests for Authentication Flows (placeholders)
  *
- * Authentication is hosted by Keycloak: the app runs an OIDC Authorization
- * Code + PKCE flow in a browser sheet (core/services/keycloakAuth.ts), and
- * Keycloak owns credentials, registration, password reset and social
- * brokering. The backend keeps guest login and /api/auth/me (profile +
+ * Authentication is backed by Keycloak. The login page collects credentials
+ * in-app and exchanges them via the Direct Access Grant at Keycloak's token
+ * endpoint (core/services/keycloakAuth.ts — no browser popup). Browser
+ * sheets remain only for brokered identity providers (kc_idp_hint),
+ * registration (OIDC registrations endpoint) and password reset (hosted
+ * page). The backend keeps guest login and /api/auth/me (profile +
  * DB-driven permissions). These placeholders document the intended coverage;
- * the directory is excluded from the Jest run (see package.json).
+ * the directory is excluded from the Jest run (see package.json). Real unit
+ * coverage: core/services/__tests__/keycloakAuth.test.ts.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,22 +19,37 @@ describe('Authentication Integration Tests', () => {
     await AsyncStorage.clear();
   });
 
-  describe('IT-001: Keycloak hosted sign-in', () => {
-    it('should complete the Authorization Code + PKCE flow and load the profile', async () => {
+  describe('IT-001: In-app credential sign-in (Direct Access Grant)', () => {
+    it('should exchange in-app credentials at the token endpoint and load the profile', async () => {
       // Test Steps:
-      // 1. User presses "Log In" (login-submit-button) — promptAsync opens the
-      //    Keycloak hosted page (login + registration + forgot-password links).
-      // 2. Keycloak redirects to myapp://auth/callback?code=… (allowed by
-      //    +native-intent.tsx) and the code is exchanged for tokens.
-      // 3. Tokens (access/refresh/id + expiry) are persisted via tokenStorage.
-      // 4. /api/auth/me returns the JIT-provisioned local profile with
+      // 1. User types email/username + password into the login form and
+      //    presses Sign In (login-submit-button) — no browser opens.
+      // 2. signInWithPassword posts grant_type=password to Keycloak's token
+      //    endpoint; tokens (access/refresh/id + expiry) persisted via
+      //    tokenStorage.
+      // 3. /api/auth/me returns the JIT-provisioned local profile with
       //    permissions and navigation tabs; the app redirects to /(tabs)/home.
       expect(true).toBe(true); // Placeholder
     });
 
-    it('should stay on the login screen when the browser sheet is dismissed', async () => {
-      // promptAsync resolving with type 'cancel'/'dismiss' must not error or
-      // navigate — AuthContext.signIn() returns false.
+    it('should show "invalid credentials" on a wrong password and stay on the page', async () => {
+      // Keycloak responds 401 invalid_grant → KeycloakAuthError →
+      // auth.invalidCredentials alert; no navigation, no tokens stored.
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it('should direct accounts with pending required actions to the browser flow', async () => {
+      // invalid_grant "Account is not fully set up" (email verification /
+      // forced password update) → auth.accountNotSetUp message; the hosted
+      // browser sign-in can complete the required actions.
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it('should stay on the login screen when a browser-sheet flow is dismissed', async () => {
+      // Provider buttons (kc_idp_hint), hosted-login fallback and the
+      // registration link open a browser sheet; promptAsync resolving with
+      // type 'cancel'/'dismiss' must not error or navigate — signIn()/
+      // register() return false.
       expect(true).toBe(true); // Placeholder
     });
 
