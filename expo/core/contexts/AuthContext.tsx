@@ -10,9 +10,14 @@ import * as userProfileApi from '@core/services/userProfile';
 import * as tokenStorage from '@core/services/tokenStorage';
 import {setOnAuthExpired} from '@core/services/api';
 import {clearImageCacheScope, userScope} from '@core/services/imageCache';
-import {DEFAULT_ROLE_PERMISSIONS, type Permission} from '@shared/constants/permissions';
+import {canAccessAdminConfig, type Permission} from '@shared/constants/permissions';
 
-export type UserRole = 'standard' | 'admin' | 'guest';
+/**
+ * Lowercased name of the user's Keycloak user-type role. Not a union type:
+ * roles are dynamic (composite realm roles defined in Keycloak), so new types
+ * like 'gold' arrive without app changes. 'guest' keeps special meaning.
+ */
+export type UserRole = string;
 
 export interface User {
   id: string;
@@ -57,11 +62,14 @@ function mapNavigationTab(t: NavigationTabResponse): NavigationTab {
 }
 
 function resolvePermissions(role: UserRole, apiPermissions?: string[]): Permission[] {
-  if (apiPermissions && apiPermissions.length > 0) {
-    return apiPermissions as Permission[];
+  // Permissions come exclusively from the backend (which reads them from the
+  // Keycloak token / GUEST composite role) — there is no client-side fallback,
+  // since the role list itself is dynamic.
+  if (!apiPermissions || apiPermissions.length === 0) {
+    console.warn('[Auth] No permissions returned from API for role:', role);
+    return [];
   }
-  console.warn('[Auth] No permissions returned from API — falling back to client-side defaults for role:', role);
-  return DEFAULT_ROLE_PERMISSIONS[role] ?? DEFAULT_ROLE_PERMISSIONS.standard;
+  return apiPermissions as Permission[];
 }
 
 function mapAuthResponseToUser(
@@ -165,8 +173,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isLoading: false,
           lastActivity: Date.now(),
         });
-        // /api/admin/config is ADMIN-only — skip the call for other roles.
-        if (user.role === 'admin') reloadTabConfig();
+        // /api/admin/config requires an admin-settings permission — skip
+        // the call for users without any.
+        if (canAccessAdminConfig(user.permissions)) reloadTabConfig();
         return;
       }
     } catch (error) {
@@ -230,7 +239,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isLoading: false,
       lastActivity: Date.now(),
     });
-    if (user.role === 'admin') reloadTabConfig();
+    if (canAccessAdminConfig(user.permissions)) reloadTabConfig();
     return true;
   };
 

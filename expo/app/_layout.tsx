@@ -4,7 +4,7 @@ import {PostsProvider, usePosts} from '@core/contexts/PostsContext';
 import {PreferencesProvider, usePreferences} from '@core/contexts/PreferencesContext';
 import {UserManagementProvider} from '@core/contexts/UserManagementContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
-import {PERMISSIONS} from '@shared/constants/permissions';
+import {canAccessAdminConfig, PERMISSIONS} from '@shared/constants/permissions';
 import SplashGate from '@modules/splash/SplashGate';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {Fraunces_700Bold, useFonts} from '@expo-google-fonts/fraunces';
@@ -23,8 +23,6 @@ const queryClient = new QueryClient();
 
 const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PERMISSIONS]> = {
   'user-management': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
-  'user-permissions': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE,
-  'profile-permissions': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE,
   'configure-authentication': PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH,
   'session-configuration': PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG,
   'language-settings': PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
@@ -99,7 +97,8 @@ function RootLayoutNav() {
     if (!isAuthenticated) return;
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        if (user?.role === 'admin') {
+        // Permission-based, not role-based: roles are dynamic (Keycloak).
+        if (canAccessAdminConfig(user?.permissions ?? [])) {
           reloadTabConfig();
         } else {
           refreshProfile();
@@ -107,7 +106,7 @@ function RootLayoutNav() {
       }
     });
     return () => subscription.remove();
-  }, [isAuthenticated, user?.role]);
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -144,8 +143,6 @@ function RootLayoutNav() {
       <Stack.Screen name="navigation-management" options={{ headerShown: true }} />
       <Stack.Screen name="branding" options={{ headerShown: true }} />
       <Stack.Screen name="user-management" options={{ headerShown: true, title: 'User Management' }} />
-      <Stack.Screen name="user-permissions" options={{ headerShown: true, title: 'User Permissions' }} />
-      <Stack.Screen name="profile-permissions" options={{ headerShown: true, title: 'Profile Permissions' }} />
       <Stack.Screen name="profile-restrictions" options={{ headerShown: true }} />
       <Stack.Screen name="configure-authentication" options={{ headerShown: true }} />
       <Stack.Screen name="session-configuration" options={{ headerShown: true }} />

@@ -7,7 +7,6 @@ import {
     RoleFilter,
     StatusFilter,
 } from '@modules/settings/utils/userFilters';
-import type {AdminRole} from '@core/services/adminUsers';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {usePermissions} from '@shared/hooks/usePermissions';
 import {PERMISSIONS} from '@shared/constants/permissions';
@@ -30,11 +29,9 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
     Apple as AppleIcon,
     CheckCircle,
-    ChevronRight,
     Chrome,
     Edit3,
     Filter,
-    Key,
     Lock,
     Shield,
     Trash2,
@@ -48,10 +45,15 @@ import {
 
 export default function UserManagementScreen() {
   const { user: currentUser } = useAuth();
-  const { users, isLoading, loadError, loadUsers, toggleUserStatus, deleteUser, updateUser, addUser } = useUserManagement();
+  const {
+    users, isLoading, loadError, availableRoles,
+    loadUsers, loadAvailableRoles, toggleUserStatus, deleteUser, updateUser, addUser,
+  } = useUserManagement();
 
   useFocusEffect(useCallback(() => {
     loadUsers();
+    // Role list comes from Keycloak — types created there appear automatically.
+    loadAvailableRoles();
   }, []));
   const { colors } = usePreferences();
   const { hasPermission } = usePermissions();
@@ -68,16 +70,23 @@ export default function UserManagementScreen() {
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [editName, setEditName] = useState('');
   const [editUsername, setEditUsername] = useState('');
-  const [editRole, setEditRole] = useState<'admin' | 'standard' | 'guest'>('standard');
+  const [editRole, setEditRole] = useState<string>('standard');
   const [createEmail, setCreateEmail] = useState('');
   const [createDisplayName, setCreateDisplayName] = useState('');
   const [createPassword, setCreatePassword] = useState('');
-  const [createRole, setCreateRole] = useState<AdminRole>('STANDARD');
+  const [createRole, setCreateRole] = useState<string>('standard');
   const [createLoading, setCreateLoading] = useState(false);
 
   const filteredUsers = useMemo(
     () => filterUsers(users, { search: searchQuery, role: roleFilter, status: statusFilter }),
     [users, searchQuery, roleFilter, statusFilter],
+  );
+
+  // Assignable user types (lowercased for display/state), straight from Keycloak.
+  const roleOptions = useMemo(
+    () => (availableRoles.length > 0 ? availableRoles : ['ADMIN', 'STANDARD', 'GUEST'])
+        .map((r) => r.toLowerCase()),
+    [availableRoles],
   );
 
   const stats = useMemo(() => {
@@ -261,42 +270,6 @@ export default function UserManagementScreen() {
         },
         emptyTitle: { fontSize: 18, fontWeight: '700' as const, color: colors.text, marginBottom: 8 },
         emptyDescription: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-        sectionTitle: {
-          fontSize: 13,
-          fontWeight: '700' as const,
-          color: colors.textSecondary,
-          textTransform: 'uppercase' as const,
-          letterSpacing: 0.8,
-          marginBottom: 12,
-          marginTop: 4,
-        },
-        profileDefaultsCard: {
-          backgroundColor: colors.card,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: colors.border,
-          overflow: 'hidden' as const,
-          marginBottom: 24,
-        },
-        profileRow: {
-          flexDirection: 'row' as const,
-          alignItems: 'center',
-          gap: 12,
-          padding: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        },
-        profileIconWrap: {
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          backgroundColor: colors.primary + '15',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        profileRowInfo: { flex: 1 },
-        profileRowTitle: { fontSize: 15, fontWeight: '600' as const, color: colors.text },
-        profileRowSubtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
         accessDeniedContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
         accessDeniedIcon: {
           width: 100,
@@ -420,12 +393,12 @@ export default function UserManagementScreen() {
     }
     setCreateLoading(true);
     try {
-      await addUser({ email: createEmail.trim(), displayName: createDisplayName.trim(), temporaryPassword: createPassword, role: createRole });
+      await addUser({ email: createEmail.trim(), displayName: createDisplayName.trim(), temporaryPassword: createPassword, role: createRole.toUpperCase() });
       setCreateModalVisible(false);
       setCreateEmail('');
       setCreateDisplayName('');
       setCreatePassword('');
-      setCreateRole('STANDARD');
+      setCreateRole('standard');
       showAlert(t('common.success'), 'User created successfully');
     } catch {
       showAlert(t('common.error'), 'Failed to create user. The email may already be in use.');
@@ -452,7 +425,10 @@ export default function UserManagementScreen() {
       ? t('userManagement.admin')
       : role === 'guest'
         ? t('userManagement.guest')
-        : t('userManagement.standard');
+        : role === 'standard'
+          ? t('userManagement.standard')
+          // Types created in Keycloak after this app shipped (e.g. GOLD).
+          : role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
 
   const statusLabel = (status: string) =>
     status === 'active'
@@ -499,53 +475,6 @@ export default function UserManagementScreen() {
               <Text style={styles.statLabel}>{t('userManagement.disabledUsers')}</Text>
             </View>
           </View>
-
-          {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
-            <>
-              <Text style={styles.sectionTitle}>{t('userManagement.profileDefaults')}</Text>
-              <View style={styles.profileDefaultsCard}>
-                <TouchableOpacity
-                  style={styles.profileRow}
-                  onPress={() => router.push('/profile-permissions?role=STANDARD')}
-                >
-                  <View style={styles.profileIconWrap}>
-                    <UserIcon size={18} color={colors.primary} />
-                  </View>
-                  <View style={styles.profileRowInfo}>
-                    <Text style={styles.profileRowTitle}>{t('userManagement.standard')}</Text>
-                    <Text style={styles.profileRowSubtitle}>{t('userManagement.profileDefaultsSubtitle')}</Text>
-                  </View>
-                  <ChevronRight size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.profileRow}
-                  onPress={() => router.push('/profile-permissions?role=ADMIN')}
-                >
-                  <View style={styles.profileIconWrap}>
-                    <Shield size={18} color={colors.primary} />
-                  </View>
-                  <View style={styles.profileRowInfo}>
-                    <Text style={styles.profileRowTitle}>{t('userManagement.admin')}</Text>
-                    <Text style={styles.profileRowSubtitle}>{t('userManagement.profileDefaultsSubtitle')}</Text>
-                  </View>
-                  <ChevronRight size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.profileRow, { borderBottomWidth: 0 }]}
-                  onPress={() => router.push('/profile-permissions?role=GUEST')}
-                >
-                  <View style={styles.profileIconWrap}>
-                    <UserCheck size={18} color={colors.primary} />
-                  </View>
-                  <View style={styles.profileRowInfo}>
-                    <Text style={styles.profileRowTitle}>{t('userManagement.guest')}</Text>
-                    <Text style={styles.profileRowSubtitle}>{t('userManagement.profileDefaultsSubtitle')}</Text>
-                  </View>
-                  <ChevronRight size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
 
           <View style={styles.searchContainer}>
             <View style={{ flex: 1, position: 'relative' }}>
@@ -677,16 +606,6 @@ export default function UserManagementScreen() {
                       <Text style={styles.actionButtonText}>{t('common.edit')}</Text>
                     </TouchableOpacity>
                   )}
-                  {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) &&
-                    user.id !== currentUser?.id && (
-                      <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() => router.push(`/user-permissions?userId=${user.id}`)}
-                      >
-                        <Key size={16} color={colors.text} />
-                        <Text style={styles.actionButtonText}>{t('userManagement.managePermissions')}</Text>
-                      </TouchableOpacity>
-                    )}
                   {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS_UPDATE) && (
                     <TouchableOpacity
                       style={styles.actionButton}
@@ -739,24 +658,15 @@ export default function UserManagementScreen() {
                   >
                     <Text style={styles.filterOptionText}>{t('userManagement.allRoles')}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterOption, roleFilter === 'admin' && styles.filterOptionActive]}
-                    onPress={() => setRoleFilter('admin')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.admin')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterOption, roleFilter === 'standard' && styles.filterOptionActive]}
-                    onPress={() => setRoleFilter('standard')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.standard')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterOption, roleFilter === 'guest' && styles.filterOptionActive]}
-                    onPress={() => setRoleFilter('guest')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.guest')}</Text>
-                  </TouchableOpacity>
+                  {roleOptions.map((role) => (
+                    <TouchableOpacity
+                      key={role}
+                      style={[styles.filterOption, roleFilter === role && styles.filterOptionActive]}
+                      onPress={() => setRoleFilter(role)}
+                    >
+                      <Text style={styles.filterOptionText}>{roleLabel(role)}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
 
@@ -842,24 +752,15 @@ export default function UserManagementScreen() {
               <View style={styles.formField}>
                 <Text style={styles.formLabel}>Role</Text>
                 <View style={styles.filterOptions}>
-                  <TouchableOpacity
-                    style={[styles.filterOption, createRole === 'STANDARD' && styles.filterOptionActive]}
-                    onPress={() => setCreateRole('STANDARD')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.standard')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterOption, createRole === 'ADMIN' && styles.filterOptionActive]}
-                    onPress={() => setCreateRole('ADMIN')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.admin')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterOption, createRole === 'GUEST' && styles.filterOptionActive]}
-                    onPress={() => setCreateRole('GUEST')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.guest')}</Text>
-                  </TouchableOpacity>
+                  {roleOptions.map((role) => (
+                    <TouchableOpacity
+                      key={role}
+                      style={[styles.filterOption, createRole === role && styles.filterOptionActive]}
+                      onPress={() => setCreateRole(role)}
+                    >
+                      <Text style={styles.filterOptionText}>{roleLabel(role)}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
             </View>
@@ -907,24 +808,15 @@ export default function UserManagementScreen() {
               <View style={styles.formField}>
                 <Text style={styles.formLabel}>{t('userManagement.changeRole')}</Text>
                 <View style={styles.filterOptions}>
-                  <TouchableOpacity
-                    style={[styles.filterOption, editRole === 'standard' && styles.filterOptionActive]}
-                    onPress={() => setEditRole('standard')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.standard')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterOption, editRole === 'admin' && styles.filterOptionActive]}
-                    onPress={() => setEditRole('admin')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.admin')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterOption, editRole === 'guest' && styles.filterOptionActive]}
-                    onPress={() => setEditRole('guest')}
-                  >
-                    <Text style={styles.filterOptionText}>{t('userManagement.guest')}</Text>
-                  </TouchableOpacity>
+                  {roleOptions.map((role) => (
+                    <TouchableOpacity
+                      key={role}
+                      style={[styles.filterOption, editRole === role && styles.filterOptionActive]}
+                      onPress={() => setEditRole(role)}
+                    >
+                      <Text style={styles.filterOptionText}>{roleLabel(role)}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
             </View>

@@ -1,13 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import {useState} from 'react';
 import {User, UserRole} from './AuthContext';
-import type {
-    AdminRole,
-    PermissionOverride,
-    RolePermissionsResponse,
-    UserPermissionsResponse,
-    UserSummary
-} from '@core/services/adminUsers';
+import type {UserSummary} from '@core/services/adminUsers';
 import * as adminUsersApi from '@core/services/adminUsers';
 
 export type UserStatus = 'active' | 'disabled' | 'deactivated';
@@ -26,7 +20,8 @@ function mapToManagedUser(s: UserSummary): ManagedUser {
     username: s.username,
     role: s.role.toLowerCase() as UserRole,
     provider: (s.providers?.[0]?.toLowerCase() ?? 'manual') as User['provider'],
-    // The admin list summary carries no permission/tab detail — loaded separately per user.
+    // The admin list summary carries no permission/tab detail — permissions
+    // are managed in Keycloak (composite realm roles).
     permissions: [],
     navigationTabs: [],
     status: s.status.toLowerCase() as UserStatus,
@@ -39,10 +34,8 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [selectedUserPermissions, setSelectedUserPermissions] = useState<UserPermissionsResponse | null>(null);
-  const [permissionsLoading, setPermissionsLoading] = useState(false);
-  const [rolePermissions, setRolePermissions] = useState<RolePermissionsResponse[]>([]);
-  const [rolePermissionsLoading, setRolePermissionsLoading] = useState(false);
+  // User-type roles defined in Keycloak — new types appear here without app changes.
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
 
   const loadUsers = async () => {
     setIsLoading(true);
@@ -56,6 +49,16 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
       setUsers([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadAvailableRoles = async () => {
+    try {
+      const result = await adminUsersApi.listAssignableRoles();
+      setAvailableRoles(result?.roles ?? []);
+    } catch (error) {
+      console.error('[UserManagement] Failed to load roles:', error);
+      setAvailableRoles(['ADMIN', 'STANDARD', 'GUEST']);
     }
   };
 
@@ -83,8 +86,8 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
   };
 
   const updateUser = async (userId: string, updates: Partial<ManagedUser>) => {
-    const body: { role?: AdminRole; status?: 'ACTIVE' | 'DISABLED' } = {};
-    if (updates.role) body.role = updates.role.toUpperCase() as AdminRole;
+    const body: { role?: string; status?: 'ACTIVE' | 'DISABLED' } = {};
+    if (updates.role) body.role = updates.role.toUpperCase();
     if (updates.status) body.status = updates.status.toUpperCase() as 'ACTIVE' | 'DISABLED';
     try {
       const updated = await adminUsersApi.updateUser(userId, body);
@@ -95,55 +98,7 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     }
   };
 
-  const loadUserPermissions = async (userId: string) => {
-    setPermissionsLoading(true);
-    try {
-      const result = await adminUsersApi.getUserPermissions(userId);
-      setSelectedUserPermissions(result);
-    } catch (error) {
-      console.error('[UserManagement] Failed to load user permissions:', error);
-      setSelectedUserPermissions(null);
-    } finally {
-      setPermissionsLoading(false);
-    }
-  };
-
-  const saveUserPermissions = async (userId: string, overrides: PermissionOverride[]) => {
-    try {
-      const result = await adminUsersApi.updateUserPermissions(userId, overrides);
-      setSelectedUserPermissions(result);
-    } catch (error) {
-      console.error('[UserManagement] Failed to update user permissions:', error);
-      throw error;
-    }
-  };
-
-  const loadRolePermissions = async () => {
-    setRolePermissionsLoading(true);
-    try {
-      const result = await adminUsersApi.getRolePermissions();
-      setRolePermissions(result ?? []);
-    } catch (error) {
-      console.error('[UserManagement] Failed to load role permissions:', error);
-    } finally {
-      setRolePermissionsLoading(false);
-    }
-  };
-
-  const saveRolePermissions = async (role: string, permissions: string[]) => {
-    try {
-      const result = await adminUsersApi.updateRolePermissions(role, permissions);
-      setRolePermissions((prev) =>
-        prev.map((rp) => (rp.role.toUpperCase() === result.role.toUpperCase() ? result : rp)),
-      );
-      return result;
-    } catch (error) {
-      console.error('[UserManagement] Failed to update role permissions:', error);
-      throw error;
-    }
-  };
-
-  const addUser = async (userData: { email: string; displayName: string; temporaryPassword: string; role?: AdminRole }) => {
+  const addUser = async (userData: { email: string; displayName: string; temporaryPassword: string; role?: string }) => {
     const created = await adminUsersApi.createUser({
       email: userData.email,
       displayName: userData.displayName,
@@ -179,19 +134,13 @@ export const [UserManagementProvider, useUserManagement] = createContextHook(() 
     users,
     isLoading,
     loadError,
-    selectedUserPermissions,
-    permissionsLoading,
-    rolePermissions,
-    rolePermissionsLoading,
+    availableRoles,
     loadUsers,
+    loadAvailableRoles,
     toggleUserStatus,
     deleteUser,
     updateUser,
     addUser,
-    loadUserPermissions,
-    saveUserPermissions,
-    loadRolePermissions,
-    saveRolePermissions,
     getUserById,
     getUsersByRole,
     getUsersByStatus,

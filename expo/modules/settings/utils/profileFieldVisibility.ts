@@ -1,4 +1,4 @@
-import type { BackendProfileField, BackendRole, ProfileFieldVisibilityMap } from '@core/services/adminConfig';
+import type { BackendProfileField, ProfileFieldVisibilityMap } from '@core/services/adminConfig';
 
 export type ProfileFieldKey =
   | 'profilePicture'
@@ -8,9 +8,13 @@ export type ProfileFieldKey =
   | 'provider'
   | 'language';
 
-export type ProfileRole = 'admin' | 'standard' | 'guest';
-
-export type ProfileFieldsConfig = Record<ProfileRole, Record<ProfileFieldKey, boolean>>;
+/**
+ * Keyed by lowercased role name. Roles are dynamic (Keycloak composite realm
+ * roles), so this is an open map — known defaults exist for admin/standard/
+ * guest, and unknown roles fall back to everything-visible (mirroring the
+ * backend: only guests are restricted by default).
+ */
+export type ProfileFieldsConfig = Record<string, Record<ProfileFieldKey, boolean>>;
 
 const FIELD_KEY_MAP: Record<BackendProfileField, ProfileFieldKey> = {
   PROFILE_PICTURE: 'profilePicture',
@@ -19,12 +23,6 @@ const FIELD_KEY_MAP: Record<BackendProfileField, ProfileFieldKey> = {
   ROLE: 'role',
   PROVIDER: 'provider',
   LANGUAGE: 'language',
-};
-
-const ROLE_KEY_MAP: Record<BackendRole, ProfileRole> = {
-  ADMIN: 'admin',
-  STANDARD: 'standard',
-  GUEST: 'guest',
 };
 
 const ALL_VISIBLE: Record<ProfileFieldKey, boolean> = {
@@ -45,7 +43,7 @@ const NONE_VISIBLE: Record<ProfileFieldKey, boolean> = {
   language: false,
 };
 
-/** Mirrors the backend defaults: ADMIN/STANDARD see everything, GUEST sees nothing. */
+/** Mirrors the backend defaults: GUEST sees nothing, every other role sees everything. */
 export const DEFAULT_PROFILE_FIELDS_CONFIG: ProfileFieldsConfig = {
   admin: { ...ALL_VISIBLE },
   standard: { ...ALL_VISIBLE },
@@ -64,8 +62,10 @@ export function mapProfileFieldVisibility(
     return config;
   }
   for (const [backendRole, fields] of Object.entries(raw)) {
-    const role = ROLE_KEY_MAP[backendRole as BackendRole];
-    if (!role || !fields) continue;
+    if (!backendRole || !fields) continue;
+    const role = backendRole.toLowerCase();
+    config[role] = config[role]
+      ?? { ...(role === 'guest' ? NONE_VISIBLE : ALL_VISIBLE) };
     for (const [backendField, visible] of Object.entries(fields)) {
       const field = FIELD_KEY_MAP[backendField as BackendProfileField];
       if (field && typeof visible === 'boolean') {
@@ -80,10 +80,11 @@ export function getVisibleProfileFields(
   config: ProfileFieldsConfig,
   role: string | undefined,
 ): Set<ProfileFieldKey> {
-  // Unknown/missing roles get the most restrictive treatment (guest).
-  const roleKey: ProfileRole =
-    role === 'admin' || role === 'standard' || role === 'guest' ? role : 'guest';
-  const fields = config[roleKey] ?? DEFAULT_PROFILE_FIELDS_CONFIG[roleKey];
+  const roleKey = role?.toLowerCase() ?? 'guest';
+  // Unknown roles (types created later in Keycloak) mirror the backend
+  // default: everything visible; only guests are restricted by default.
+  const fields = config[roleKey]
+    ?? (roleKey === 'guest' ? NONE_VISIBLE : ALL_VISIBLE);
   return new Set(
     (Object.keys(fields) as ProfileFieldKey[]).filter((key) => fields[key]),
   );

@@ -13,7 +13,8 @@ export interface NavigationTabResponse {
   configs?: Record<string, Record<string, unknown>>;
 }
 
-export type BackendRole = 'ADMIN' | 'STANDARD' | 'GUEST';
+/** Uppercased Keycloak user-type role name — dynamic, not a fixed union. */
+export type BackendRole = string;
 
 export type BackendProfileField =
   | 'PROFILE_PICTURE'

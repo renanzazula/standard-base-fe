@@ -1,6 +1,7 @@
 import type {ManagedUser} from '@core/contexts/UserManagementContext';
 
-export type RoleFilter = 'all' | 'admin' | 'standard' | 'guest';
+/** 'all', or a lowercased role name — roles are dynamic (defined in Keycloak). */
+export type RoleFilter = string;
 export type StatusFilter = 'all' | 'active' | 'disabled' | 'deactivated';
 
 export const DEFAULT_STATUS_FILTER: StatusFilter = 'active';

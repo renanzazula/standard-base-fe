@@ -100,11 +100,13 @@ Local default (no `.env`): `http://localhost:8080`
 
 ### Permission System
 
-Permissions are FUNC_* string constants defined in `shared/constants/permissions.ts`.
+Permissions are FUNC_* string constants defined in `shared/constants/permissions.ts`. Roles and their permissions are managed in **Keycloak** (user types = composite realm roles made of FUNC_* roles), so `UserRole` is a plain string — new types like GOLD created in the Keycloak console work without app changes.
 
 - **Route-level guard**: `ROUTE_PERMISSION_MAP` in `app/_layout.tsx` maps route segments to required permissions. The root `useEffect` redirects to `/(tabs)/home` if the user lacks the required permission.
 - **UI-level guard**: `usePermissions()` hook from `shared/hooks/usePermissions.ts` exposes `hasPermission(key)` and `hasAnyPermission(keys[])`.
-- Permissions come from the backend on login/profile-refresh. If the API returns none, `resolvePermissions()` falls back to `DEFAULT_ROLE_PERMISSIONS[role]` in permissions.ts.
+- Permissions come exclusively from the backend on login/profile-refresh (derived from the Keycloak token, or the GUEST composite for guests). There is no client-side fallback.
+- Never gate on `role === 'admin'` — use permission checks (`canAccessAdminConfig(user.permissions)` for the admin-config surface). `'guest'` is the only role with fixed semantics.
+- User management's role picker/filter is fed by `GET /api/admin/roles`; permission editing happens in the Keycloak admin console, not in the app.
 
 ### Tab Navigation
 

@@ -9,10 +9,7 @@ jest.mock('@core/services/adminUsers', () => ({
   createUser: jest.fn(),
   updateUser: jest.fn(),
   deleteUser: jest.fn(),
-  getUserPermissions: jest.fn(),
-  updateUserPermissions: jest.fn(),
-  getRolePermissions: jest.fn(),
-  updateRolePermissions: jest.fn(),
+  listAssignableRoles: jest.fn(),
 }));
 
 const mockedApi = adminUsersApi as jest.Mocked<typeof adminUsersApi>;
@@ -67,6 +64,29 @@ describe('UserManagementContext', () => {
     expect(result.current.users).toHaveLength(2);
     expect(result.current.users[1].role).toBe('guest');
     expect(result.current.users[0].role).toBe('admin');
+  });
+
+  it('exposes the user-type roles defined in Keycloak', async () => {
+    // A type created in the Keycloak console (GOLD) appears with no app changes.
+    mockedApi.listAssignableRoles.mockResolvedValue({ roles: ['ADMIN', 'GOLD', 'GUEST', 'STANDARD'] });
+    const { result } = setup();
+
+    await act(async () => {
+      await result.current.loadAvailableRoles();
+    });
+
+    expect(result.current.availableRoles).toEqual(['ADMIN', 'GOLD', 'GUEST', 'STANDARD']);
+  });
+
+  it('falls back to the built-in roles when the role list cannot be loaded', async () => {
+    mockedApi.listAssignableRoles.mockRejectedValue(new Error('boom'));
+    const { result } = setup();
+
+    await act(async () => {
+      await result.current.loadAvailableRoles();
+    });
+
+    expect(result.current.availableRoles).toEqual(['ADMIN', 'STANDARD', 'GUEST']);
   });
 
   it('removes the row when delete succeeds', async () => {

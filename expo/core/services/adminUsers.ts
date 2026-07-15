@@ -1,18 +1,8 @@
 import {apiFetch} from './api';
 
-export interface PermissionOverride {
-  permission: string;
-  granted: boolean;
-}
-
-export interface UserPermissionsResponse {
-  userId: string;
-  effectivePermissions: string[];
-  roleDefaults: string[];
-  overrides: PermissionOverride[];
-}
-
-export type AdminRole = 'STANDARD' | 'ADMIN' | 'GUEST';
+// Role → permission mapping is managed in Keycloak (composite realm roles),
+// so roles are plain strings here: new user types (e.g. GOLD) created in the
+// Keycloak admin console work without app changes.
 
 export interface UserSummary {
   userId: string;
@@ -20,7 +10,7 @@ export interface UserSummary {
   displayName: string;
   username?: string;
   providers?: string[];
-  role: AdminRole;
+  role: string;
   status: 'ACTIVE' | 'DISABLED' | 'DEACTIVATED';
   createdAt?: string;
   lastLoginAt?: string;
@@ -48,14 +38,14 @@ export function createUser(body: {
   email: string;
   displayName: string;
   temporaryPassword: string;
-  role?: AdminRole;
+  role?: string;
 }): Promise<UserSummary> {
   return apiFetch('/api/admin/users', { method: 'POST', body: JSON.stringify(body) });
 }
 
 export function updateUser(
   userId: string,
-  body: { role?: AdminRole; status?: 'ACTIVE' | 'DISABLED' },
+  body: { role?: string; status?: 'ACTIVE' | 'DISABLED' },
 ): Promise<UserSummary> {
   return apiFetch(`/api/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) });
 }
@@ -64,35 +54,7 @@ export function deleteUser(userId: string): Promise<void> {
   return apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
 }
 
-export function getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
-  return apiFetch(`/api/admin/users/${userId}/permissions`);
-}
-
-export function updateUserPermissions(
-  userId: string,
-  overrides: PermissionOverride[],
-): Promise<UserPermissionsResponse> {
-  return apiFetch(`/api/admin/users/${userId}/permissions`, {
-    method: 'PUT',
-    body: JSON.stringify({ overrides }),
-  });
-}
-
-export interface RolePermissionsResponse {
-  role: string;
-  permissions: string[];
-}
-
-export function getRolePermissions(): Promise<RolePermissionsResponse[]> {
-  return apiFetch('/api/admin/permissions');
-}
-
-export function updateRolePermissions(
-  role: string,
-  permissions: string[],
-): Promise<RolePermissionsResponse> {
-  return apiFetch(`/api/admin/permissions/${role}`, {
-    method: 'PUT',
-    body: JSON.stringify({ permissions }),
-  });
+/** User-type roles defined in Keycloak (composite realm roles). */
+export function listAssignableRoles(): Promise<{roles: string[]}> {
+  return apiFetch('/api/admin/roles');
 }

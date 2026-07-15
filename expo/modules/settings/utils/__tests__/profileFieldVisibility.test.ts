@@ -59,14 +59,17 @@ describe('mapProfileFieldVisibility', () => {
     expect(config.standard).toEqual(DEFAULT_PROFILE_FIELDS_CONFIG.standard);
   });
 
-  it('ignores unknown roles and fields', () => {
+  it('accepts dynamic roles and ignores unknown fields', () => {
+    // Roles are defined in Keycloak — a type created there (e.g. GOLD) must
+    // flow through with the all-visible baseline plus its overrides.
     const config = mapProfileFieldVisibility({
-      SUPERADMIN: { EMAIL: false },
+      GOLD: { EMAIL: false },
       GUEST: { NICKNAME: true, LANGUAGE: true },
     } as never);
 
     expect(config).toEqual({
       ...DEFAULT_PROFILE_FIELDS_CONFIG,
+      gold: { ...DEFAULT_PROFILE_FIELDS_CONFIG.standard, email: false },
       guest: { ...DEFAULT_PROFILE_FIELDS_CONFIG.guest, language: true },
     });
   });
@@ -87,9 +90,12 @@ describe('getVisibleProfileFields', () => {
     expect(getVisibleProfileFields(DEFAULT_PROFILE_FIELDS_CONFIG, 'guest').size).toBe(0);
   });
 
-  it('treats a missing or unknown role as guest', () => {
+  it('treats a missing role as guest and an unknown role as unrestricted', () => {
     expect(getVisibleProfileFields(DEFAULT_PROFILE_FIELDS_CONFIG, undefined).size).toBe(0);
-    expect(getVisibleProfileFields(DEFAULT_PROFILE_FIELDS_CONFIG, 'moderator').size).toBe(0);
+    // Mirrors the backend default: only guests are restricted by default, so
+    // a type created later in Keycloak sees everything until configured.
+    const unknownRole = getVisibleProfileFields(DEFAULT_PROFILE_FIELDS_CONFIG, 'gold');
+    expect([...unknownRole].sort()).toEqual([...ALL_FIELDS].sort());
   });
 
   it('reflects per-field overrides', () => {
