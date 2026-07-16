@@ -90,12 +90,12 @@ Authentication is backed by Keycloak. The login page collects credentials in-app
 `core/config/env.ts` reads:
 - `EXPO_PUBLIC_API_URL` — backend base URL (set in `.env`)
 - `EXPO_PUBLIC_TENANT_ID` — multi-tenant identifier
-- `EXPO_PUBLIC_KEYCLOAK_URL` / `EXPO_PUBLIC_KEYCLOAK_REALM` / `EXPO_PUBLIC_KEYCLOAK_CLIENT_ID` — Keycloak (defaults: `http://localhost:8180`, `standard-base`, `standard-base-app`); the URL must match the backend's configured issuer exactly (Android emulator: `adb reverse tcp:8180 tcp:8180`)
+- `EXPO_PUBLIC_KEYCLOAK_URL` / `EXPO_PUBLIC_KEYCLOAK_REALM` / `EXPO_PUBLIC_KEYCLOAK_CLIENT_ID` — Keycloak (defaults: `http://localhost:8180`, `skateboard-podcast`, `skateboard-podcast-fe`); the URL must match the backend's configured issuer exactly (Android emulator: `adb reverse tcp:8180 tcp:8180`)
 - `ENV.HAS_BACKEND` — `true` only when `EXPO_PUBLIC_API_URL` is set
 
 When `HAS_BACKEND` is false, `AdminConfigContext` skips the API call and uses hardcoded `DEFAULT_CONFIG`. The app runs fully offline/mock in this mode.
 
-Production backend: `https://standard-base-production.up.railway.app`
+Production backend: `https://skateboard-podcast-be-app.up.railway.app`
 Local default (no `.env`): `http://localhost:8080`
 
 ### Permission System
