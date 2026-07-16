@@ -1,9 +1,8 @@
 import {showAlert} from '@shared/utils/alert';
 import {useAuth} from '@core/contexts/AuthContext';
-import {useAdminConfig} from '@core/contexts/AdminConfigContext';
 import {usePreferences} from '@core/contexts/PreferencesContext';
 import {useRouter} from 'expo-router';
-import {Apple as AppleIcon, Chrome, Globe, Lock, LogIn, type LucideIcon, Mail, UserRound} from 'lucide-react-native';
+import {Lock, LogIn, Mail, UserRound} from 'lucide-react-native';
 import {useState} from 'react';
 import {useTranslation} from '@shared/hooks/useTranslation';
 import {FONTS} from '@shared/constants/typography';
@@ -35,15 +34,14 @@ import ProviderButton from '../components/ProviderButton';
 /**
  * Integrated login page: credentials are entered directly in the app and
  * exchanged with Keycloak's token endpoint (Direct Access Grant) — no browser
- * popup. Brokered identity providers (Google, Apple, …) render as buttons
- * driven by the admin auth-method config and use the browser sheet with a
- * kc_idp_hint, landing straight on the provider. Registration and password
- * reset stay on Keycloak's hosted pages.
+ * popup. Sign-in method enablement lives in Keycloak (realm settings and
+ * identity providers); when a brokered provider (Google, Apple, …) is added
+ * there, render its button here via signIn({ idpHint }) — no config flag.
+ * Registration and password reset stay on Keycloak's hosted pages.
  */
 export default function LoginScreen() {
   const { colors } = usePreferences();
-  const { config } = useAdminConfig();
-  const { signIn, signInWithCredentials, register, loginAsGuest } = useAuth();
+  const { signInWithCredentials, register, loginAsGuest } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
   const isMobileWeb = useIsMobileWeb();
@@ -131,18 +129,6 @@ export default function LoginScreen() {
     // Fire-and-forget: the reset happens on Keycloak's hosted page + email.
     openPasswordReset().catch(() => {});
   };
-
-  // Brokered providers, rendered only when enabled in the admin auth-method
-  // config (AdminConfigContext). Adding a provider later = new entry here +
-  // Keycloak identity-brokering config — no layout changes.
-  const providers: { key: string; idpHint: string; icon: LucideIcon; label: string; enabled: boolean }[] = [
-    { key: 'google', idpHint: 'google', icon: Chrome, label: t('auth.continueWithGoogle'), enabled: config.enabledAuthMethods.google },
-    { key: 'apple', idpHint: 'apple', icon: AppleIcon, label: t('auth.continueWithApple'), enabled: config.enabledAuthMethods.apple },
-  ];
-  const enabledProviders = providers.filter((p) => p.enabled);
-  const showCredentialForm = config.enabledAuthMethods.manual;
-  const hasSecondaryButtons =
-    enabledProviders.length > 0 || !showCredentialForm || config.enabledAuthMethods.guest;
 
   const styles = StyleSheet.create({
     container: {
@@ -300,116 +286,86 @@ export default function LoginScreen() {
               <Text style={styles.subtitle}>{t('auth.signInToContinue')}</Text>
             </View>
 
-            {showCredentialForm && (
-              <View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>{t('auth.emailOrUsername')}</Text>
-                  <View style={styles.inputWrapper}>
-                    <Mail size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput
-                      testID="login-email-input"
-                      style={styles.input}
-                      placeholder={t('auth.enterEmailOrUsername')}
-                      placeholderTextColor={colors.textSecondary}
-                      value={usernameOrEmail}
-                      onChangeText={setUsernameOrEmail}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      editable={!isLoading}
-                    />
-                  </View>
+            <View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{t('auth.emailOrUsername')}</Text>
+                <View style={styles.inputWrapper}>
+                  <Mail size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    testID="login-email-input"
+                    style={styles.input}
+                    placeholder={t('auth.enterEmailOrUsername')}
+                    placeholderTextColor={colors.textSecondary}
+                    value={usernameOrEmail}
+                    onChangeText={setUsernameOrEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                  />
                 </View>
+              </View>
 
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>{t('auth.password')}</Text>
-                  <View style={styles.inputWrapper}>
-                    <Lock size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput
-                      testID="login-password-input"
-                      style={styles.input}
-                      placeholder={t('auth.enterPassword')}
-                      placeholderTextColor={colors.textSecondary}
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      editable={!isLoading}
-                      onSubmitEditing={handleCredentialLogin}
-                    />
-                  </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{t('auth.password')}</Text>
+                <View style={styles.inputWrapper}>
+                  <Lock size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    testID="login-password-input"
+                    style={styles.input}
+                    placeholder={t('auth.enterPassword')}
+                    placeholderTextColor={colors.textSecondary}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                    onSubmitEditing={handleCredentialLogin}
+                  />
                 </View>
-
-                <TouchableOpacity
-                  testID="login-forgot-password-link"
-                  style={styles.forgotPassword}
-                  onPress={handleForgotPassword}
-                  disabled={isLoading}
-                >
-                  <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  testID="login-submit-button"
-                  style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-                  onPress={handleCredentialLogin}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <>
-                      <LogIn size={20} color="#FFFFFF" />
-                      <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
               </View>
-            )}
 
-            {showCredentialForm && hasSecondaryButtons && (
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>{t('common.or')}</Text>
-                <View style={styles.dividerLine} />
-              </View>
-            )}
+              <TouchableOpacity
+                testID="login-forgot-password-link"
+                style={styles.forgotPassword}
+                onPress={handleForgotPassword}
+                disabled={isLoading}
+              >
+                <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                testID="login-submit-button"
+                style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+                onPress={handleCredentialLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <LogIn size={20} color="#FFFFFF" />
+                    <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>{t('common.or')}</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
             <View style={styles.secondaryButtons}>
-              {enabledProviders.map((provider) => (
-                <ProviderButton
-                  key={provider.key}
-                  testID={`login-${provider.key}-button`}
-                  icon={provider.icon}
-                  label={provider.label}
-                  onPress={() => runBrowserFlow(() => signIn({ idpHint: provider.idpHint }))}
-                  disabled={isLoading}
-                />
-              ))}
-
-              {!showCredentialForm && (
-                // Credential form disabled by admin config — fall back to the
-                // hosted Keycloak login page. Also the escape hatch for
-                // accounts with pending required actions (see accountNotSetUp).
-                <ProviderButton
-                  testID="login-browser-button"
-                  icon={Globe}
-                  label={t('auth.signInWithBrowser')}
-                  onPress={() => runBrowserFlow(() => signIn())}
-                  disabled={isLoading}
-                />
-              )}
-
-              {config.enabledAuthMethods.guest && (
-                <ProviderButton
-                  testID="login-guest-button"
-                  icon={UserRound}
-                  label={t('auth.enterAsGuest')}
-                  onPress={handleGuestLogin}
-                  disabled={isLoading}
-                />
-              )}
+              <ProviderButton
+                testID="login-guest-button"
+                icon={UserRound}
+                label={t('auth.enterAsGuest')}
+                onPress={handleGuestLogin}
+                disabled={isLoading}
+              />
             </View>
 
             <View style={styles.footer}>

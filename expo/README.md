@@ -267,7 +267,8 @@ Other details:
 - **Guest access** stays backend-issued (`POST /api/auth/guest`) and never
   touches Keycloak.
 
-Keycloak client requirements (admin console):
+Keycloak client requirements (admin console — full step-by-step guide in
+[`docs/KEYCLOAK_SETUP.md`](../docs/KEYCLOAK_SETUP.md)):
 
 - Client (`EXPO_PUBLIC_KEYCLOAK_CLIENT_ID`): **Direct access grants** enabled;
   redirect URIs cover `skateboardpodcast://auth/callback` and the web origin's

@@ -1,12 +1,8 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import { ProfileInfoCard } from '../ProfileInfoCard';
-import {
-  DEFAULT_PROFILE_FIELDS_CONFIG,
-  getVisibleProfileFields,
-  mapProfileFieldVisibility,
-} from '../../utils/profileFieldVisibility';
-import type { User } from '@core/contexts/AuthContext';
+import {render} from '@testing-library/react-native';
+import {ProfileInfoCard} from '../ProfileInfoCard';
+import {getVisibleProfileFields} from '../../utils/profileFieldVisibility';
+import type {User} from '@core/contexts/AuthContext';
 
 jest.mock('@core/contexts/PreferencesContext', () => ({
   usePreferences: () => ({
@@ -55,12 +51,12 @@ function makeUser(role: User['role']): User {
   };
 }
 
-function renderCard(role: User['role'], config = DEFAULT_PROFILE_FIELDS_CONFIG) {
+function renderCard(role: User['role'], visibility?: Record<string, boolean>) {
   const user = makeUser(role);
   return render(
     <ProfileInfoCard
       user={user}
-      visibleFields={getVisibleProfileFields(config, role)}
+      visibleFields={getVisibleProfileFields(visibility, role)}
       isGuest={role === 'guest'}
       language="en"
       onAvatarPress={jest.fn()}
@@ -94,18 +90,14 @@ describe('ProfileInfoCard', () => {
   });
 
   it('renders only the fields enabled by the config', () => {
-    const config = mapProfileFieldVisibility({
-      STANDARD: {
-        PROFILE_PICTURE: false,
-        USERNAME: false,
-        ROLE: false,
-        PROVIDER: false,
-        LANGUAGE: false,
-        EMAIL: true,
-      },
+    const { queryByTestId, getByTestId } = renderCard('standard', {
+      PROFILE_PICTURE: false,
+      USERNAME: false,
+      ROLE: false,
+      PROVIDER: false,
+      LANGUAGE: false,
+      EMAIL: true,
     });
-
-    const { queryByTestId, getByTestId } = renderCard('standard', config);
 
     expect(getByTestId('profile-field-email')).toBeTruthy();
     expect(queryByTestId('profile-field-username')).toBeNull();
@@ -115,11 +107,10 @@ describe('ProfileInfoCard', () => {
   });
 
   it('never shows edit affordances to guests even when fields are visible', () => {
-    const config = mapProfileFieldVisibility({
-      GUEST: { USERNAME: true, PROFILE_PICTURE: true },
+    const { getByTestId, queryByTestId } = renderCard('guest', {
+      USERNAME: true,
+      PROFILE_PICTURE: true,
     });
-
-    const { getByTestId, queryByTestId } = renderCard('guest', config);
 
     expect(getByTestId('profile-field-username')).toBeTruthy();
     expect(queryByTestId('edit-username-button')).toBeNull();

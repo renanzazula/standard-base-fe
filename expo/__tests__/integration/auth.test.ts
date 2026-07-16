@@ -64,15 +64,7 @@ describe('Authentication Integration Tests', () => {
   describe('IT-002: Guest access', () => {
     it('should start a guest session without touching Keycloak', async () => {
       // POST /api/auth/guest issues a backend-signed token (no refresh token);
-      // the session ends when it expires. Button gated by
-      // config.enabledAuthMethods.guest.
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('IT-003: Admin configuration', () => {
-    it('should allow admins to toggle guest access only', async () => {
-      // PATCH /api/admin/config/auth-methods accepts guestAuthEnabled only —
+      // the session ends when it expires. Guest access is always enabled —
       // sign-in methods (email/password, Google, Apple) are managed in the
       // Keycloak admin console.
       expect(true).toBe(true); // Placeholder

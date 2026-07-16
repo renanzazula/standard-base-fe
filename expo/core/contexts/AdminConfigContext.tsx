@@ -5,11 +5,6 @@ import type {AppConfigResponse} from '@core/services/adminConfig';
 import * as adminConfigApi from '@core/services/adminConfig';
 import {type Permission, PERMISSIONS} from '@shared/constants/permissions';
 import {ENV} from '@core/config/env';
-import {
-  DEFAULT_PROFILE_FIELDS_CONFIG,
-  mapProfileFieldVisibility,
-  type ProfileFieldsConfig,
-} from '@modules/settings/utils/profileFieldVisibility';
 
 export type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 
@@ -25,17 +20,6 @@ export interface NavigationTab {
 }
 
 export interface AdminConfig {
-  enabledAuthMethods: {
-    google: boolean;
-    apple: boolean;
-    manual: boolean;
-    guest: boolean;
-  };
-  sessionConfig: {
-    maxTime: number;
-    idleTime: number;
-    autoRefresh: boolean;
-  };
   languageConfig: {
     availableLanguages: Language[];
     defaultLanguage: Language;
@@ -57,21 +41,9 @@ export interface AdminConfig {
   navigationConfig: {
     tabs: NavigationTab[];
   };
-  profileFieldsConfig: ProfileFieldsConfig;
 }
 
 const DEFAULT_CONFIG: AdminConfig = {
-  enabledAuthMethods: {
-    google: false,
-    apple: false,
-    manual: true,
-    guest: true,
-  },
-  sessionConfig: {
-    maxTime: 30 * 60 * 1000,
-    idleTime: 15 * 60 * 1000,
-    autoRefresh: true,
-  },
   languageConfig: {
     availableLanguages: ['en'],
     defaultLanguage: 'en' as Language,
@@ -99,22 +71,10 @@ const DEFAULT_CONFIG: AdminConfig = {
       { id: 'settings', name: 'Settings', enabled: true, icon: 'settings', order: 5, isSystem: true, permissionKey: PERMISSIONS.FUNC_TAB_SETTINGS },
     ],
   },
-  profileFieldsConfig: DEFAULT_PROFILE_FIELDS_CONFIG,
 };
 
 function mapConfigResponse(response: AppConfigResponse): AdminConfig {
   return {
-    enabledAuthMethods: {
-      google: response.googleAuthEnabled,
-      apple: response.appleAuthEnabled,
-      manual: response.emailAuthEnabled,
-      guest: response.guestAuthEnabled ?? true,
-    },
-    sessionConfig: {
-      maxTime: response.sessionDurationSeconds * 1000,
-      idleTime: response.refreshTokenDurationSeconds * 1000,
-      autoRefresh: response.sessionAutoRefresh ?? true,
-    },
     languageConfig: {
       availableLanguages: response.availableLanguages as Language[],
       defaultLanguage: response.defaultLanguage as Language,
@@ -146,7 +106,6 @@ function mapConfigResponse(response: AppConfigResponse): AdminConfig {
           }))
         : DEFAULT_CONFIG.navigationConfig.tabs,
     },
-    profileFieldsConfig: mapProfileFieldVisibility(response.profileFieldVisibility),
   };
 }
 
@@ -185,35 +144,6 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
       if (response) setConfig(mapConfigResponse(response));
     } catch (error) {
       console.error('[AdminConfig] Failed to reload tab config:', error);
-    }
-  };
-
-  /**
-   * Guest access is the only auth method toggled here — sign-in methods
-   * (email/password, Google, Apple) are managed in Keycloak.
-   */
-  const toggleGuestAccess = async () => {
-    try {
-      const response = await adminConfigApi.updateAuthMethods({
-        guestAuthEnabled: !config.enabledAuthMethods.guest,
-      });
-      setConfig(mapConfigResponse(response));
-    } catch (error) {
-      console.error('[AdminConfig] Failed to toggle guest access:', error);
-    }
-  };
-
-  const updateSessionConfig = async (sessionConfig: Partial<AdminConfig['sessionConfig']>) => {
-    try {
-      const merged = { ...config.sessionConfig, ...sessionConfig };
-      const response = await adminConfigApi.updateSessionPolicy({
-        sessionDurationSeconds: Math.round(merged.maxTime / 1000),
-        refreshTokenDurationSeconds: Math.round(merged.idleTime / 1000),
-        autoRefresh: merged.autoRefresh,
-      });
-      setConfig(mapConfigResponse(response));
-    } catch (error) {
-      console.error('[AdminConfig] Failed to update session config:', error);
     }
   };
 
@@ -366,8 +296,6 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     isLoading,
     configLoaded,
     reloadTabConfig,
-    toggleGuestAccess,
-    updateSessionConfig,
     toggleLanguageAvailability,
     setDefaultLanguage,
     updateRegionalConfig,

@@ -47,6 +47,8 @@ export interface UserProfileResponse {
   permissions?: string[];
   navigationTabs?: NavigationTabResponse[];
   preferences?: UserPreferencesDto;
+  /** Profile field (e.g. EMAIL) -> visible, resolved for this user's role. */
+  profileFieldVisibility?: Record<string, boolean>;
 }
 
 export async function guestLogin(): Promise<AuthResponse> {

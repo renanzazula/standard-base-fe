@@ -1,6 +1,6 @@
 import React from 'react';
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { AuthProvider, useAuth } from '../AuthContext';
+import {act, renderHook, waitFor} from '@testing-library/react-native';
+import {AuthProvider, useAuth} from '../AuthContext';
 import * as userProfileApi from '@core/services/userProfile';
 import * as keycloakAuth from '@core/services/keycloakAuth';
 import * as tokenStorage from '@core/services/tokenStorage';
@@ -11,7 +11,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 jest.mock('@core/contexts/AdminConfigContext', () => ({
   useAdminConfig: () => ({
-    config: { sessionConfig: { idleTime: 600000, autoRefresh: false } },
+    config: {},
     reloadTabConfig: jest.fn(),
   }),
 }));

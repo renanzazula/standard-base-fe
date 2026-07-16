@@ -9,12 +9,8 @@ import {useTranslation} from '@shared/hooks/useTranslation';
 
 export default function HomeScreen() {
   const { colors, language } = usePreferences();
-  const { user, updateActivity } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
-
-  const handleInteraction = () => {
-    updateActivity();
-  };
 
   const styles = StyleSheet.create({
     container: {
@@ -138,7 +134,7 @@ export default function HomeScreen() {
   });
 
   return (
-    <View style={styles.container} onTouchStart={handleInteraction}>
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.greeting}>{t('home.welcomeBack')}, {user?.name}!</Text>
@@ -195,7 +191,7 @@ export default function HomeScreen() {
 
         <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
         <View style={styles.featureGrid}>
-          <TouchableOpacity style={styles.featureCard} onPress={handleInteraction}>
+          <TouchableOpacity style={styles.featureCard}>
             <View style={styles.featureIcon}>
               <Home size={32} color={colors.primary} />
             </View>
@@ -203,7 +199,7 @@ export default function HomeScreen() {
             <Text style={styles.featureDescription}>{t('home.viewOverview')}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.featureCard} onPress={handleInteraction}>
+          <TouchableOpacity style={styles.featureCard}>
             <View style={styles.featureIcon}>
               <Activity size={32} color={colors.primary} />
             </View>

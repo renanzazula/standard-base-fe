@@ -3,6 +3,4 @@ export { default as AdminConfigScreen } from './screens/AdminConfigScreen';
 export { default as NavigationManagementScreen } from './screens/NavigationManagementScreen';
 export { default as UserManagementScreen } from './screens/UserManagementScreen';
 export { default as ProfileRestrictionsScreen } from './screens/ProfileRestrictionsScreen';
-export { default as ConfigureAuthScreen } from './screens/ConfigureAuthScreen';
-export { default as SessionConfigScreen } from './screens/SessionConfigScreen';
 export { default as LanguageSettingsScreen } from './screens/LanguageSettingsScreen';

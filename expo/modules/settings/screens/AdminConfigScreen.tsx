@@ -5,31 +5,14 @@ import {useAuth} from '@core/contexts/AuthContext';
 import {AVAILABLE_LANGUAGES, Language} from '@shared/constants/languages';
 import {MAX_CONTENT_WIDTH} from '@shared/constants/layout';
 import {Stack, useRouter} from 'expo-router';
-import {
-  ChevronRight,
-  Clock,
-  Globe,
-  Minus,
-  Plus,
-  Shield,
-  ToggleLeft,
-  ToggleRight,
-  Trash2,
-  UserRound
-} from 'lucide-react-native';
-import {ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View} from 'react-native';
+import {ChevronRight, Globe, Shield, ToggleLeft, ToggleRight, Trash2} from 'lucide-react-native';
+import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 
 export default function AdminConfigScreen() {
   const { colors } = usePreferences();
-  const { config, toggleGuestAccess, updateSessionConfig, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
+  const { config, toggleLanguageAvailability, setDefaultLanguage } = useAdminConfig();
   const router = useRouter();
   const { user } = useAuth();
-
-  const MIN_SESSION_TIME = 5 * 60 * 1000;
-  const MAX_SESSION_TIME = 24 * 60 * 60 * 1000;
-  const MIN_IDLE_TIME = 5 * 60 * 1000;
-  const MAX_IDLE_TIME = 24 * 60 * 60 * 1000;
-  const TIME_STEP = 5 * 60 * 1000;
 
   const styles = StyleSheet.create({
     container: {
@@ -224,30 +207,6 @@ export default function AdminConfigScreen() {
     },
   });
 
-  const formatTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    if (remainingMinutes === 0) return `${hours} hr`;
-    return `${hours}h ${remainingMinutes}m`;
-  };
-
-  const adjustTime = (currentTime: number, increment: boolean, min: number, max: number) => {
-    const newTime = increment ? currentTime + TIME_STEP : currentTime - TIME_STEP;
-    return Math.max(min, Math.min(max, newTime));
-  };
-
-  const handleMaxTimeChange = (increment: boolean) => {
-    const newMaxTime = adjustTime(config.sessionConfig.maxTime, increment, MIN_SESSION_TIME, MAX_SESSION_TIME);
-    updateSessionConfig({ maxTime: newMaxTime });
-  };
-
-  const handleIdleTimeChange = (increment: boolean) => {
-    const newIdleTime = adjustTime(config.sessionConfig.idleTime, increment, MIN_IDLE_TIME, MAX_IDLE_TIME);
-    updateSessionConfig({ idleTime: newIdleTime });
-  };
-
   const handleToggleLanguage = (langCode: Language) => {
     const isCurrentlyEnabled = config.languageConfig.availableLanguages.includes(langCode);
 
@@ -356,148 +315,6 @@ export default function AdminConfigScreen() {
       />
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Authentication Methods</Text>
-
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <UserRound size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>Guest Access</Text>
-              </View>
-
-              <View style={styles.settingRow}>
-                <View>
-                  <Text style={styles.settingLabel}>Enable Guest Access</Text>
-                  <Text style={styles.settingDescription}>
-                    Allow users to enter without an account
-                  </Text>
-                </View>
-                <Switch
-                  value={config.enabledAuthMethods.guest}
-                  onValueChange={toggleGuestAccess}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                />
-              </View>
-
-              <Text style={styles.settingDescription}>
-                Sign-in methods (email/password, Google, Apple) are managed in
-                the Keycloak admin console.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Session Configuration</Text>
-
-            <View style={styles.sessionCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Clock size={20} color={colors.text} />
-                </View>
-                <Text style={styles.cardTitle}>Session Timeout Settings</Text>
-              </View>
-
-              <View style={styles.sessionRow}>
-                <Text style={styles.sessionLabel}>Maximum Session Time</Text>
-                <Text style={styles.settingDescription}>
-                  Total active session lifetime (5 min - 24 hours)
-                </Text>
-                <View style={styles.timeControl}>
-                  <View style={styles.timeButtons}>
-                    <TouchableOpacity
-                      style={[
-                        styles.timeButton,
-                        config.sessionConfig.maxTime <= MIN_SESSION_TIME && styles.timeButtonDisabled,
-                      ]}
-                      onPress={() => handleMaxTimeChange(false)}
-                      disabled={config.sessionConfig.maxTime <= MIN_SESSION_TIME}
-                      testID="decrease-max-time"
-                    >
-                      <Minus size={20} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.timeDisplay}>
-                      <Text style={styles.sessionValue}>{formatTime(config.sessionConfig.maxTime)}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[
-                        styles.timeButton,
-                        config.sessionConfig.maxTime >= MAX_SESSION_TIME && styles.timeButtonDisabled,
-                      ]}
-                      onPress={() => handleMaxTimeChange(true)}
-                      disabled={config.sessionConfig.maxTime >= MAX_SESSION_TIME}
-                      testID="increase-max-time"
-                    >
-                      <Plus size={20} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.sessionRow}>
-                <Text style={styles.sessionLabel}>Idle Timeout</Text>
-                <Text style={styles.settingDescription}>
-                  Time of inactivity before auto logout (5 min - 24 hours)
-                </Text>
-                <View style={styles.timeControl}>
-                  <View style={styles.timeButtons}>
-                    <TouchableOpacity
-                      style={[
-                        styles.timeButton,
-                        config.sessionConfig.idleTime <= MIN_IDLE_TIME && styles.timeButtonDisabled,
-                      ]}
-                      onPress={() => handleIdleTimeChange(false)}
-                      disabled={config.sessionConfig.idleTime <= MIN_IDLE_TIME}
-                      testID="decrease-idle-time"
-                    >
-                      <Minus size={20} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.timeDisplay}>
-                      <Text style={styles.sessionValue}>{formatTime(config.sessionConfig.idleTime)}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[
-                        styles.timeButton,
-                        config.sessionConfig.idleTime >= MAX_IDLE_TIME && styles.timeButtonDisabled,
-                      ]}
-                      onPress={() => handleIdleTimeChange(true)}
-                      disabled={config.sessionConfig.idleTime >= MAX_IDLE_TIME}
-                      testID="increase-idle-time"
-                    >
-                      <Plus size={20} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-
-              <View style={[styles.settingRow, styles.settingRowLast]}>
-                <View>
-                  <Text style={styles.settingLabel}>Auto Refresh Session</Text>
-                  <Text style={styles.settingDescription}>
-                    Extend session while user is active
-                  </Text>
-                </View>
-                <Switch
-                  value={config.sessionConfig.autoRefresh}
-                  onValueChange={(value) => updateSessionConfig({ autoRefresh: value })}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                  testID="auto-refresh-toggle"
-                />
-              </View>
-
-              <View style={styles.infoBox}>
-                <Text style={styles.infoText}>
-                  <Text style={{ fontWeight: '700' as const }}>Session Configuration:</Text>{' '}
-                  Controls how long users can remain logged in. The idle timeout triggers when there is no user activity, while the maximum session time is an absolute limit. Use the +/- buttons to adjust in 5-minute increments.
-                  {config.sessionConfig.autoRefresh && '\n\nAuto-refresh is enabled: Session will extend automatically while user is active.'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Language Settings</Text>
             <View style={styles.card}>

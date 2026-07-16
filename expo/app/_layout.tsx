@@ -23,8 +23,6 @@ const queryClient = new QueryClient();
 
 const ROUTE_PERMISSION_MAP: Record<string, (typeof PERMISSIONS)[keyof typeof PERMISSIONS]> = {
   'user-management': PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
-  'configure-authentication': PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH,
-  'session-configuration': PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG,
   'language-settings': PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
   'profile-restrictions': PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
   'navigation-management': PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
@@ -144,8 +142,6 @@ function RootLayoutNav() {
       <Stack.Screen name="branding" options={{ headerShown: true }} />
       <Stack.Screen name="user-management" options={{ headerShown: true, title: 'User Management' }} />
       <Stack.Screen name="profile-restrictions" options={{ headerShown: true }} />
-      <Stack.Screen name="configure-authentication" options={{ headerShown: true }} />
-      <Stack.Screen name="session-configuration" options={{ headerShown: true }} />
       <Stack.Screen name="language-settings" options={{ headerShown: true }} />
       <Stack.Screen name="create-post" options={{ headerShown: true, title: 'Create Post', presentation: 'modal' }} />
       <Stack.Screen name="edit-post/[id]" options={{ headerShown: true, title: 'Edit Post', presentation: 'modal' }} />

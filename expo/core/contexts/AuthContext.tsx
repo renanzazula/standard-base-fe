@@ -1,6 +1,6 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useState} from 'react';
 import type {NavigationTab} from './AdminConfigContext';
 import {useAdminConfig} from './AdminConfigContext';
 import type {NavigationTabResponse} from '@core/services/auth';
@@ -30,6 +30,8 @@ export interface User {
   avatarVersion?: number;
   permissions: Permission[];
   navigationTabs: NavigationTab[];
+  /** Profile field (e.g. EMAIL) -> visible, from /api/auth/me for this user's role. */
+  profileFieldVisibility?: Record<string, boolean>;
   preferences?: {
     language: string;
     theme: string;
@@ -43,7 +45,6 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  lastActivity: number;
 }
 
 const USER_STORAGE_KEY = '@user_data';
@@ -121,6 +122,7 @@ function mapProfileToUser(profile: authApi.UserProfileResponse): User {
     provider: role === 'guest' ? 'guest' : providerMap[firstProvider] ?? 'manual',
     permissions: resolvePermissions(role, profile.permissions),
     navigationTabs: profile.navigationTabs?.map(mapNavigationTab) ?? [],
+    profileFieldVisibility: profile.profileFieldVisibility,
     preferences: profile.preferences
       ? {
           language: profile.preferences.language ?? 'en',
@@ -138,10 +140,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     user: null,
     isAuthenticated: false,
     isLoading: true,
-    lastActivity: Date.now(),
   });
-  const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { config, reloadTabConfig } = useAdminConfig();
+  const { reloadTabConfig } = useAdminConfig();
 
   useEffect(() => {
     setOnAuthExpired(() => {
@@ -150,15 +150,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     });
     loadSession();
   }, []);
-
-  useEffect(() => {
-    if (authState.isAuthenticated) {
-      startSessionTimeout();
-    } else {
-      clearSessionTimeout();
-    }
-    return () => clearSessionTimeout();
-  }, [authState.isAuthenticated, authState.lastActivity, config.sessionConfig]);
 
   const loadSession = async () => {
     try {
@@ -171,7 +162,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           user,
           isAuthenticated: true,
           isLoading: false,
-          lastActivity: Date.now(),
         });
         // /api/admin/config requires an admin-settings permission — skip
         // the call for users without any.
@@ -185,7 +175,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      lastActivity: Date.now(),
     });
   };
 
@@ -194,27 +183,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
     } catch (error) {
       console.error('Failed to cache user data:', error);
-    }
-  };
-
-  const startSessionTimeout = () => {
-    clearSessionTimeout();
-    sessionTimeoutRef.current = setTimeout(() => {
-      console.log('Session timeout - logging out');
-      logout();
-    }, config.sessionConfig.idleTime);
-  };
-
-  const clearSessionTimeout = () => {
-    if (sessionTimeoutRef.current) {
-      clearTimeout(sessionTimeoutRef.current);
-      sessionTimeoutRef.current = null;
-    }
-  };
-
-  const updateActivity = () => {
-    if (authState.isAuthenticated && config.sessionConfig.autoRefresh) {
-      setAuthState((prev) => ({ ...prev, lastActivity: Date.now() }));
     }
   };
 
@@ -231,7 +199,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       user,
       isAuthenticated: true,
       isLoading: false,
-      lastActivity: Date.now(),
     });
     if (canAccessAdminConfig(user.permissions)) reloadTabConfig();
   };
@@ -282,7 +249,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       user,
       isAuthenticated: true,
       isLoading: false,
-      lastActivity: Date.now(),
     });
     return true;
   };
@@ -305,12 +271,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       // Best-effort: covers account switching too, since the next user gets a different scope.
       clearImageCacheScope(userScope(userId)).catch(() => {});
     }
-    clearSessionTimeout();
     setAuthState({
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      lastActivity: Date.now(),
     });
   };
 
@@ -370,7 +334,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     loginAsGuest,
     logout,
     deactivateAccount,
-    updateActivity,
     updateProfile,
     updateAvatar,
     refreshProfile,

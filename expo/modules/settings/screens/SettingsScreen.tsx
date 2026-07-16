@@ -9,9 +9,7 @@ import {useRouter} from 'expo-router';
 import {
     Check,
     ChevronRight,
-    Clock,
     Globe,
-    Lock,
     LogOut,
     Menu,
     Mic,
@@ -68,7 +66,7 @@ export default function SettingsScreen() {
     return null;
   }
 
-  const visibleFields = getVisibleProfileFields(config.profileFieldsConfig, user?.role);
+  const visibleFields = getVisibleProfileFields(user?.profileFieldVisibility, user?.role);
 
 
 
@@ -951,8 +949,6 @@ export default function SettingsScreen() {
 
         {hasAnyPermission([
           PERMISSIONS.FUNC_TAB_SETTINGS_MANAGE_USERS,
-          PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH,
-          PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG,
           PERMISSIONS.FUNC_TAB_SETTINGS_LANGUAGE_SETTINGS,
           PERMISSIONS.FUNC_TAB_SETTINGS_PROFILE_RESTRICTIONS,
           PERMISSIONS.FUNC_TAB_SETTINGS_NAVIGATION_MANAGEMENT,
@@ -975,48 +971,6 @@ export default function SettingsScreen() {
                     <Text style={styles.settingTitle}>{t('userManagement.manageUsers')}</Text>
                     <Text style={styles.settingDescription}>
                       {t('userManagement.viewAllUsers')}
-                    </Text>
-                  </View>
-                  <View style={styles.settingAction}>
-                    <ChevronRight size={20} color={colors.textSecondary} />
-                  </View>
-                </TouchableOpacity>
-              )}
-              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_CONFIGURE_AUTH) && (
-                <TouchableOpacity
-                  style={styles.settingItem}
-                  onPress={() => router.push('/configure-authentication')}
-                  testID="configure-auth-link"
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.settingIcon}>
-                    <Lock size={20} color={colors.text} />
-                  </View>
-                  <View style={styles.settingContent}>
-                    <Text style={styles.settingTitle}>Configure Authentication</Text>
-                    <Text style={styles.settingDescription}>
-                      Manage authentication methods and service modes
-                    </Text>
-                  </View>
-                  <View style={styles.settingAction}>
-                    <ChevronRight size={20} color={colors.textSecondary} />
-                  </View>
-                </TouchableOpacity>
-              )}
-              {hasPermission(PERMISSIONS.FUNC_TAB_SETTINGS_SESSION_CONFIG) && (
-                <TouchableOpacity
-                  style={styles.settingItem}
-                  onPress={() => router.push('/session-configuration')}
-                  testID="session-config-link"
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.settingIcon}>
-                    <Clock size={20} color={colors.text} />
-                  </View>
-                  <View style={styles.settingContent}>
-                    <Text style={styles.settingTitle}>Session Configuration</Text>
-                    <Text style={styles.settingDescription}>
-                      Configure session timeout and auto-refresh settings
                     </Text>
                   </View>
                   <View style={styles.settingAction}>

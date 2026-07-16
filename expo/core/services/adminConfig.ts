@@ -31,13 +31,6 @@ export type ProfileFieldVisibilityMap = Partial<
 
 export interface AppConfigResponse {
   tenantId: string;
-  emailAuthEnabled: boolean;
-  googleAuthEnabled: boolean;
-  appleAuthEnabled: boolean;
-  guestAuthEnabled?: boolean;
-  sessionDurationSeconds: number;
-  refreshTokenDurationSeconds: number;
-  sessionAutoRefresh: boolean;
   defaultLanguage: string;
   availableLanguages: string[];
   defaultTimezone: string;
@@ -59,26 +52,6 @@ export function getAppConfig(): Promise<AppConfigResponse> {
 
 export function getAdminConfig(): Promise<AppConfigResponse> {
   return apiFetch('/api/admin/config');
-}
-
-/**
- * Guest access is the only backend-managed auth toggle — email/password and
- * social sign-in are enabled/disabled in Keycloak (realm settings and
- * identity providers). The /api/config response keeps the other flags for
- * informational purposes only.
- */
-export function updateAuthMethods(body: {
-  guestAuthEnabled?: boolean;
-}): Promise<AppConfigResponse> {
-  return apiFetch('/api/admin/config/auth-methods', { method: 'PATCH', body: JSON.stringify(body) });
-}
-
-export function updateSessionPolicy(body: {
-  sessionDurationSeconds?: number;
-  refreshTokenDurationSeconds?: number;
-  autoRefresh?: boolean;
-}): Promise<AppConfigResponse> {
-  return apiFetch('/api/admin/config/session-policy', { method: 'PATCH', body: JSON.stringify(body) });
 }
 
 export function updateLanguagePolicy(body: {
