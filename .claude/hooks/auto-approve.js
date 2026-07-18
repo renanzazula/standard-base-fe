@@ -6,7 +6,8 @@
  * Wired up via: .claude/settings.json (see settings.json in this folder)
  *
  * Decision logic:
- *   - Write/Edit: ALLOW inside the project, DENY for sensitive files (.env, credentials, .git internals)
+ *   - Write/Edit: ALLOW inside the project, DENY for sensitive files (.env, credentials, .git internals),
+ *     ASK for .claude/ (policy files) and anything outside the project directory
  *   - Bash: DENY dangerous commands, ALLOW a whitelist of safe ones, ASK for everything else
  */
 
@@ -26,7 +27,7 @@ process.stdin.on("end", () => {
   const toolInput = input.tool_input || {};
 
   if (toolName === "Write" || toolName === "Edit" || toolName === "MultiEdit") {
-    handleFileEdit(toolInput);
+    handleFileEdit(toolInput, input.cwd || "");
   } else if (toolName === "Bash") {
     handleBash(toolInput);
   } else {
@@ -37,8 +38,9 @@ process.stdin.on("end", () => {
 // ---------------------------------------------------------------
 // File edits
 // ---------------------------------------------------------------
-function handleFileEdit(toolInput) {
+function handleFileEdit(toolInput, cwd) {
   const filePath = (toolInput.file_path || "").replace(/\\/g, "/");
+  const projectRoot = (cwd || "").replace(/\\/g, "/").replace(/\/+$/, "");
 
   const SENSITIVE_PATTERNS = [
     /\.env($|\.)/i,          // .env, .env.local, .env.production
@@ -56,6 +58,22 @@ function handleFileEdit(toolInput) {
       respond("deny", `Blocked: edits to sensitive file (${filePath}) require manual action`);
       return;
     }
+  }
+
+  // Policy files: editable, but only with explicit user approval
+  if (/\/\.claude\//.test(filePath)) {
+    respond("ask", "Edit to Claude Code policy file — needs manual review");
+    return;
+  }
+
+  // Only auto-approve inside the project directory (paths are absolute;
+  // Windows filesystem is case-insensitive)
+  if (
+    !projectRoot ||
+    !(filePath.toLowerCase() + "/").startsWith(projectRoot.toLowerCase() + "/")
+  ) {
+    respond("ask", "Outside project directory — asking user");
+    return;
   }
 
   respond("allow", "Auto-approved: project file edit");
@@ -122,8 +140,9 @@ function handleBash(toolInput) {
   const normalized = command.toLowerCase();
   for (const prefix of SAFE_PREFIXES) {
     if (normalized.startsWith(prefix.toLowerCase())) {
-      // Reject chained commands hiding behind a safe prefix (e.g. "ls; rm -rf /")
-      if (/[;&|]{1,2}/.test(command) && !/^git (log|diff|show)/.test(normalized)) {
+      // Reject chained commands hiding behind a safe prefix (e.g. "ls; rm -rf /",
+      // or a second command on a new line)
+      if (/[;&|\r\n]/.test(command) && !/^git (log|diff|show)/.test(normalized)) {
         respond("ask", "Chained command — needs manual review");
         return;
       }
