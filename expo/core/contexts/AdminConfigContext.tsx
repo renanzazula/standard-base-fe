@@ -126,14 +126,51 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
       return;
     }
     try {
+      // Pre-login /api/config only carries the anonymous slice; regional and
+      // profile policy arrive after sign-in via loadUserConfig (or the full
+      // admin config for admins). Merge instead of replace so a faster
+      // post-login fetch is never clobbered.
       const response = await adminConfigApi.getAppConfig();
-      setConfig(mapConfigResponse(response));
+      setConfig((prev) => ({
+        ...prev,
+        languageConfig: {
+          availableLanguages: response.availableLanguages as Language[],
+          defaultLanguage: response.defaultLanguage as Language,
+        },
+        brandingConfig: {
+          loginBackgroundUrl: response.loginBackgroundUrl ?? null,
+          loginBackgroundVersion: response.loginBackgroundVersion ?? 0,
+        },
+      }));
       setConfigLoaded(true);
     } catch (error) {
       console.error('[AdminConfig] Failed to load config from backend, using defaults:', error);
-      setConfig(DEFAULT_CONFIG);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // The signed-in, non-admin counterpart of reloadTabConfig: fetches the
+  // regional defaults and username/avatar policy that left the public config.
+  const loadUserConfig = async () => {
+    if (!ENV.HAS_BACKEND) return;
+    try {
+      const response = await adminConfigApi.getUserAppConfig();
+      setConfig((prev) => ({
+        ...prev,
+        regionalConfig: {
+          defaultTimezone: response.defaultTimezone,
+          defaultDateFormat: response.defaultDateFormat as DateFormat,
+        },
+        profileConfig: {
+          usernameMinLength: response.usernameMinLength,
+          usernameMaxLength: response.usernameMaxLength,
+          avatarMaxSizeMB: response.avatarMaxSizeMb ?? 5,
+          allowedAvatarFormats: response.allowedAvatarFormats ?? DEFAULT_CONFIG.profileConfig.allowedAvatarFormats,
+        },
+      }));
+    } catch (error) {
+      console.error('[AdminConfig] Failed to load user config:', error);
     }
   };
 
@@ -296,6 +333,7 @@ export const [AdminConfigProvider, useAdminConfig] = createContextHook(() => {
     isLoading,
     configLoaded,
     reloadTabConfig,
+    loadUserConfig,
     toggleLanguageAvailability,
     setDefaultLanguage,
     updateRegionalConfig,

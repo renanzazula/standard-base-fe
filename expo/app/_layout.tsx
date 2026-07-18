@@ -146,7 +146,7 @@ function RootLayoutNav() {
       <Stack.Screen name="create-post" options={{ headerShown: true, title: 'Create Post', presentation: 'modal' }} />
       <Stack.Screen name="edit-post/[id]" options={{ headerShown: true, title: 'Edit Post', presentation: 'modal' }} />
       <Stack.Screen name="post/[slug]" options={{ headerShown: true, title: '' }} />
-      <Stack.Screen name="post-claude-config" options={{ headerShown: true, title: 'Post & Feed Configuration' }} />
+      <Stack.Screen name="post-claude-config" options={{ headerShown: true, title: 'Post Configuration' }} />
       <Stack.Screen name="feed-import-json" options={{ headerShown: true, title: 'Import Posts from JSON' }} />
       <Stack.Screen name="podcast-config" options={{ headerShown: true, title: 'Podcast Configuration' }} />
       <Stack.Screen name="podcast-import-json" options={{ headerShown: true, title: 'Import Episodes from JSON' }} />

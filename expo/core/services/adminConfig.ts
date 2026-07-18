@@ -46,8 +46,32 @@ export interface AppConfigResponse {
   profileFieldVisibility?: ProfileFieldVisibilityMap;
 }
 
-export function getAppConfig(): Promise<AppConfigResponse> {
+/** Anonymous pre-login slice: tenant, language catalog, login branding. */
+export interface PublicAppConfigResponse {
+  tenantId: string;
+  defaultLanguage: string;
+  availableLanguages: string[];
+  loginBackgroundUrl?: string | null;
+  loginBackgroundVersion?: number;
+  loginBackgroundUpdatedAt?: string;
+}
+
+/** Signed-in slice: regional defaults + username/avatar policy. */
+export interface UserAppConfigResponse {
+  defaultTimezone: string;
+  defaultDateFormat: string;
+  usernameMinLength: number;
+  usernameMaxLength: number;
+  avatarMaxSizeMb: number;
+  allowedAvatarFormats: string[];
+}
+
+export function getAppConfig(): Promise<PublicAppConfigResponse> {
   return apiFetch('/api/config');
+}
+
+export function getUserAppConfig(): Promise<UserAppConfigResponse> {
+  return apiFetch('/api/config/user');
 }
 
 export function getAdminConfig(): Promise<AppConfigResponse> {

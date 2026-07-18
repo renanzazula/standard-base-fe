@@ -141,7 +141,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated: false,
     isLoading: true,
   });
-  const { reloadTabConfig } = useAdminConfig();
+  const { reloadTabConfig, loadUserConfig } = useAdminConfig();
 
   useEffect(() => {
     setOnAuthExpired(() => {
@@ -163,9 +163,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isAuthenticated: true,
           isLoading: false,
         });
-        // /api/admin/config requires an admin-settings permission — skip
-        // the call for users without any.
+        // /api/admin/config requires an admin-settings permission; everyone
+        // else gets the slim signed-in slice (regional + profile policy),
+        // which the admin response already contains.
         if (canAccessAdminConfig(user.permissions)) reloadTabConfig();
+        else loadUserConfig();
         return;
       }
     } catch (error) {
@@ -201,6 +203,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isLoading: false,
     });
     if (canAccessAdminConfig(user.permissions)) reloadTabConfig();
+    else loadUserConfig();
   };
 
   /**
@@ -250,6 +253,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isAuthenticated: true,
       isLoading: false,
     });
+    loadUserConfig();
     return true;
   };
 
